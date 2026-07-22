@@ -1,0 +1,17 @@
+{
+  "name": "store-management",
+  "version": "1.0.0",
+  "description": "Store Management POS & Stock System",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "start": "concurrently \"npm run server:prod\" \"npm run client:build\"",
+    "server:prod": "cd server && npm start",
+    "client:build": "cd client && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
