@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useAppStore } from '../../stores/appStore'
 import { generateSKU } from '../../lib/utils'
 import { X, Package, RefreshCw } from 'lucide-react'
 
 export default function ProductForm({ product, categories, onSave, onClose }) {
+  const { t } = useAppStore()
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -65,7 +67,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
-            {product ? 'Edit Product' : 'Add New Product'}
+            {product ? t('inventory.editProduct') : t('inventory.addProduct')}
           </h2>
           <button
             onClick={onClose}
@@ -81,7 +83,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Product Name *
+                {t('inventory.productName')} *
               </label>
               <input
                 type="text"
@@ -90,13 +92,13 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                placeholder="Enter product name"
+                placeholder={t('inventory.productNamePlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                SKU
+                {t('inventory.sku')}
               </label>
               <div className="flex gap-2">
                 <input
@@ -105,13 +107,12 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
                   value={formData.sku}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                  placeholder="Product SKU"
+                  placeholder={t('inventory.skuPlaceholder')}
                 />
                 <button
                   type="button"
                   onClick={handleGenerateSKU}
                   className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-                  title="Generate SKU"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -120,7 +121,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Barcode
+                {t('inventory.barcode')}
               </label>
               <input
                 type="text"
@@ -128,13 +129,13 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
                 value={formData.barcode}
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                placeholder="Product barcode"
+                placeholder={t('inventory.barcodePlaceholder')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category
+                {t('inventory.category')}
               </label>
               <select
                 name="category_id"
@@ -142,7 +143,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               >
-                <option value="">Select category</option>
+                <option value="">{t('inventory.selectCategory')}</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -151,7 +152,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Image URL
+                {t('inventory.imageUrl')}
               </label>
               <input
                 type="url"
@@ -168,7 +169,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Selling Price (ج.م) *
+                {t('inventory.sellingPrice')} (ج.م) *
               </label>
               <input
                 type="number"
@@ -185,7 +186,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Cost Price (ج.م)
+                {t('inventory.costPrice')} (ج.م)
               </label>
               <input
                 type="number"
@@ -204,7 +205,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Stock Quantity
+                {t('inventory.stockQuantity')}
               </label>
               <input
                 type="number"
@@ -218,7 +219,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Low Stock Threshold
+                {t('inventory.lowStockThreshold')}
               </label>
               <input
                 type="number"
@@ -234,7 +235,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
+              {t('inventory.description')}
             </label>
             <textarea
               name="description"
@@ -242,7 +243,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
               onChange={handleChange}
               rows={3}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-              placeholder="Product description (optional)"
+              placeholder={t('inventory.descriptionPlaceholder')}
             />
           </div>
 
@@ -256,7 +257,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
               className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
             />
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Product is active (visible in POS)
+              {t('inventory.productActive')}
             </label>
           </div>
         </form>
@@ -268,14 +269,14 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
             onClick={onClose}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="submit"
             onClick={handleSubmit}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
-            {product ? 'Update Product' : 'Add Product'}
+            {product ? t('inventory.updateProduct') : t('inventory.addProduct')}
           </button>
         </div>
       </div>

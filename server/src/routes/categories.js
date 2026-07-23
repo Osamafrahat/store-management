@@ -1,70 +1,85 @@
 import { Router } from 'express'
-import db from '../db/connection.js'
+import { body, param, validationResult } from 'express-validator'
+import supabase from '../db/supabase.js'
 
 const router = Router()
 
+const validate = (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg })
+  }
+  next()
+}
+
 // Get all categories
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const categories = db.prepare('SELECT * FROM categories ORDER BY name').all()
-    res.json(categories)
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name')
+
+    if (error) throw error
+    res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Create category
-router.post('/', (req, res, next) => {
+router.post('/', [
+  body('name').trim().notEmpty().withMessage('Category name is required'),
+], validate, async (req, res, next) => {
   try {
     const { name, description } = req.body
 
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' })
-    }
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name, description: description || null })
+      .select()
+      .single()
 
-    const result = db.prepare(
-      'INSERT INTO categories (name, description) VALUES (?, ?)'
-    ).run(name, description || null)
-
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(result.lastInsertRowid)
-    res.status(201).json(category)
+    if (error) throw error
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Update category
-router.put('/:id', (req, res, next) => {
+router.put('/:id', [
+  param('id').isNumeric().withMessage('Invalid category ID'),
+  body('name').trim().notEmpty().withMessage('Category name is required'),
+], validate, async (req, res, next) => {
   try {
     const { name, description } = req.body
 
-    const existing = db.prepare('SELECT id FROM categories WHERE id = ?').get(req.params.id)
+    const { data, error } = await supabase
+      .from('categories')
+      .update({ name, description: description || null })
+      .eq('id', req.params.id)
+      .select()
+      .single()
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Category not found' })
-    }
-
-    db.prepare(
-      'UPDATE categories SET name = ?, description = ? WHERE id = ?'
-    ).run(name, description, req.params.id)
-
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id)
-    res.json(category)
+    if (error) throw error
+    res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Delete category
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', [
+  param('id').isNumeric().withMessage('Invalid category ID'),
+], validate, async (req, res, next) => {
   try {
-    const existing = db.prepare('SELECT id FROM categories WHERE id = ?').get(req.params.id)
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', req.params.id)
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Category not found' })
-    }
-
-    db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id)
+    if (error) throw error
     res.json({ message: 'Category deleted successfully' })
   } catch (err) {
     next(err)

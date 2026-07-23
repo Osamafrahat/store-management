@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { formatCurrency, formatDate } from '../../lib/utils'
+import { useAppStore } from '../../stores/appStore'
+import { formatCurrency } from '../../lib/utils'
 import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle } from 'lucide-react'
 
 export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
+  const { t } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState('name')
   const [sortDirection, setSortDirection] = useState('asc')
-  const [selectedCategory, setSelectedCategory] = useState('')
 
   const filteredProducts = products
     .filter(p => {
@@ -20,7 +21,6 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
       }
       return true
     })
-    .filter(p => !selectedCategory || p.category_id === parseInt(selectedCategory))
     .sort((a, b) => {
       const aVal = a[sortField]
       const bVal = b[sortField]
@@ -53,8 +53,8 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
         <Package className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No products yet</h3>
-        <p className="text-gray-500 dark:text-gray-400">Add your first product to get started</p>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('inventory.noProducts')}</h3>
+        <p className="text-gray-500 dark:text-gray-400">{t('inventory.addFirstProduct')}</p>
       </div>
     )
   }
@@ -68,7 +68,7 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder={t('inventory.searchProducts')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
@@ -84,26 +84,26 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
             <tr className="border-b border-gray-200 dark:border-gray-700">
               <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('name')} className="flex items-center gap-1">
-                  Product <SortIcon field="name" />
+                  {t('inventory.name')} <SortIcon field="name" />
                 </button>
               </th>
               <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('sku')} className="flex items-center gap-1">
-                  SKU <SortIcon field="sku" />
+                  {t('inventory.sku')} <SortIcon field="sku" />
                 </button>
               </th>
               <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('price')} className="flex items-center gap-1">
-                  Price <SortIcon field="price" />
+                  {t('inventory.price')} <SortIcon field="price" />
                 </button>
               </th>
               <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('stock_quantity')} className="flex items-center gap-1">
-                  Stock <SortIcon field="stock_quantity" />
+                  {t('inventory.stock')} <SortIcon field="stock_quantity" />
                 </button>
               </th>
-              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">Status</th>
-              <th className="text-right p-4 font-medium text-gray-500 dark:text-gray-400">Actions</th>
+              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.status')}</th>
+              <th className="text-right p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -151,7 +151,7 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
                   }`}>
-                    {product.is_active ? 'Active' : 'Inactive'}
+                    {product.is_active ? t('inventory.active') : t('inventory.inactive')}
                   </span>
                 </td>
                 <td className="p-4">
@@ -178,7 +178,7 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
-        Showing {filteredProducts.length} of {products.length} products
+        {t('inventory.showing')} {filteredProducts.length} {t('inventory.of')} {products.length} {t('common.products')}
       </div>
     </div>
   )

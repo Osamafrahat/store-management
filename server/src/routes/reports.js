@@ -1,79 +1,103 @@
 import { Router } from 'express'
-import db from '../db/connection.js'
+import supabase from '../db/supabase.js'
 
 const router = Router()
 
 // Get sales report
-router.get('/sales', (req, res, next) => {
+router.get('/sales', async (req, res, next) => {
   try {
     const { range = 'week' } = req.query
 
-    let startDate = new Date()
+    // Calculate date range
+    const now = new Date()
+    let startDate
+
     switch (range) {
       case 'today':
-        startDate.setHours(0, 0, 0, 0)
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         break
       case 'week':
-        startDate.setDate(startDate.getDate() - 7)
+        startDate = new Date(now.setDate(now.getDate() - 7))
         break
       case 'month':
-        startDate.setMonth(startDate.getMonth() - 1)
+        startDate = new Date(now.setMonth(now.getMonth() - 1))
         break
       case 'year':
-        startDate.setFullYear(startDate.getFullYear() - 1)
+        startDate = new Date(now.setFullYear(now.getFullYear() - 1))
         break
+      default:
+        startDate = new Date(now.setDate(now.getDate() - 7))
     }
 
-    const startDateStr = startDate.toISOString()
+    // Get orders in range
+    const { data: orders, error: ordersError } = await supabase
+      .from('orders')
+      .select('*')
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false })
 
-    // Total sales
-    const orders = db.prepare(`
-      SELECT total FROM orders
-      WHERE created_at >= ? AND payment_status = 'paid'
-    `).all(startDateStr)
+    if (ordersError) throw ordersError
 
+    // Calculate stats
     const totalSales = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0)
     const totalOrders = orders.length
     const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0
 
-    // Items sold
-    const orderItems = db.prepare(`
-      SELECT oi.quantity
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.created_at >= ? AND o.payment_status = 'paid'
-    `).all(startDateStr)
+    // Get order items for top products
+    const orderIds = orders.map(o => o.id)
+    let itemsSold = 0
+    let topProducts = []
 
-    const itemsSold = orderItems.reduce((sum, i) => sum + i.quantity, 0)
+    if (orderIds.length > 0) {
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('*, products(name)')
+        .in('order_id', orderIds)
 
-    // Daily sales
-    const dailyOrders = db.prepare(`
-      SELECT DATE(created_at) as date, SUM(total) as sales, COUNT(*) as orders
-      FROM orders
-      WHERE created_at >= ? AND payment_status = 'paid'
-      GROUP BY DATE(created_at)
-      ORDER BY date
-    `).all(startDateStr)
+      if (orderItems) {
+        itemsSold = orderItems.reduce((sum, i) => sum + (i.quantity || 0), 0)
 
-    // Top products
-    const topProducts = db.prepare(`
-      SELECT p.id, p.name, SUM(oi.quantity) as quantitySold, SUM(oi.total) as revenue
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      JOIN products p ON oi.product_id = p.id
-      WHERE o.created_at >= ? AND o.payment_status = 'paid'
-      GROUP BY p.id
-      ORDER BY revenue DESC
-      LIMIT 10
-    `).all(startDateStr)
+        // Group by product
+        const productSales = {}
+        orderItems.forEach(item => {
+          const productId = item.product_id
+          if (!productSales[productId]) {
+            productSales[productId] = {
+              id: productId,
+              name: item.products?.name || 'Unknown',
+              quantitySold: 0,
+              revenue: 0
+            }
+          }
+          productSales[productId].quantitySold += item.quantity
+          productSales[productId].revenue += parseFloat(item.total) || 0
+        })
+
+        topProducts = Object.values(productSales)
+          .sort((a, b) => b.revenue - a.revenue)
+          .slice(0, 10)
+      }
+    }
+
+    // Daily sales for chart
+    const dailySales = []
+    const daysInRange = Math.ceil((new Date() - startDate) / (1000 * 60 * 60 * 24))
+    for (let i = 0; i < Math.min(daysInRange, 30); i++) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      const dayOrders = orders.filter(o => o.created_at?.startsWith(dateStr))
+      const dayTotal = dayOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0)
+      dailySales.unshift({ date: dateStr, sales: dayTotal })
+    }
 
     res.json({
       totalSales,
       totalOrders,
       avgOrderValue,
       itemsSold,
-      dailySales: dailyOrders,
-      topProducts
+      topProducts,
+      dailySales
     })
   } catch (err) {
     next(err)
@@ -81,97 +105,37 @@ router.get('/sales', (req, res, next) => {
 })
 
 // Get stock report
-router.get('/stock', (req, res, next) => {
+router.get('/stock', async (req, res, next) => {
   try {
-    // Total products
-    const { totalProducts } = db.prepare(
-      'SELECT COUNT(*) as totalProducts FROM products WHERE is_active = 1'
-    ).get()
+    // Get all products
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('*, categories(name)')
+      .order('name')
 
-    // All active products
-    const allProducts = db.prepare(
-      'SELECT * FROM products WHERE is_active = 1'
-    ).all()
+    if (productsError) throw productsError
 
-    // Low stock products
-    const lowStockProducts = allProducts.filter(
-      p => p.stock_quantity <= (p.low_stock_threshold || 10)
-    )
+    const totalProducts = products.length
+    const lowStockProducts = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10))
+    const lowStockCount = lowStockProducts.length
+    const totalValue = products.reduce((sum, p) => sum + ((p.stock_quantity || 0) * (p.price || 0)), 0)
 
-    // Total stock value
-    const totalValue = allProducts.reduce((sum, p) => {
-      return sum + (p.stock_quantity * (parseFloat(p.cost_price) || 0))
-    }, 0)
-
-    // Stock by category
-    const categoryBreakdown = db.prepare(`
-      SELECT COALESCE(c.name, 'Uncategorized') as name, COUNT(*) as value
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.is_active = 1
-      GROUP BY c.name
-    `).all()
+    // Category breakdown
+    const categoryMap = {}
+    products.forEach(p => {
+      const catName = p.categories?.name || 'Uncategorized'
+      if (!categoryMap[catName]) {
+        categoryMap[catName] = { name: catName, value: 0 }
+      }
+      categoryMap[catName].value += p.stock_quantity || 0
+    })
 
     res.json({
       totalProducts,
-      lowStockCount: lowStockProducts.length,
+      lowStockCount,
       lowStockProducts,
       totalValue,
-      categoryBreakdown
-    })
-  } catch (err) {
-    next(err)
-  }
-})
-
-// Get dashboard data
-router.get('/dashboard', (req, res, next) => {
-  try {
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-    const todayStr = todayStart.toISOString()
-
-    // Today's sales
-    const todayOrders = db.prepare(`
-      SELECT total FROM orders
-      WHERE created_at >= ? AND payment_status = 'paid'
-    `).all(todayStr)
-
-    const todaySales = todayOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0)
-    const todayOrdersCount = todayOrders.length
-
-    // Low stock count
-    const allProducts = db.prepare(
-      'SELECT stock_quantity, low_stock_threshold FROM products WHERE is_active = 1'
-    ).all()
-
-    const lowStockCount = allProducts.filter(
-      p => p.stock_quantity <= (p.low_stock_threshold || 10)
-    ).length
-
-    // Recent orders
-    const recentOrders = db.prepare(
-      'SELECT * FROM orders ORDER BY created_at DESC LIMIT 5'
-    ).all()
-
-    // Top products today
-    const topProductsToday = db.prepare(`
-      SELECT p.name, SUM(oi.quantity) as quantity
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      JOIN products p ON oi.product_id = p.id
-      WHERE o.created_at >= ? AND o.payment_status = 'paid'
-      GROUP BY p.id
-      ORDER BY quantity DESC
-      LIMIT 5
-    `).all(todayStr)
-
-    res.json({
-      todaySales,
-      todayOrders: todayOrdersCount,
-      lowStockCount,
-      recentOrders,
-      topProductsToday
+      categoryBreakdown: Object.values(categoryMap)
     })
   } catch (err) {
     next(err)

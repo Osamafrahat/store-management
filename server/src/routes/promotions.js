@@ -1,35 +1,48 @@
 import { Router } from 'express'
-import db from '../db/connection.js'
+import { body, param, validationResult } from 'express-validator'
+import supabase from '../db/supabase.js'
 
 const router = Router()
 
-// Get all promotions
-router.get('/', (req, res, next) => {
-  try {
-    const promotions = db.prepare(
-      'SELECT * FROM promotions ORDER BY created_at DESC'
-    ).all()
+const validate = (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg })
+  }
+  next()
+}
 
-    res.json(promotions)
+// Get all promotions
+router.get('/', async (req, res, next) => {
+  try {
+    const { data, error } = await supabase
+      .from('promotions')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Validate promo code
-router.post('/validate', (req, res, next) => {
+router.post('/validate', [
+  body('code').trim().notEmpty().withMessage('Promo code is required'),
+  body('orderAmount').isFloat({ min: 0 }).withMessage('Order amount is required'),
+], validate, async (req, res, next) => {
   try {
     const { code, orderAmount } = req.body
 
-    if (!code) {
-      return res.status(400).json({ error: 'Promo code is required' })
-    }
+    const { data: promo, error } = await supabase
+      .from('promotions')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .eq('is_active', true)
+      .single()
 
-    const promo = db.prepare(
-      'SELECT * FROM promotions WHERE code = ? AND is_active = 1'
-    ).get(code.toUpperCase())
-
-    if (!promo) {
+    if (error || !promo) {
       return res.status(404).json({ error: 'Invalid promo code' })
     }
 
@@ -38,93 +51,106 @@ router.post('/validate', (req, res, next) => {
       return res.status(400).json({ error: 'Promo code has expired' })
     }
 
-    // Check max uses
+    // Check usage limit
     if (promo.max_uses && promo.used_count >= promo.max_uses) {
       return res.status(400).json({ error: 'Promo code usage limit reached' })
     }
 
     // Check minimum order amount
     if (promo.min_order_amount && orderAmount < promo.min_order_amount) {
-      return res.status(400).json({
-        error: `Minimum order amount is ${promo.min_order_amount}`
-      })
+      return res.status(400).json({ error: `Minimum order amount is ${promo.min_order_amount}` })
     }
 
-    res.json({
-      valid: true,
-      code: promo.code,
-      type: promo.type,
-      value: promo.value
-    })
-  } catch (err) {
-    next(err)
-  }
-})
-
-// Create promotion
-router.post('/', (req, res, next) => {
-  try {
-    const { code, type, value, min_order_amount, max_uses, start_date, end_date, is_active } = req.body
-
-    if (!code || !type || value === undefined) {
-      return res.status(400).json({ error: 'Code, type, and value are required' })
-    }
-
-    const result = db.prepare(`
-      INSERT INTO promotions (code, type, value, min_order_amount, max_uses, start_date, end_date, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      code.toUpperCase(), type, value,
-      min_order_amount || null, max_uses || null,
-      start_date || null, end_date || null,
-      is_active !== false ? 1 : 0
-    )
-
-    const promo = db.prepare('SELECT * FROM promotions WHERE id = ?').get(result.lastInsertRowid)
-    res.status(201).json(promo)
-  } catch (err) {
-    next(err)
-  }
-})
-
-// Update promotion
-router.put('/:id', (req, res, next) => {
-  try {
-    const { code, type, value, min_order_amount, max_uses, start_date, end_date, is_active } = req.body
-
-    const existing = db.prepare('SELECT id FROM promotions WHERE id = ?').get(req.params.id)
-
-    if (!existing) {
-      return res.status(404).json({ error: 'Promotion not found' })
-    }
-
-    db.prepare(`
-      UPDATE promotions
-      SET code = ?, type = ?, value = ?, min_order_amount = ?, max_uses = ?,
-          start_date = ?, end_date = ?, is_active = ?
-      WHERE id = ?
-    `).run(
-      code?.toUpperCase(), type, value, min_order_amount, max_uses,
-      start_date, end_date, is_active ? 1 : 0, req.params.id
-    )
-
-    const promo = db.prepare('SELECT * FROM promotions WHERE id = ?').get(req.params.id)
     res.json(promo)
   } catch (err) {
     next(err)
   }
 })
 
-// Delete promotion
-router.delete('/:id', (req, res, next) => {
+// Create promotion
+router.post('/', [
+  body('code').trim().notEmpty().withMessage('Promo code is required'),
+  body('type').isIn(['percentage', 'fixed']).withMessage('Type must be percentage or fixed'),
+  body('value').isFloat({ min: 0 }).withMessage('Value must be a positive number'),
+], validate, async (req, res, next) => {
   try {
-    const existing = db.prepare('SELECT id FROM promotions WHERE id = ?').get(req.params.id)
+    const { code, type, value, min_order_amount, max_uses, start_date, end_date, is_active } = req.body
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Promotion not found' })
+    // Check if code exists
+    const { data: existing } = await supabase
+      .from('promotions')
+      .select('id')
+      .eq('code', code.toUpperCase())
+      .single()
+
+    if (existing) {
+      return res.status(409).json({ error: 'Promo code already exists' })
     }
 
-    db.prepare('DELETE FROM promotions WHERE id = ?').run(req.params.id)
+    const { data, error } = await supabase
+      .from('promotions')
+      .insert({
+        code: code.toUpperCase(),
+        type,
+        value,
+        min_order_amount: min_order_amount || null,
+        max_uses: max_uses || null,
+        start_date: start_date || null,
+        end_date: end_date || null,
+        is_active: is_active !== false
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    res.status(201).json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Update promotion
+router.put('/:id', [
+  param('id').isNumeric().withMessage('Invalid promotion ID'),
+], validate, async (req, res, next) => {
+  try {
+    const { code, type, value, min_order_amount, max_uses, start_date, end_date, is_active } = req.body
+
+    const updateData = {}
+    if (code !== undefined) updateData.code = code.toUpperCase()
+    if (type !== undefined) updateData.type = type
+    if (value !== undefined) updateData.value = value
+    if (min_order_amount !== undefined) updateData.min_order_amount = min_order_amount
+    if (max_uses !== undefined) updateData.max_uses = max_uses
+    if (start_date !== undefined) updateData.start_date = start_date
+    if (end_date !== undefined) updateData.end_date = end_date
+    if (is_active !== undefined) updateData.is_active = is_active
+
+    const { data, error } = await supabase
+      .from('promotions')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Delete promotion
+router.delete('/:id', [
+  param('id').isNumeric().withMessage('Invalid promotion ID'),
+], validate, async (req, res, next) => {
+  try {
+    const { error } = await supabase
+      .from('promotions')
+      .delete()
+      .eq('id', req.params.id)
+
+    if (error) throw error
     res.json({ message: 'Promotion deleted successfully' })
   } catch (err) {
     next(err)

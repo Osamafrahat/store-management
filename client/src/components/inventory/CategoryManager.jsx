@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useAppStore } from '../../stores/appStore'
 import { categoriesApi } from '../../lib/api'
 import { X, Plus, Edit2, Trash2, Tag, Check } from 'lucide-react'
 
 export default function CategoryManager({ categories, onClose, onRefresh }) {
+  const { t } = useAppStore()
   const [newCategory, setNewCategory] = useState({ name: '', description: '' })
   const [editingCategory, setEditingCategory] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -18,7 +20,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
       onRefresh()
     } catch (err) {
       console.error('Failed to create category:', err)
-      alert('Failed to create category')
+      alert(t('inventory.failedToCreateCategory'))
     } finally {
       setLoading(false)
     }
@@ -34,14 +36,14 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
       onRefresh()
     } catch (err) {
       console.error('Failed to update category:', err)
-      alert('Failed to update category')
+      alert(t('inventory.failedToUpdateCategory'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this category? Products in this category will become uncategorized.')) return
+    if (!confirm(t('inventory.deleteCategoryConfirm'))) return
 
     setLoading(true)
     try {
@@ -49,7 +51,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
       onRefresh()
     } catch (err) {
       console.error('Failed to delete category:', err)
-      alert('Failed to delete category')
+      alert(t('inventory.failedToDeleteCategory'))
     } finally {
       setLoading(false)
     }
@@ -60,7 +62,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">Manage Categories</h2>
+          <h2 className="text-xl font-semibold">{t('inventory.manageCategories')}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -76,7 +78,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
               type="text"
               value={newCategory.name}
               onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-              placeholder="New category name"
+              placeholder={t('inventory.newCategoryName')}
               className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
             <button
@@ -85,7 +87,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add
+              {t('common.add')}
             </button>
           </div>
         </form>
@@ -95,7 +97,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
           {categories.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <Tag className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No categories yet</p>
+              <p>{t('inventory.noCategories')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -163,7 +165,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
             onClick={onClose}
             className="w-full py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
           >
-            Done
+            {t('inventory.done')}
           </button>
         </div>
       </div>

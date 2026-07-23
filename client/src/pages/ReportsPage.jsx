@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react'
+import { useAppStore } from '../stores/appStore'
 import { reportsApi } from '../lib/api'
-import { formatCurrency, formatDate } from '../lib/utils'
+import { formatCurrency } from '../lib/utils'
 import { BarChart3, TrendingUp, Package, AlertTriangle } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export default function ReportsPage() {
+  const { t } = useAppStore()
   const [salesData, setSalesData] = useState(null)
   const [stockData, setStockData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('week')
   const [activeTab, setActiveTab] = useState('sales')
+
+  const dateRanges = [
+    { key: 'today', label: t('reports.daily') },
+    { key: 'week', label: t('reports.weekly') },
+    { key: 'month', label: t('reports.monthly') },
+    { key: 'year', label: t('reports.yearly') },
+  ]
 
   useEffect(() => {
     fetchData()
@@ -45,21 +54,21 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Reports & Analytics</h1>
-          <p className="text-gray-500 dark:text-gray-400">Track your store performance</p>
+          <h1 className="text-2xl font-bold">{t('reports.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('reports.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          {['today', 'week', 'month', 'year'].map((range) => (
+          {dateRanges.map((range) => (
             <button
-              key={range}
-              onClick={() => setDateRange(range)}
+              key={range.key}
+              onClick={() => setDateRange(range.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                dateRange === range
+                dateRange === range.key
                   ? 'bg-primary-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
+              {range.label}
             </button>
           ))}
         </div>
@@ -76,7 +85,7 @@ export default function ReportsPage() {
           }`}
         >
           <BarChart3 className="w-4 h-4 inline mr-2" />
-          Sales
+          {t('reports.sales')}
         </button>
         <button
           onClick={() => setActiveTab('stock')}
@@ -87,7 +96,7 @@ export default function ReportsPage() {
           }`}
         >
           <Package className="w-4 h-4 inline mr-2" />
-          Stock
+          {t('reports.stock')}
         </button>
       </div>
 
@@ -101,7 +110,7 @@ export default function ReportsPage() {
                   <TrendingUp className="w-5 h-5 text-primary-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Sales</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.totalSales')}</p>
                   <p className="text-xl font-bold">{formatCurrency(salesData.totalSales)}</p>
                 </div>
               </div>
@@ -112,7 +121,7 @@ export default function ReportsPage() {
                   <BarChart3 className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Orders</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.orders')}</p>
                   <p className="text-xl font-bold">{salesData.totalOrders}</p>
                 </div>
               </div>
@@ -123,7 +132,7 @@ export default function ReportsPage() {
                   <TrendingUp className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Avg Order</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.avgOrder')}</p>
                   <p className="text-xl font-bold">{formatCurrency(salesData.avgOrderValue)}</p>
                 </div>
               </div>
@@ -134,7 +143,7 @@ export default function ReportsPage() {
                   <Package className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Items Sold</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.itemsSold')}</p>
                   <p className="text-xl font-bold">{salesData.itemsSold}</p>
                 </div>
               </div>
@@ -143,7 +152,7 @@ export default function ReportsPage() {
 
           {/* Sales Chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold mb-4">Sales Trend</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('reports.salesTrend')}</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={salesData.dailySales}>
@@ -165,14 +174,14 @@ export default function ReportsPage() {
 
           {/* Top Products */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold mb-4">Top Selling Products</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('reports.topSellingProducts')}</h3>
             <div className="space-y-3">
               {salesData.topProducts?.map((product, index) => (
                 <div key={product.id} className="flex items-center gap-4">
                   <span className="text-lg font-bold text-gray-400 w-8">{index + 1}</span>
                   <div className="flex-1">
                     <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{product.quantitySold} sold</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{product.quantitySold} {t('reports.sold')}</p>
                   </div>
                   <p className="font-semibold">{formatCurrency(product.revenue)}</p>
                 </div>
@@ -192,7 +201,7 @@ export default function ReportsPage() {
                   <Package className="w-5 h-5 text-primary-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Products</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.totalProducts')}</p>
                   <p className="text-xl font-bold">{stockData.totalProducts}</p>
                 </div>
               </div>
@@ -203,7 +212,7 @@ export default function ReportsPage() {
                   <AlertTriangle className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock Items</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.lowStockItems')}</p>
                   <p className="text-xl font-bold text-amber-600">{stockData.lowStockCount}</p>
                 </div>
               </div>
@@ -214,7 +223,7 @@ export default function ReportsPage() {
                   <TrendingUp className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Stock Value</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('reports.stockValue')}</p>
                   <p className="text-xl font-bold">{formatCurrency(stockData.totalValue)}</p>
                 </div>
               </div>
@@ -226,7 +235,7 @@ export default function ReportsPage() {
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-800 p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-amber-600">
                 <AlertTriangle className="w-5 h-5" />
-                Low Stock Alert
+                {t('reports.lowStockAlert')}
               </h3>
               <div className="space-y-3">
                 {stockData.lowStockProducts.map((product) => (
@@ -237,11 +246,11 @@ export default function ReportsPage() {
                     <div>
                       <p className="font-medium">{product.name}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Threshold: {product.low_stock_threshold}
+                        {t('reports.threshold')}: {product.low_stock_threshold}
                       </p>
                     </div>
                     <span className="text-lg font-bold text-amber-600">
-                      {product.stock_quantity} left
+                      {product.stock_quantity} {t('reports.left')}
                     </span>
                   </div>
                 ))}
@@ -251,7 +260,7 @@ export default function ReportsPage() {
 
           {/* Stock by Category Chart */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold mb-4">Stock by Category</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('reports.stockByCategory')}</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>

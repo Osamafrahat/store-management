@@ -5,15 +5,15 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount, currency = 'ج.م') {
-  return `${currency} ${Number(amount).toLocaleString('en-EG', {
+export function formatCurrency(amount, currency = 'ج.م', locale = 'en-EG') {
+  return `${currency} ${Number(amount).toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
 }
 
-export function formatDate(date, options = {}) {
-  return new Date(date).toLocaleDateString('en-EG', {
+export function formatDate(date, options = {}, locale = 'en-EG') {
+  return new Date(date).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -21,8 +21,8 @@ export function formatDate(date, options = {}) {
   })
 }
 
-export function formatDateTime(date) {
-  return new Date(date).toLocaleString('en-EG', {
+export function formatDateTime(date, locale = 'en-EG') {
+  return new Date(date).toLocaleString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -52,4 +52,8 @@ export function generateSKU() {
 
 export function calculateChange(tendered, total) {
   return Math.max(0, tendered - total)
+}
+
+export function getLocale(language) {
+  return language === 'ar' ? 'ar-EG' : 'en-EG'
 }

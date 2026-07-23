@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useAppStore } from '../stores/appStore'
 import { promotionsApi } from '../lib/api'
 import { formatCurrency, formatDate } from '../lib/utils'
 import { X, Plus, Edit2, Trash2, Tag, Percent, DollarSign, CheckCircle, XCircle } from 'lucide-react'
 
 export default function PromotionsPage() {
+  const { t } = useAppStore()
   const [promotions, setPromotions] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -31,13 +33,13 @@ export default function PromotionsPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this promotion?')) return
+    if (!confirm(t('promotions.deleteConfirm'))) return
     try {
       await promotionsApi.delete(id)
       fetchPromotions()
     } catch (err) {
       console.error('Failed to delete promotion:', err)
-      alert('Failed to delete promotion')
+      alert(t('promotions.failedToDelete'))
     }
   }
 
@@ -62,7 +64,7 @@ export default function PromotionsPage() {
       fetchPromotions()
     } catch (err) {
       console.error('Failed to save promotion:', err)
-      alert('Failed to save promotion')
+      alert(t('promotions.failedToSave'))
     }
   }
 
@@ -82,8 +84,8 @@ export default function PromotionsPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Promotions & Discounts</h1>
-          <p className="text-gray-500 dark:text-gray-400">Manage promo codes and discounts</p>
+          <h1 className="text-2xl font-bold">{t('promotions.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('promotions.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -93,7 +95,7 @@ export default function PromotionsPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
           <Plus className="w-4 h-4" />
-          Add Promotion
+          {t('promotions.addPromo')}
         </button>
       </div>
 
@@ -101,8 +103,8 @@ export default function PromotionsPage() {
       {promotions.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Tag className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No promotions yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">Create your first promotion to attract customers</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('promotions.noPromotions')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('promotions.createFirst')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -135,7 +137,7 @@ export default function PromotionsPage() {
                     <div>
                       <h3 className="font-mono font-bold text-lg">{promo.code}</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {promo.type === 'percentage' ? `${promo.value}% off` : `${formatCurrency(promo.value)} off`}
+                        {promo.type === 'percentage' ? `${promo.value}% ${t('promotions.off')}` : `${formatCurrency(promo.value)} ${t('promotions.off')}`}
                       </p>
                     </div>
                   </div>
@@ -157,15 +159,15 @@ export default function PromotionsPage() {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Min Order</span>
-                    <span>{promo.min_order_amount ? formatCurrency(promo.min_order_amount) : 'None'}</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t('promotions.minOrder')}</span>
+                    <span>{promo.min_order_amount ? formatCurrency(promo.min_order_amount) : t('common.none')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Usage</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t('promotions.usage')}</span>
                     <span>{promo.used_count} / {promo.max_uses || '∞'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Valid Until</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t('promotions.validTo')}</span>
                     <span>{formatDate(promo.end_date)}</span>
                   </div>
                 </div>
@@ -175,22 +177,22 @@ export default function PromotionsPage() {
                     {expired ? (
                       <span className="flex items-center gap-1 text-sm text-red-500">
                         <XCircle className="w-4 h-4" />
-                        Expired
+                        {t('promotions.expired')}
                       </span>
                     ) : usageLimitReached ? (
                       <span className="flex items-center gap-1 text-sm text-amber-500">
                         <XCircle className="w-4 h-4" />
-                        Limit Reached
+                        {t('promotions.limitReached')}
                       </span>
                     ) : promo.is_active ? (
                       <span className="flex items-center gap-1 text-sm text-green-500">
                         <CheckCircle className="w-4 h-4" />
-                        Active
+                        {t('promotions.active')}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-sm text-gray-500">
                         <XCircle className="w-4 h-4" />
-                        Inactive
+                        {t('promotions.inactive')}
                       </span>
                     )}
                   </div>
@@ -203,7 +205,7 @@ export default function PromotionsPage() {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
                     } ${expired ? 'cursor-not-allowed' : 'hover:opacity-80'}`}
                   >
-                    {promo.is_active ? 'Active' : 'Inactive'}
+                    {promo.is_active ? t('promotions.active') : t('promotions.inactive')}
                   </button>
                 </div>
               </div>
@@ -228,6 +230,7 @@ export default function PromotionsPage() {
 }
 
 function PromotionForm({ promotion, onSave, onClose }) {
+  const { t } = useAppStore()
   const [formData, setFormData] = useState({
     code: promotion?.code || '',
     type: promotion?.type || 'percentage',
@@ -262,7 +265,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
-            {promotion ? 'Edit Promotion' : 'Add New Promotion'}
+            {promotion ? t('promotions.editPromo') : t('promotions.addNewPromo')}
           </h2>
           <button
             onClick={onClose}
@@ -275,7 +278,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Promo Code *
+              {t('promotions.promoCodeLabel')} *
             </label>
             <input
               type="text"
@@ -284,14 +287,14 @@ function PromotionForm({ promotion, onSave, onClose }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 font-mono uppercase"
-              placeholder="e.g., SUMMER2024"
+              placeholder={t('promotions.promoCodePlaceholder')}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Discount Type
+                {t('promotions.discountType')}
               </label>
               <select
                 name="type"
@@ -299,13 +302,13 @@ function PromotionForm({ promotion, onSave, onClose }) {
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               >
-                <option value="percentage">Percentage (%)</option>
-                <option value="fixed">Fixed Amount (ج.م)</option>
+                <option value="percentage">{t('promotions.percentage')} (%)</option>
+                <option value="fixed">{t('promotions.fixed')} (ج.م)</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {formData.type === 'percentage' ? 'Percentage Off' : 'Amount Off'} *
+                {formData.type === 'percentage' ? t('promotions.percentageOff') : t('promotions.amountOff')} *
               </label>
               <input
                 type="number"
@@ -323,7 +326,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Min Order Amount
+                {t('promotions.minOrderAmount')}
               </label>
               <input
                 type="number"
@@ -333,12 +336,12 @@ function PromotionForm({ promotion, onSave, onClose }) {
                 min="0"
                 step="0.01"
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                placeholder="No minimum"
+                placeholder={t('promotions.noMinimum')}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Max Uses
+                {t('promotions.maxUses')}
               </label>
               <input
                 type="number"
@@ -347,7 +350,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
                 onChange={handleChange}
                 min="1"
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                placeholder="Unlimited"
+                placeholder={t('promotions.unlimited')}
               />
             </div>
           </div>
@@ -355,7 +358,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Start Date
+                {t('promotions.startDate')}
               </label>
               <input
                 type="date"
@@ -367,7 +370,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                End Date *
+                {t('promotions.endDate')} *
               </label>
               <input
                 type="date"
@@ -389,7 +392,7 @@ function PromotionForm({ promotion, onSave, onClose }) {
               className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
             />
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Promotion is active
+              {t('promotions.promotionActive')}
             </label>
           </div>
 
@@ -399,13 +402,13 @@ function PromotionForm({ promotion, onSave, onClose }) {
               onClick={onClose}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
-              {promotion ? 'Update' : 'Create'} Promotion
+              {promotion ? t('promotions.update') : t('promotions.create')} {t('promotions.title').split(' ')[0]}
             </button>
           </div>
         </form>

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useAppStore } from '../stores/appStore'
 import { suppliersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, Truck, Phone, Mail, MapPin } from 'lucide-react'
 
 export default function SuppliersPage() {
+  const { t } = useAppStore()
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -30,13 +32,13 @@ export default function SuppliersPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this supplier?')) return
+    if (!confirm(t('suppliers.deleteConfirm'))) return
     try {
       await suppliersApi.delete(id)
       fetchSuppliers()
     } catch (err) {
       console.error('Failed to delete supplier:', err)
-      alert('Failed to delete supplier')
+      alert(t('suppliers.failedToDelete'))
     }
   }
 
@@ -52,7 +54,7 @@ export default function SuppliersPage() {
       fetchSuppliers()
     } catch (err) {
       console.error('Failed to save supplier:', err)
-      alert('Failed to save supplier')
+      alert(t('suppliers.failedToSave'))
     }
   }
 
@@ -68,8 +70,8 @@ export default function SuppliersPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Suppliers</h1>
-          <p className="text-gray-500 dark:text-gray-400">Manage your suppliers</p>
+          <h1 className="text-2xl font-bold">{t('suppliers.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('suppliers.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -79,7 +81,7 @@ export default function SuppliersPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
           <Plus className="w-4 h-4" />
-          Add Supplier
+          {t('suppliers.addSupplier')}
         </button>
       </div>
 
@@ -87,8 +89,8 @@ export default function SuppliersPage() {
       {suppliers.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Truck className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No suppliers yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">Add your first supplier to get started</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('suppliers.noSuppliers')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('suppliers.addFirstSupplier')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -172,6 +174,7 @@ export default function SuppliersPage() {
 }
 
 function SupplierForm({ supplier, onSave, onClose }) {
+  const { t } = useAppStore()
   const [formData, setFormData] = useState({
     name: supplier?.name || '',
     contact_person: supplier?.contact_person || '',
@@ -196,7 +199,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
-            {supplier ? 'Edit Supplier' : 'Add New Supplier'}
+            {supplier ? t('suppliers.editSupplier') : t('suppliers.addNewSupplier')}
           </h2>
           <button
             onClick={onClose}
@@ -209,7 +212,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Supplier Name *
+              {t('suppliers.supplierName')} *
             </label>
             <input
               type="text"
@@ -224,7 +227,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Contact Person
+                {t('suppliers.contactPerson')}
               </label>
               <input
                 type="text"
@@ -236,7 +239,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Phone
+                {t('suppliers.phone')}
               </label>
               <input
                 type="tel"
@@ -250,7 +253,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
+              {t('suppliers.email')}
             </label>
             <input
               type="email"
@@ -263,7 +266,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Address
+              {t('suppliers.address')}
             </label>
             <textarea
               name="address"
@@ -276,7 +279,7 @@ function SupplierForm({ supplier, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes
+              {t('suppliers.notes')}
             </label>
             <textarea
               name="notes"
@@ -293,13 +296,13 @@ function SupplierForm({ supplier, onSave, onClose }) {
               onClick={onClose}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
-              {supplier ? 'Update' : 'Add'} Supplier
+              {supplier ? t('suppliers.update') : t('suppliers.add')} {t('suppliers.title')}
             </button>
           </div>
         </form>

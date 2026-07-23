@@ -1,13 +1,16 @@
+import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
 import { Package, Plus } from 'lucide-react'
 
 export default function ProductGrid({ products, onAddToCart }) {
+  const { t } = useAppStore()
+
   if (products.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
         <Package className="w-16 h-16 mb-4" />
-        <p className="text-lg font-medium">No products found</p>
-        <p className="text-sm">Try adjusting your search or category filter</p>
+        <p className="text-lg font-medium">{t('inventory.noProducts')}</p>
+        <p className="text-sm">{t('inventory.addFirstProduct')}</p>
       </div>
     )
   }
@@ -55,7 +58,7 @@ export default function ProductGrid({ products, onAddToCart }) {
                     : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                   }
                 `}>
-                  {product.stock_quantity > 0 ? `In Stock: ${product.stock_quantity}` : 'Out of Stock'}
+                  {product.stock_quantity > 0 ? `${t('inventory.inStock')}: ${product.stock_quantity}` : t('pos.outOfStock')}
                 </span>
               </div>
             </div>
@@ -64,7 +67,7 @@ export default function ProductGrid({ products, onAddToCart }) {
             <div className="mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="flex items-center justify-center gap-2 py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-600 rounded-lg">
                 <Plus className="w-4 h-4" />
-                <span className="text-sm font-medium">Add to Cart</span>
+                <span className="text-sm font-medium">{t('pos.addToCart')}</span>
               </div>
             </div>
           </button>

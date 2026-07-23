@@ -19,6 +19,25 @@ body {
   min-height: 100vh;
 }
 
+/* RTL Support for Arabic */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl .flex-row-reverse {
+  flex-direction: row;
+}
+
+.rtl [dir="rtl"] {
+  direction: rtl;
+}
+
+/* Arabic font support */
+.rtl {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useProductStore } from '../stores/productStore'
+import { useAppStore } from '../stores/appStore'
 import { productsApi, categoriesApi } from '../lib/api'
 import ProductList from '../components/inventory/ProductList'
 import ProductForm from '../components/inventory/ProductForm'
@@ -8,6 +9,7 @@ import { Plus, Package, Tag } from 'lucide-react'
 
 export default function InventoryPage() {
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
+  const { t } = useAppStore()
   const [showProductForm, setShowProductForm] = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
@@ -56,18 +58,18 @@ export default function InventoryPage() {
       fetchData()
     } catch (err) {
       console.error('Failed to save product:', err)
-      alert('Failed to save product')
+      alert(t('inventory.failedToSave'))
     }
   }
 
   const handleDeleteProduct = async (productId) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+    if (!confirm(t('inventory.deleteConfirm'))) return
     try {
       await productsApi.delete(productId)
       fetchData()
     } catch (err) {
       console.error('Failed to delete product:', err)
-      alert('Failed to delete product')
+      alert(t('inventory.failedToDelete'))
     }
   }
 
@@ -76,8 +78,8 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Inventory Management</h1>
-          <p className="text-gray-500 dark:text-gray-400">Manage your products and categories</p>
+          <h1 className="text-2xl font-bold">{t('inventory.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('inventory.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -85,14 +87,14 @@ export default function InventoryPage() {
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
           >
             <Tag className="w-4 h-4" />
-            Categories
+            {t('inventory.categories')}
           </button>
           <button
             onClick={handleCreateProduct}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
             <Plus className="w-4 h-4" />
-            Add Product
+            {t('inventory.addProduct')}
           </button>
         </div>
       </div>
@@ -108,7 +110,7 @@ export default function InventoryPage() {
           }`}
         >
           <Package className="w-4 h-4 inline mr-2" />
-          Products ({products.length})
+          {t('inventory.products')} ({products.length})
         </button>
         <button
           onClick={() => setActiveTab('low-stock')}
@@ -118,7 +120,7 @@ export default function InventoryPage() {
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
-          Low Stock ({products.filter(p => p.stock_quantity <= p.low_stock_threshold).length})
+          {t('inventory.lowStock')} ({products.filter(p => p.stock_quantity <= p.low_stock_threshold).length})
         </button>
       </div>
 

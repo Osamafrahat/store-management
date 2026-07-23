@@ -6,16 +6,14 @@ import { Trash2, Plus, Minus, Tag, ShoppingBag, X } from 'lucide-react'
 
 export default function Cart({ onCheckout }) {
   const { items, removeItem, updateQuantity, clearCart, getSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount, applyPromo, removePromo } = useCartStore()
-  const { settings } = useAppStore()
+  const { settings, t } = useAppStore()
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return
     try {
-      // In a real app, you'd validate against the backend
-      // For now, we'll just apply a simple discount
-      applyPromo(promoInput, 10) // 10% discount for demo
+      applyPromo(promoInput, 10)
       setPromoError('')
     } catch (err) {
       setPromoError('Invalid promo code')
@@ -35,7 +33,7 @@ export default function Cart({ onCheckout }) {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <ShoppingBag className="w-5 h-5" />
-            Current Order
+            {t('cart.title')}
           </h2>
           {items.length > 0 && (
             <button
@@ -43,7 +41,7 @@ export default function Cart({ onCheckout }) {
               className="text-sm text-red-500 hover:text-red-600 flex items-center gap-1"
             >
               <Trash2 className="w-4 h-4" />
-              Clear
+              {t('cart.remove')}
             </button>
           )}
         </div>
@@ -54,8 +52,8 @@ export default function Cart({ onCheckout }) {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
             <ShoppingBag className="w-12 h-12 mb-3" />
-            <p className="font-medium">Cart is empty</p>
-            <p className="text-sm">Add products to start a sale</p>
+            <p className="font-medium">{t('cart.empty')}</p>
+            <p className="text-sm">{t('pos.addToCart')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -138,7 +136,7 @@ export default function Cart({ onCheckout }) {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Promo code"
+                placeholder={t('cart.promoCode')}
                 value={promoInput}
                 onChange={(e) => setPromoInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
@@ -148,7 +146,7 @@ export default function Cart({ onCheckout }) {
                 onClick={handleApplyPromo}
                 className="px-3 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
               >
-                Apply
+                {t('cart.apply')}
               </button>
             </div>
           )}
@@ -162,21 +160,21 @@ export default function Cart({ onCheckout }) {
       {items.length > 0 && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+            <span className="text-gray-500 dark:text-gray-400">{t('cart.subtotal')}</span>
             <span>{formatCurrency(getSubtotal())}</span>
           </div>
           {getDiscount() > 0 && (
             <div className="flex justify-between text-sm text-green-600">
-              <span>Discount</span>
+              <span>{t('cart.discount')}</span>
               <span>-{formatCurrency(getDiscount())}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Tax ({settings.taxRate}%)</span>
+            <span className="text-gray-500 dark:text-gray-400">{t('cart.tax')} ({settings.taxRate}%)</span>
             <span>{formatCurrency(getTax(settings.taxRate))}</span>
           </div>
           <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
-            <span>Total</span>
+            <span>{t('cart.total')}</span>
             <span className="text-primary-600">{formatCurrency(getTotal(settings.taxRate))}</span>
           </div>
         </div>
@@ -189,7 +187,7 @@ export default function Cart({ onCheckout }) {
             onClick={onCheckout}
             className="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
           >
-            Proceed to Payment
+            {t('cart.checkout')}
           </button>
         </div>
       )}

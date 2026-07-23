@@ -1,53 +1,42 @@
 import { Router } from 'express'
-import db from '../db/connection.js'
+import supabase from '../db/supabase.js'
 
 const router = Router()
 
 // Get all settings
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const rows = db.prepare('SELECT * FROM store_settings').all()
+    const { data, error } = await supabase
+      .from('store_settings')
+      .select('*')
 
-    const settingsObj = {}
-    for (const row of rows) {
-      settingsObj[row.key] = row.value
-    }
-    res.json(settingsObj)
+    if (error) throw error
+
+    // Convert array to object
+    const settings = {}
+    data.forEach(s => {
+      settings[s.key] = s.value
+    })
+
+    res.json(settings)
   } catch (err) {
     next(err)
   }
 })
 
 // Update settings
-router.put('/', (req, res, next) => {
+router.put('/', async (req, res, next) => {
   try {
-    const updates = req.body
+    const settings = req.body
 
-    const upsert = db.prepare(`
-      INSERT INTO store_settings (key, value)
-      VALUES (?, ?)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `)
-
-    db.exec('BEGIN')
-    try {
-      for (const [key, value] of Object.entries(updates)) {
-        upsert.run(key, String(value))
-      }
-      db.exec('COMMIT')
-    } catch (err) {
-      db.exec('ROLLBACK')
-      throw err
+    // Upsert each setting
+    for (const [key, value] of Object.entries(settings)) {
+      await supabase
+        .from('store_settings')
+        .upsert({ key, value: String(value) }, { onConflict: 'key' })
     }
 
-    // Return updated settings
-    const rows = db.prepare('SELECT * FROM store_settings').all()
-
-    const settingsObj = {}
-    for (const row of rows) {
-      settingsObj[row.key] = row.value
-    }
-    res.json(settingsObj)
+    res.json({ message: 'Settings updated successfully' })
   } catch (err) {
     next(err)
   }

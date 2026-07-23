@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { settingsApi } from '../lib/api'
-import { Save, Store, Percent, Receipt, AlertTriangle } from 'lucide-react'
+import { languageNames } from '../lib/translations'
+import { Save, Store, Percent, Receipt, AlertTriangle, Globe } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { settings, updateSettings } = useAppStore()
+  const { settings, updateSettings, language, setLanguage, t } = useAppStore()
   const [formData, setFormData] = useState(settings)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -27,7 +28,7 @@ export default function SettingsPage() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       console.error('Failed to save settings:', err)
-      alert('Failed to save settings')
+      alert(t('common.error'))
     } finally {
       setSaving(false)
     }
@@ -36,24 +37,51 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-gray-500 dark:text-gray-400">Configure your store settings</p>
+        <h1 className="text-2xl font-bold">{t('settings.title')}</h1>
+        <p className="text-gray-500 dark:text-gray-400">{t('settings.storeInfo')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Language Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Globe className="w-5 h-5 text-blue-600" />
+            </div>
+            <h2 className="text-lg font-semibold">{t('nav.language')}</h2>
+          </div>
+
+          <div className="flex gap-3">
+            {Object.entries(languageNames).map(([code, name]) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => setLanguage(code)}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  language === code
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Store Information */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
               <Store className="w-5 h-5 text-primary-600" />
             </div>
-            <h2 className="text-lg font-semibold">Store Information</h2>
+            <h2 className="text-lg font-semibold">{t('settings.storeInfo')}</h2>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Store Name
+                {t('settings.storeName')}
               </label>
               <input
                 type="text"
@@ -61,13 +89,13 @@ export default function SettingsPage() {
                 value={formData.storeName}
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                placeholder="My Store"
+                placeholder={t('settings.storeName')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Address
+                {t('settings.storeAddress')}
               </label>
               <textarea
                 name="storeAddress"
@@ -75,13 +103,13 @@ export default function SettingsPage() {
                 onChange={handleChange}
                 rows={2}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                placeholder="Store address"
+                placeholder={t('settings.storeAddress')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Phone Number
+                {t('settings.storePhone')}
               </label>
               <input
                 type="tel"
@@ -101,12 +129,12 @@ export default function SettingsPage() {
             <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
               <Percent className="w-5 h-5 text-amber-600" />
             </div>
-            <h2 className="text-lg font-semibold">Tax Settings</h2>
+            <h2 className="text-lg font-semibold">{t('settings.taxRate')}</h2>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              VAT Rate (%)
+              {t('settings.taxRate')}
             </label>
             <input
               type="number"
@@ -130,13 +158,13 @@ export default function SettingsPage() {
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <Receipt className="w-5 h-5 text-green-600" />
             </div>
-            <h2 className="text-lg font-semibold">Currency Settings</h2>
+            <h2 className="text-lg font-semibold">{t('settings.currency')}</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Currency
+                {t('settings.currency')}
               </label>
               <input
                 type="text"
@@ -148,7 +176,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Currency Symbol
+                {t('settings.currency')} Symbol
               </label>
               <input
                 type="text"
@@ -167,12 +195,12 @@ export default function SettingsPage() {
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <Receipt className="w-5 h-5 text-purple-600" />
             </div>
-            <h2 className="text-lg font-semibold">Receipt Settings</h2>
+            <h2 className="text-lg font-semibold">{t('settings.receiptSettings')}</h2>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Receipt Footer Message
+              {t('settings.receiptFooter')}
             </label>
             <textarea
               name="receiptFooter"
@@ -180,7 +208,7 @@ export default function SettingsPage() {
               onChange={handleChange}
               rows={2}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-              placeholder="Thank you for your purchase!"
+              placeholder={t('receipt.thankYou')}
             />
           </div>
         </div>
@@ -191,12 +219,12 @@ export default function SettingsPage() {
             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
-            <h2 className="text-lg font-semibold">Inventory Settings</h2>
+            <h2 className="text-lg font-semibold">{t('settings.lowStockThreshold')}</h2>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Default Low Stock Threshold
+              {t('settings.lowStockThreshold')}
             </label>
             <input
               type="number"
@@ -220,7 +248,7 @@ export default function SettingsPage() {
             className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5" />
-            {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
+            {saving ? t('common.loading') : saved ? t('settings.saved') : t('settings.save')}
           </button>
         </div>
       </form>

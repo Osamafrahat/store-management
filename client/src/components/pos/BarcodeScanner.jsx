@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
+import { useAppStore } from '../../stores/appStore'
 import { X, Camera, Keyboard } from 'lucide-react'
 
 export default function BarcodeScanner({ onScan, onClose }) {
-  const [mode, setMode] = useState('manual') // 'manual' or 'camera'
+  const { t } = useAppStore()
+  const [mode, setMode] = useState('manual')
   const [manualInput, setManualInput] = useState('')
   const [isScanning, setIsScanning] = useState(false)
   const inputRef = useRef(null)
   const scannerRef = useRef(null)
 
-  // Auto-focus input when in manual mode
   useEffect(() => {
     if (mode === 'manual') {
       inputRef.current?.focus()
     }
   }, [mode])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
@@ -37,7 +37,6 @@ export default function BarcodeScanner({ onScan, onClose }) {
       setMode('camera')
       setIsScanning(true)
 
-      // Dynamic import for html5-qrcode
       const { Html5Qrcode } = await import('html5-qrcode')
 
       const scanner = new Html5Qrcode('barcode-scanner')
@@ -54,13 +53,13 @@ export default function BarcodeScanner({ onScan, onClose }) {
           scanner.stop()
           setIsScanning(false)
         },
-        () => {} // Ignore errors
+        () => {}
       )
     } catch (err) {
       console.error('Camera scanner error:', err)
       setIsScanning(false)
       setMode('manual')
-      alert('Could not access camera. Please use manual input.')
+      alert(t('scanner.cameraError'))
     }
   }
 
@@ -78,7 +77,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md mx-4 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">Scan Barcode</h2>
+          <h2 className="text-xl font-semibold">{t('scanner.title')}</h2>
           <button
             onClick={() => {
               stopCameraScanner()
@@ -105,7 +104,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
               }`}
             >
               <Keyboard className="w-4 h-4" />
-              Manual
+              {t('scanner.manual')}
             </button>
             <button
               onClick={startCameraScanner}
@@ -116,7 +115,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
               }`}
             >
               <Camera className="w-4 h-4" />
-              Camera
+              {t('scanner.camera')}
             </button>
           </div>
         </div>
@@ -127,14 +126,14 @@ export default function BarcodeScanner({ onScan, onClose }) {
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Enter barcode manually
+                  {t('scanner.enterBarcode')}
                 </label>
                 <input
                   ref={inputRef}
                   type="text"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  placeholder="Type or paste barcode..."
+                  placeholder={t('scanner.barcodePlaceholder')}
                   className="w-full px-4 py-3 text-lg rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   autoFocus
                 />
@@ -144,7 +143,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
                 disabled={!manualInput.trim()}
                 className="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                Look Up Product
+                {t('scanner.lookUp')}
               </button>
             </form>
           ) : (
@@ -155,14 +154,14 @@ export default function BarcodeScanner({ onScan, onClose }) {
               />
               {isScanning && (
                 <div className="text-center text-gray-500 dark:text-gray-400">
-                  <p className="animate-pulse">Point camera at barcode...</p>
+                  <p className="animate-pulse">{t('scanner.pointCamera')}</p>
                 </div>
               )}
               <button
                 onClick={stopCameraScanner}
                 className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600"
               >
-                Cancel Camera
+                {t('scanner.cancelCamera')}
               </button>
             </div>
           )}
@@ -172,8 +171,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
         <div className="px-4 pb-4">
           <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-400">
-              <strong>Tip:</strong> Most barcode scanners work as keyboard input. 
-              Just scan the barcode while the manual input field is focused.
+              <strong>{t('scanner.tip')}</strong> {t('scanner.tipText')}
             </p>
           </div>
         </div>

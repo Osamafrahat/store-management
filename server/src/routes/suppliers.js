@@ -1,88 +1,120 @@
 import { Router } from 'express'
-import db from '../db/connection.js'
+import { body, param, validationResult } from 'express-validator'
+import supabase from '../db/supabase.js'
 
 const router = Router()
 
+const validate = (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg })
+  }
+  next()
+}
+
 // Get all suppliers
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const suppliers = db.prepare('SELECT * FROM suppliers ORDER BY name').all()
-    res.json(suppliers)
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .order('name')
+
+    if (error) throw error
+    res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Get supplier by ID
-router.get('/:id', (req, res, next) => {
+router.get('/:id', [
+  param('id').isNumeric().withMessage('Invalid supplier ID'),
+], validate, async (req, res, next) => {
   try {
-    const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(req.params.id)
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
 
-    if (!supplier) {
+    if (error || !data) {
       return res.status(404).json({ error: 'Supplier not found' })
     }
 
-    res.json(supplier)
+    res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Create supplier
-router.post('/', (req, res, next) => {
+router.post('/', [
+  body('name').trim().notEmpty().withMessage('Supplier name is required'),
+], validate, async (req, res, next) => {
   try {
     const { name, contact_person, email, phone, address, notes } = req.body
 
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' })
-    }
+    const { data, error } = await supabase
+      .from('suppliers')
+      .insert({
+        name,
+        contact_person: contact_person || null,
+        email: email || null,
+        phone: phone || null,
+        address: address || null,
+        notes: notes || null
+      })
+      .select()
+      .single()
 
-    const result = db.prepare(`
-      INSERT INTO suppliers (name, contact_person, email, phone, address, notes)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(name, contact_person || null, email || null, phone || null, address || null, notes || null)
-
-    const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(result.lastInsertRowid)
-    res.status(201).json(supplier)
+    if (error) throw error
+    res.status(201).json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Update supplier
-router.put('/:id', (req, res, next) => {
+router.put('/:id', [
+  param('id').isNumeric().withMessage('Invalid supplier ID'),
+  body('name').trim().notEmpty().withMessage('Supplier name is required'),
+], validate, async (req, res, next) => {
   try {
     const { name, contact_person, email, phone, address, notes } = req.body
 
-    const existing = db.prepare('SELECT id FROM suppliers WHERE id = ?').get(req.params.id)
+    const { data, error } = await supabase
+      .from('suppliers')
+      .update({
+        name,
+        contact_person: contact_person || null,
+        email: email || null,
+        phone: phone || null,
+        address: address || null,
+        notes: notes || null
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Supplier not found' })
-    }
-
-    db.prepare(`
-      UPDATE suppliers
-      SET name = ?, contact_person = ?, email = ?, phone = ?, address = ?, notes = ?
-      WHERE id = ?
-    `).run(name, contact_person, email, phone, address, notes, req.params.id)
-
-    const supplier = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(req.params.id)
-    res.json(supplier)
+    if (error) throw error
+    res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
 // Delete supplier
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', [
+  param('id').isNumeric().withMessage('Invalid supplier ID'),
+], validate, async (req, res, next) => {
   try {
-    const existing = db.prepare('SELECT id FROM suppliers WHERE id = ?').get(req.params.id)
+    const { error } = await supabase
+      .from('suppliers')
+      .delete()
+      .eq('id', req.params.id)
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Supplier not found' })
-    }
-
-    db.prepare('DELETE FROM suppliers WHERE id = ?').run(req.params.id)
+    if (error) throw error
     res.json({ message: 'Supplier deleted successfully' })
   } catch (err) {
     next(err)
