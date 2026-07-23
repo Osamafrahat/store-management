@@ -38,42 +38,60 @@ A complete retail store management application with Point of Sale (POS) and Inve
 
 - **Frontend:** React 18, Vite, Tailwind CSS, Zustand, Recharts
 - **Backend:** Node.js, Express
-- **Database:** SQLite (via better-sqlite3)
+- **Database:** Supabase (PostgreSQL)
 
 ## Installation
 
 ### Prerequisites
 - Node.js 18+ installed
+- Supabase account (free tier works)
 
 ### Setup
 
 1. Clone or download this project
 
-2. Install backend dependencies:
+2. Create a Supabase project at [supabase.com](https://supabase.com)
+
+3. Run the SQL schema in Supabase SQL Editor:
+   - Open `supabase-schema.sql` and copy its contents
+   - Paste into Supabase SQL Editor and run
+
+4. Get your Supabase credentials from Project Settings > API:
+   - `SUPABASE_URL` - Your project URL
+   - `SUPABASE_ANON_KEY` - Your anon/public key
+
+5. Create `.env` file in `server/` directory:
+   ```env
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   PORT=3001
+   ```
+
+6. Install backend dependencies:
    ```bash
    cd server
    npm install
    ```
 
-3. Install frontend dependencies:
+7. Install frontend dependencies:
    ```bash
    cd client
    npm install
    ```
 
-4. Start the backend server:
+8. Start the backend server:
    ```bash
    cd server
    npm run dev
    ```
 
-5. Start the frontend development server:
+9. Start the frontend development server:
    ```bash
    cd client
    npm run dev
    ```
 
-6. Open your browser and go to `http://localhost:5173`
+10. Open your browser and go to `http://localhost:5173`
 
 ## Project Structure
 
@@ -90,12 +108,11 @@ store-management/
 ├── server/                 # Node.js backend
 │   ├── src/
 │   │   ├── routes/         # API routes
-│   │   ├── db/             # Database connection and migrations
+│   │   ├── db/             # Database connection (Supabase)
 │   │   └── middleware/     # Express middleware
 │   └── package.json
 │
-└── data/                   # SQLite database
-    └── store.db
+└── supabase-schema.sql     # Database schema for Supabase
 ```
 
 ## API Endpoints

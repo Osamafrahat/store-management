@@ -1,7 +1,22 @@
 # Store Management - Quick Start Guide
 
 ## Prerequisites
-- Node.js 18+ installed (already installed)
+- Node.js 18+ installed
+- Supabase account (free tier works)
+
+## Database Setup
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the SQL schema in Supabase SQL Editor:
+   - Open `supabase-schema.sql` and copy its contents
+   - Paste into Supabase SQL Editor and run
+3. Get your Supabase credentials from Project Settings > API
+4. Create `.env` file in `server/` directory with your credentials:
+   ```env
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   PORT=3001
+   ```
 
 ## Start the Application
 
@@ -96,8 +111,8 @@ npm run dev
 ```
 store-management/
 ├── client/          # React frontend (Vite + Tailwind)
-├── server/          # Node.js backend (Express + SQLite)
-├── data/            # SQLite database
+├── server/          # Node.js backend (Express + Supabase)
+├── supabase-schema.sql  # Database schema
 ├── package.json     # Root package with scripts
 └── README.md        # Full documentation
 ```
@@ -107,11 +122,13 @@ store-management/
 **Server won't start:**
 - Make sure port 3001 is not in use
 - Check if all dependencies are installed: `cd server && npm install`
+- Verify `.env` file exists with correct Supabase credentials
 
 **Frontend can't connect to API:**
 - Ensure server is running on port 3001
 - Check browser console for CORS errors
 
 **Database issues:**
-- Database file is at: `data/store.db`
-- Delete it to reset: server will recreate on next start
+- Ensure Supabase credentials are correct in `.env`
+- Check Supabase dashboard for connection issues
+- Re-run `supabase-schema.sql` if tables are missing
