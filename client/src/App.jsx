@@ -32,8 +32,15 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
-  const { theme, settings } = useAppStore()
+  const { theme, settings, loadSettings } = useAppStore()
   const { isAuthenticated, mustChangePassword } = useUserStore()
+
+  // Load settings from database on app startup (only when authenticated)
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadSettings()
+    }
+  }, [isAuthenticated, loadSettings])
 
   // Update document title with store name
   useEffect(() => {
