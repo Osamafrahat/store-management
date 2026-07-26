@@ -242,6 +242,23 @@ router.post('/', async (req, res, next) => {
         .insert(paymentInserts)
     }
 
+    // Log activity
+    req.logActivity({
+      action: 'created',
+      entity_type: 'order',
+      entity_id: order.id,
+      entity_name: order_number,
+      details: { total, payment_method, items_count: items.length, customer_id }
+    })
+
+    // Auto-post to accounting journal (fire and forget)
+    try {
+      const { postOrderJournal } = await import('../services/accountingEngine.js')
+      await postOrderJournal(order, items)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.status(201).json(order)
   } catch (err) {
     console.error('Failed to create order:', err)

@@ -145,7 +145,7 @@ export default function SettingsPage() {
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Current rate: {formData.taxRate}% (Egypt standard VAT is 14%)
+              {t('settings.currentRate')}{formData.taxRate}%{t('settings.egyptVat')}
             </p>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {t('settings.currency')} Symbol
+                {t('settings.currency')}{t('settings.symbol')}
               </label>
               <input
                 type="text"
@@ -233,7 +233,7 @@ export default function SettingsPage() {
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Alert when stock falls below this number
+              {t('settings.lowStockHelper')}
             </p>
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function SettingsPage() {
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {t('settings.loyaltyPointsDesc')} (e.g., 1 = 1 point per $1 spent)
+              {t('settings.loyaltyPointsDesc')} {t('settings.loyaltyHelper')}
             </p>
           </div>
         </div>

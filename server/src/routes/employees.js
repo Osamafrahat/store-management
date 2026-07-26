@@ -83,6 +83,13 @@ router.post('/', [
       .single()
 
     if (error) throw error
+
+    // Link user back to this employee if user_id provided
+    if (user_id) {
+      await supabase.from('users').update({ employee_id: data.id, updated_at: new Date().toISOString() }).eq('id', user_id)
+    }
+
+    req.logActivity({ action: 'created', entity_type: 'employee', entity_name: data.name })
     res.status(201).json(data)
   } catch (err) {
     next(err)
@@ -96,6 +103,16 @@ router.put('/:id', [
   body('role').trim().notEmpty().withMessage('Employee role is required'),
 ], validate, async (req, res, next) => {
   try {
+    const { data: existing } = await supabase
+      .from('employees')
+      .select('id, user_id, is_active')
+      .eq('id', req.params.id)
+      .single()
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee not found' })
+    }
+
     const { name, role, phone, email, salary, hire_date, notes, is_active, user_id } = req.body
 
     const { data, error } = await supabase
@@ -117,23 +134,58 @@ router.put('/:id', [
       .single()
 
     if (error) throw error
+
+    // Sync user link if user_id changed
+    if (user_id !== undefined) {
+      // Remove old user link if exists
+      if (existing.user_id && existing.user_id !== user_id) {
+        await supabase.from('users').update({ employee_id: null, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+      }
+      // Set new user link
+      if (user_id) {
+        await supabase.from('users').update({ employee_id: data.id, updated_at: new Date().toISOString() }).eq('id', user_id)
+      }
+    }
+
+    // Sync is_active status to linked user
+    if (is_active !== undefined && existing.user_id && existing.is_active !== is_active) {
+      await supabase.from('users').update({ is_active, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+    }
+
+    req.logActivity({ action: 'updated', entity_type: 'employee', entity_id: req.params.id })
     res.json(data)
   } catch (err) {
     next(err)
   }
 })
 
-// Delete employee (soft delete)
+// Delete employee (soft delete) - also deactivates linked user
 router.delete('/:id', [
   param('id').isNumeric().withMessage('Invalid employee ID'),
 ], validate, async (req, res, next) => {
   try {
+    const { data: existing } = await supabase
+      .from('employees')
+      .select('id, user_id')
+      .eq('id', req.params.id)
+      .single()
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee not found' })
+    }
+
+    // Deactivate linked user
+    if (existing.user_id) {
+      await supabase.from('users').update({ is_active: false, employee_id: null, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+    }
+
     const { error } = await supabase
       .from('employees')
-      .update({ is_active: false })
+      .update({ is_active: false, user_id: null })
       .eq('id', req.params.id)
 
     if (error) throw error
+    req.logActivity({ action: 'deleted', entity_type: 'employee', entity_id: req.params.id })
     res.json({ message: 'Employee deleted successfully' })
   } catch (err) {
     next(err)

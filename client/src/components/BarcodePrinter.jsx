@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { X, Printer, Download } from 'lucide-react'
+import { useAppStore } from '../stores/appStore'
 
 // Simple barcode generator using Code 128
 function generateBarcode(value) {
@@ -65,6 +66,7 @@ function BarcodeSVG({ value, width = 200, height = 80, showText = true }) {
 }
 
 export default function BarcodePrinter({ product, onClose }) {
+  const { t } = useAppStore()
   const [quantity, setQuantity] = useState(1)
   const [labelWidth, setLabelWidth] = useState(50)
   const [labelHeight, setLabelHeight] = useState(30)
@@ -147,7 +149,7 @@ export default function BarcodePrinter({ product, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">Print Barcode</h2>
+          <h2 className="text-xl font-semibold">{t('barcode.printBarcode')}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -159,9 +161,9 @@ export default function BarcodePrinter({ product, onClose }) {
         <div className="p-4 space-y-4">
           {/* Product Info */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-            <p className="font-medium">{product?.name || 'Unknown Product'}</p>
-            <p className="text-sm text-gray-500">Barcode: {barcodeValue}</p>
-            <p className="text-sm text-gray-500">Price: ${product?.price?.toFixed(2) || '0.00'}</p>
+            <p className="font-medium">{product?.name || t('barcode.unknownProduct')}</p>
+            <p className="text-sm text-gray-500">{t('barcode.barcode')}: {barcodeValue}</p>
+            <p className="text-sm text-gray-500">{t('barcode.price')}: ${product?.price?.toFixed(2) || '0.00'}</p>
           </div>
 
           {/* Preview */}
@@ -178,7 +180,7 @@ export default function BarcodePrinter({ product, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Quantity
+                {t('barcode.quantity')}
               </label>
               <input
                 type="number"
@@ -191,7 +193,7 @@ export default function BarcodePrinter({ product, onClose }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Label Width (mm)
+                {t('barcode.labelWidth')}
               </label>
               <input
                 type="number"
@@ -212,7 +214,7 @@ export default function BarcodePrinter({ product, onClose }) {
               onChange={(e) => setShowText(e.target.checked)}
               className="rounded"
             />
-            <label htmlFor="showText" className="text-sm">Show barcode text</label>
+            <label htmlFor="showText" className="text-sm">{t('barcode.showText')}</label>
           </div>
 
           {/* Actions */}
@@ -222,14 +224,14 @@ export default function BarcodePrinter({ product, onClose }) {
               className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
               <Download className="w-4 h-4" />
-              Download
+              {t('barcode.download')}
             </button>
             <button
               onClick={handlePrint}
               className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
               <Printer className="w-4 h-4" />
-              Print
+              {t('barcode.print')}
             </button>
           </div>
         </div>

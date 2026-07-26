@@ -55,7 +55,7 @@ export default function ReceiptModal({ order, onClose }) {
         </div>
         ${order.users?.full_name ? `
           <div class="row">
-            <span>Cashier:</span>
+            <span>${t('receipt.cashier')}</span>
             <span>${order.users.full_name}</span>
           </div>
         ` : ''}
@@ -155,7 +155,7 @@ export default function ReceiptModal({ order, onClose }) {
             </div>
             {order.users?.full_name && (
               <div className="flex justify-between mb-3">
-                <span className="text-gray-500">Cashier:</span>
+                <span className="text-gray-500">{t('receipt.cashier')}:</span>
                 <span>{order.users.full_name}</span>
               </div>
             )}

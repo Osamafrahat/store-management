@@ -40,6 +40,8 @@ export const authApi = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (data) => api.post('/auth/register', data),
   changePassword: (data) => api.post('/auth/change-password', data),
+  getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.put('/auth/profile', data),
 }
 
 // Products API
@@ -156,6 +158,47 @@ export const notificationsApi = {
   sendCustom: (data) => api.post('/notifications/custom', data),
   delete: (id) => api.delete(`/notifications/${id}`),
   sendWhatsApp: (data) => api.post('/notifications/whatsapp', data),
+}
+
+// Activities API
+export const activitiesApi = {
+  getAll: (params) => api.get('/activities', { params }),
+  getStats: () => api.get('/activities/stats'),
+  create: (data) => api.post('/activities', data),
+  cleanup: (days) => api.delete('/activities/cleanup', { params: { days } }),
+}
+
+// Accounting API
+export const accountsApi = {
+  getAll: (params) => api.get('/accounting/accounts', { params }),
+  getById: (id) => api.get(`/accounting/accounts/${id}`),
+  create: (data) => api.post('/accounting/accounts', data),
+  update: (id, data) => api.put(`/accounting/accounts/${id}`, data),
+  delete: (id) => api.delete(`/accounting/accounts/${id}`),
+  seed: () => api.post('/accounting/accounts/seed'),
+}
+
+export const journalsApi = {
+  getAll: (params) => api.get('/accounting/journals', { params }),
+  getById: (id) => api.get(`/accounting/journals/${id}`),
+  create: (data) => api.post('/accounting/journals', data),
+  reverse: (id) => api.post(`/accounting/journals/${id}/reverse`),
+  delete: (id) => api.delete(`/accounting/journals/${id}`),
+}
+
+export const accountingReportsApi = {
+  getTrialBalance: (params) => api.get('/accounting/reports/trial-balance', { params }),
+  getBalanceSheet: (params) => api.get('/accounting/reports/balance-sheet', { params }),
+  getProfitLoss: (params) => api.get('/accounting/reports/profit-loss', { params }),
+  getAccountLedger: (accountId, params) => api.get(`/accounting/reports/account-ledger/${accountId}`, { params }),
+  getFiscalPeriods: () => api.get('/accounting/reports/fiscal-periods'),
+  closeFiscalPeriod: (id) => api.post(`/accounting/reports/fiscal-periods/${id}/close`),
+}
+
+export const paymentsApi = {
+  getAll: (params) => api.get('/accounting/payments', { params }),
+  create: (data) => api.post('/accounting/payments', data),
+  delete: (id) => api.delete(`/accounting/payments/${id}`),
 }
 
 export default api

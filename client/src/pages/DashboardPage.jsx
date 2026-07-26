@@ -18,6 +18,9 @@ import {
   DollarSign,
   ShoppingBag,
   Box,
+  UserCheck,
+  RotateCcw,
+  ClipboardList,
 } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -131,172 +134,205 @@ export default function DashboardPage() {
     return t('dashboard.goodEvening')
   }
 
+  const role = currentUser?.role
+  const isManager = role === 'MANAGER'
+  const isSalesManager = role === 'SALES_MANAGER'
+  const isCashier = role === 'CASHIER' || role === 'SENIOR_CASHIER'
+  const isInventoryClerk = role === 'INVENTORY_CLERK'
+  const isSalesAssociate = role === 'SALES_ASSOCIATE'
+  const isViewer = role === 'VIEWER'
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 text-white">
         <h1 className="text-2xl font-bold">{getGreeting()}, {currentUser?.fullName}!</h1>
         <p className="text-primary-100 mt-1">
-          {settings.storeName || 'Store POS'} — {currentUser?.role?.toLowerCase()} {t('dashboard.dashboard')}
+          {settings.storeName || t('layout.defaultStoreName')} — {ROLES_LABELS[role] || role}
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* POS Stats */}
-        {hasPermission(PERMISSIONS.POS_ACCESS) && (
-          <>
-            <StatCard
-              icon={DollarSign}
-              label={t('dashboard.todaysSales')}
-              value={formatCurrency(stats.todaySales)}
-              color="green"
-              href="/reports"
-            />
-            <StatCard
-              icon={ShoppingBag}
-              label={t('dashboard.todaysOrders')}
-              value={stats.todayOrders}
-              color="blue"
-              href="/reports"
-            />
-          </>
-        )}
-
-        {/* Inventory Stats */}
-        {hasPermission(PERMISSIONS.INVENTORY_VIEW) && (
-          <>
-            <StatCard
-              icon={Package}
-              label={t('dashboard.totalProducts')}
-              value={stats.totalProducts}
-              color="purple"
-              href="/inventory"
-            />
-            <StatCard
-              icon={AlertTriangle}
-              label={t('dashboard.lowStockItems')}
-              value={stats.lowStockCount}
-              color={stats.lowStockCount > 0 ? 'red' : 'gray'}
-              href="/inventory"
-            />
-          </>
-        )}
-
-        {/* Supplier Stats */}
-        {hasPermission(PERMISSIONS.SUPPLIERS_VIEW) && (
-          <StatCard
-            icon={Truck}
-            label={t('dashboard.totalSuppliers')}
-            value={stats.totalSuppliers}
-            color="amber"
-            href="/suppliers"
-          />
-        )}
-
-        {/* Promotion Stats */}
-        {hasPermission(PERMISSIONS.PROMOTIONS_VIEW) && (
-          <StatCard
-            icon={Tag}
-            label={t('dashboard.activePromotions')}
-            value={stats.activePromotions}
-            color="pink"
-            href="/promotions"
-          />
-        )}
-
-        {/* Manager Stats */}
-        {hasPermission(PERMISSIONS.USER_MANAGE) && (
-          <StatCard
-            icon={Users}
-            label={t('dashboard.teamMembers')}
-            value={t('dashboard.viewAll')}
-            color="indigo"
-            href="/users"
-          />
-        )}
-      </div>
-
-      {/* Quick Actions */}
-      <QuickActions />
-
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Orders */}
-        {hasPermission(PERMISSIONS.POS_ACCESS) && stats.recentOrders.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{t('dashboard.recentOrders')}</h3>
-              <Link to="/reports" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
-                {t('dashboard.viewAll')} <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {stats.recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{order.order_number}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(order.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatCurrency(order.total)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                      {order.payment_method}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* ===== MANAGER: Full Dashboard ===== */}
+      {isManager && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
+            <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
+            <StatCard icon={Package} label={t('dashboard.totalProducts')} value={stats.totalProducts} color="purple" href="/inventory" />
+            <StatCard icon={AlertTriangle} label={t('dashboard.lowStockItems')} value={stats.lowStockCount} color={stats.lowStockCount > 0 ? 'red' : 'gray'} href="/inventory" />
           </div>
-        )}
-
-        {/* Low Stock Alert */}
-        {hasPermission(PERMISSIONS.INVENTORY_VIEW) && stats.lowStockProducts.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-800 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2 text-amber-600">
-                <AlertTriangle className="w-5 h-5" />
-                {t('dashboard.lowStockAlert')}
-              </h3>
-              <Link to="/inventory" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
-                {t('dashboard.viewAll')} <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {stats.lowStockProducts.map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                  <div>
-                    <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {t('dashboard.threshold')}: {product.low_stock_threshold}
-                    </p>
-                  </div>
-                  <span className="text-lg font-bold text-amber-600">
-                    {product.stock_quantity} {t('dashboard.left')}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={Truck} label={t('dashboard.totalSuppliers')} value={stats.totalSuppliers} color="amber" href="/suppliers" />
+            <StatCard icon={Tag} label={t('dashboard.activePromotions')} value={stats.activePromotions} color="pink" href="/promotions" />
+            <StatCard icon={Users} label={t('dashboard.teamMembers')} value={t('dashboard.viewAll')} color="indigo" href="/users" />
           </div>
-        )}
+          <QuickActions showAll />
+          <ManagerDashboard stats={stats} t={t} />
+        </>
+      )}
 
-        {/* No Content Message */}
-        {!hasPermission(PERMISSIONS.POS_ACCESS) && !hasPermission(PERMISSIONS.INVENTORY_VIEW) && (
-          <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <BarChart3 className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              {t('dashboard.welcomeMessage')}
-            </p>
+      {/* ===== SALES MANAGER: Sales & Customers Focus ===== */}
+      {isSalesManager && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
+            <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
+            <StatCard icon={Tag} label={t('dashboard.activePromotions')} value={stats.activePromotions} color="pink" href="/promotions" />
+            <StatCard icon={Package} label={t('dashboard.totalProducts')} value={stats.totalProducts} color="purple" href="/inventory" />
           </div>
-        )}
-      </div>
+          <QuickActions showPOS showPromotions showCustomers />
+          <SalesDashboard stats={stats} t={t} />
+        </>
+      )}
+
+      {/* ===== CASHIER / SENIOR CASHIER: POS Focus ===== */}
+      {isCashier && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
+            <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
+            {role === 'SENIOR_CASHIER' && (
+              <StatCard icon={Tag} label={t('dashboard.activePromotions')} value={stats.activePromotions} color="pink" href="/promotions" />
+            )}
+          </div>
+          <QuickActions showPOS={false} />
+          <CashierDashboard stats={stats} t={t} />
+        </>
+      )}
+
+      {/* ===== INVENTORY CLERK: Inventory Focus ===== */}
+      {isInventoryClerk && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard icon={Package} label={t('dashboard.totalProducts')} value={stats.totalProducts} color="purple" href="/inventory" />
+            <StatCard icon={AlertTriangle} label={t('dashboard.lowStockItems')} value={stats.lowStockCount} color={stats.lowStockCount > 0 ? 'red' : 'gray'} href="/inventory" />
+            <StatCard icon={Truck} label={t('dashboard.totalSuppliers')} value={stats.totalSuppliers} color="amber" href="/suppliers" />
+          </div>
+          <QuickActions showInventory showSuppliers />
+          <InventoryDashboard stats={stats} t={t} />
+        </>
+      )}
+
+      {/* ===== SALES ASSOCIATE: Basic POS ===== */}
+      {isSalesAssociate && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
+            <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
+          </div>
+          <QuickActions showPOS />
+          <SalesDashboard stats={stats} t={t} />
+        </>
+      )}
+
+      {/* ===== VIEWER: Read-Only Overview ===== */}
+      {isViewer && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {hasPermission(PERMISSIONS.POS_ACCESS) && (
+              <>
+                <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
+                <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
+              </>
+            )}
+            {hasPermission(PERMISSIONS.INVENTORY_VIEW) && (
+              <>
+                <StatCard icon={Package} label={t('dashboard.totalProducts')} value={stats.totalProducts} color="purple" href="/inventory" />
+                <StatCard icon={AlertTriangle} label={t('dashboard.lowStockItems')} value={stats.lowStockCount} color={stats.lowStockCount > 0 ? 'red' : 'gray'} href="/inventory" />
+              </>
+            )}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {hasPermission(PERMISSIONS.POS_ACCESS) && stats.recentOrders.length > 0 && (
+              <RecentOrders orders={stats.recentOrders} t={t} />
+            )}
+            {hasPermission(PERMISSIONS.INVENTORY_VIEW) && stats.lowStockProducts.length > 0 && (
+              <LowStockAlert products={stats.lowStockProducts} t={t} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
+const ROLES_LABELS = {
+  MANAGER: 'Manager / مدير',
+  SALES_MANAGER: 'Sales Manager / مدير المبيعات',
+  CASHIER: 'Cashier / كاشير',
+  SENIOR_CASHIER: 'Senior Cashier / كاشير أول',
+  INVENTORY_CLERK: 'Inventory Clerk /موظف مخزون',
+  SALES_ASSOCIATE: 'Sales Associate /موظف مبيعات',
+  VIEWER: 'Viewer / مشاهد',
+}
+
+// ===== Manager Dashboard =====
+function ManagerDashboard({ stats, t }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
+      {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
+      {stats.recentOrders.length === 0 && stats.lowStockProducts.length === 0 && (
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <BarChart3 className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===== Sales Dashboard =====
+function SalesDashboard({ stats, t }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
+      {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
+      {stats.recentOrders.length === 0 && stats.lowStockProducts.length === 0 && (
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <TrendingUp className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===== Cashier Dashboard =====
+function CashierDashboard({ stats, t }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
+      {stats.recentOrders.length === 0 && (
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <ShoppingCart className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.startSelling')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('dashboard.startSellingDesc')}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===== Inventory Dashboard =====
+function InventoryDashboard({ stats, t }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
+      {stats.lowStockProducts.length === 0 && (
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <Package className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.manageInventory')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('dashboard.manageInventoryDesc')}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ===== Shared Components =====
 function StatCard({ icon: Icon, label, value, color, href }) {
   const colorClasses = {
     green: 'bg-green-100 dark:bg-green-900/30 text-green-600',
@@ -327,13 +363,13 @@ function StatCard({ icon: Icon, label, value, color, href }) {
   )
 }
 
-function QuickActions() {
+function QuickActions({ showAll, showPOS, showInventory, showSuppliers, showPromotions, showCustomers }) {
   const { hasPermission } = useUserStore()
   const { t } = useAppStore()
 
   const actions = []
 
-  if (hasPermission(PERMISSIONS.POS_ACCESS)) {
+  if (showAll || showPOS || hasPermission(PERMISSIONS.POS_ACCESS)) {
     actions.push({
       label: t('dashboard.startSelling'),
       description: t('dashboard.startSellingDesc'),
@@ -343,7 +379,7 @@ function QuickActions() {
     })
   }
 
-  if (hasPermission(PERMISSIONS.INVENTORY_EDIT)) {
+  if (showAll || showInventory || hasPermission(PERMISSIONS.INVENTORY_EDIT)) {
     actions.push({
       label: t('dashboard.manageInventory'),
       description: t('dashboard.manageInventoryDesc'),
@@ -353,7 +389,7 @@ function QuickActions() {
     })
   }
 
-  if (hasPermission(PERMISSIONS.SUPPLIERS_EDIT)) {
+  if (showAll || showSuppliers || hasPermission(PERMISSIONS.SUPPLIERS_EDIT)) {
     actions.push({
       label: t('dashboard.addSupplier'),
       description: t('dashboard.addSupplierDesc'),
@@ -363,7 +399,7 @@ function QuickActions() {
     })
   }
 
-  if (hasPermission(PERMISSIONS.PROMOTIONS_EDIT)) {
+  if (showAll || showPromotions || hasPermission(PERMISSIONS.PROMOTIONS_EDIT)) {
     actions.push({
       label: t('dashboard.createPromotion'),
       description: t('dashboard.createPromotionDesc'),
@@ -390,6 +426,68 @@ function QuickActions() {
           </div>
         </Link>
       ))}
+    </div>
+  )
+}
+
+function RecentOrders({ orders, t }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">{t('dashboard.recentOrders')}</h3>
+        <Link to="/reports" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
+          {t('dashboard.viewAll')} <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="space-y-3">
+        {orders.map((order) => (
+          <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div>
+              <p className="font-medium">{order.order_number}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {new Date(order.created_at).toLocaleString()}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-semibold">{formatCurrency(order.total)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                {order.payment_method}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LowStockAlert({ products, t }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-800 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2 text-amber-600">
+          <AlertTriangle className="w-5 h-5" />
+          {t('dashboard.lowStockAlert')}
+        </h3>
+        <Link to="/inventory" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
+          {t('dashboard.viewAll')} <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="space-y-3">
+        {products.map((product) => (
+          <div key={product.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+            <div>
+              <p className="font-medium">{product.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t('dashboard.threshold')}: {product.low_stock_threshold}
+              </p>
+            </div>
+            <span className="text-lg font-bold text-amber-600">
+              {product.stock_quantity} {t('dashboard.left')}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

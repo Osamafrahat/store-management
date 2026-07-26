@@ -32,7 +32,7 @@ export default function RefundsPage() {
       fetchRefunds()
     } catch (err) {
       console.error('Failed to process refund:', err)
-      alert(err.response?.data?.error || 'Failed to process refund')
+      alert(err.response?.data?.error || t('refunds.failedToProcess'))
     }
   }
 
@@ -48,15 +48,15 @@ export default function RefundsPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Refunds</h1>
-          <p className="text-gray-500 dark:text-gray-400">Process and track order refunds</p>
+          <h1 className="text-2xl font-bold">{t('refunds.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('refunds.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
         >
           <RotateCcw className="w-4 h-4" />
-          Process Refund
+          {t('refunds.processRefund')}
         </button>
       </div>
 
@@ -64,44 +64,44 @@ export default function RefundsPage() {
       {refunds.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <RotateCcw className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Refunds Yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">Refunds will appear here when processed</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('refunds.noRefunds')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('refunds.addFirst')}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Date</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Order #</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Amount</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Reason</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Processed By</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.date')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.orderNumber')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.amount')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.reason')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.processedBy')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {refunds.map((refund) => (
                 <tr key={refund.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm text-start">
                     {new Date(refund.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium">
+                  <td className="px-4 py-3 text-sm font-medium text-start">
                     {refund.orders?.order_number || '-'}
                   </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-red-600">
+                  <td className="px-4 py-3 text-sm font-semibold text-red-600 text-start">
                     ${refund.amount.toFixed(2)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-start">
                     {refund.reason}
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm text-start">
                     {refund.users?.full_name || 'System'}
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-4 py-3 text-sm text-start">
                     <span className="flex items-center gap-1 text-green-600">
                       <CheckCircle className="w-4 h-4" />
-                      Completed
+                      {t('refunds.completed')}
                     </span>
                   </td>
                 </tr>
@@ -123,6 +123,7 @@ export default function RefundsPage() {
 }
 
 function RefundForm({ onSave, onClose }) {
+  const { t } = useAppStore()
   const [orderNumber, setOrderNumber] = useState('')
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -141,19 +142,19 @@ function RefundForm({ onSave, onClose }) {
       const foundOrder = response.data.find(o => o.order_number === orderNumber)
 
       if (!foundOrder) {
-        setError('Order not found')
+        setError(t('refunds.orderNotFound'))
         return
       }
 
       if (foundOrder.is_refunded) {
-        setError('This order has already been refunded')
+        setError(t('refunds.alreadyRefunded'))
         return
       }
 
       setOrder(foundOrder)
       setRefundAmount(foundOrder.total.toString())
     } catch (err) {
-      setError('Failed to search order')
+      setError(t('refunds.failedToSearch'))
     } finally {
       setLoading(false)
     }
@@ -174,7 +175,7 @@ function RefundForm({ onSave, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">Process Refund</h2>
+          <h2 className="text-xl font-semibold">{t('refunds.processRefund')}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -187,14 +188,14 @@ function RefundForm({ onSave, onClose }) {
           {/* Order Search */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Order Number *
+              {t('refunds.orderNumber')} *
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
-                placeholder="Enter order number"
+                placeholder={t('refunds.enterOrderNumber')}
                 className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               />
               <button
@@ -203,7 +204,7 @@ function RefundForm({ onSave, onClose }) {
                 disabled={loading}
                 className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading ? t('refunds.searching') : t('common.search')}
               </button>
             </div>
           </div>
@@ -218,15 +219,15 @@ function RefundForm({ onSave, onClose }) {
           {order && (
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Order Total:</span>
+                <span className="text-gray-500">{t('refunds.orderTotal')}</span>
                 <span className="font-semibold">${order.total.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Payment Method:</span>
+                <span className="text-gray-500">{t('refunds.paymentMethod')}</span>
                 <span className="capitalize">{order.payment_method}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Date:</span>
+                <span className="text-gray-500">{t('expenses.date')}:</span>
                 <span>{new Date(order.created_at).toLocaleDateString()}</span>
               </div>
             </div>
@@ -236,7 +237,7 @@ function RefundForm({ onSave, onClose }) {
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Refund Amount *
+                  {t('refunds.refundAmount')}
                 </label>
                 <input
                   type="number"
@@ -252,14 +253,14 @@ function RefundForm({ onSave, onClose }) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Reason *
+                  {t('refunds.reason')} *
                 </label>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   required
                   rows={3}
-                  placeholder="Enter reason for refund..."
+                  placeholder={t('refunds.enterReason')}
                   className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                 />
               </div>
@@ -272,14 +273,14 @@ function RefundForm({ onSave, onClose }) {
               onClick={onClose}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={!order || !reason.trim()}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Process Refund
+              {t('refunds.processRefund')}
             </button>
           </div>
         </form>

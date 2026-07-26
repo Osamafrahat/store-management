@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useUserStore, ROLES, PERMISSIONS } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
-import { X, Plus, Edit2, Trash2, User, Shield, Check, XCircle } from 'lucide-react'
+import { usersApi, employeesApi } from '../lib/api'
+import { X, Plus, Edit2, Trash2, User, UserCheck, Shield, Check, XCircle } from 'lucide-react'
 
 const permissionLabelsEn = {
   [PERMISSIONS.POS_ACCESS]: 'POS Access',
@@ -15,6 +16,14 @@ const permissionLabelsEn = {
   [PERMISSIONS.SETTINGS_VIEW]: 'View Settings',
   [PERMISSIONS.SETTINGS_EDIT]: 'Edit Settings',
   [PERMISSIONS.USER_MANAGE]: 'Manage Users',
+  [PERMISSIONS.CUSTOMERS_VIEW]: 'View Customers',
+  [PERMISSIONS.CUSTOMERS_EDIT]: 'Edit Customers',
+  [PERMISSIONS.EXPENSES_VIEW]: 'View Expenses',
+  [PERMISSIONS.EXPENSES_EDIT]: 'Manage Expenses',
+  [PERMISSIONS.REFUNDS_VIEW]: 'View Refunds',
+  [PERMISSIONS.REFUNDS_EDIT]: 'Process Refunds',
+  [PERMISSIONS.EMPLOYEES_VIEW]: 'View Employees',
+  [PERMISSIONS.EMPLOYEES_EDIT]: 'Manage Employees',
 }
 
 const permissionLabelsAr = {
@@ -29,6 +38,14 @@ const permissionLabelsAr = {
   [PERMISSIONS.SETTINGS_VIEW]: 'عرض الإعدادات',
   [PERMISSIONS.SETTINGS_EDIT]: 'تعديل الإعدادات',
   [PERMISSIONS.USER_MANAGE]: 'إدارة المستخدمين',
+  [PERMISSIONS.CUSTOMERS_VIEW]: 'عرض العملاء',
+  [PERMISSIONS.CUSTOMERS_EDIT]: 'تعديل العملاء',
+  [PERMISSIONS.EXPENSES_VIEW]: 'عرض المصروفات',
+  [PERMISSIONS.EXPENSES_EDIT]: 'إدارة المصروفات',
+  [PERMISSIONS.REFUNDS_VIEW]: 'عرض المرتجعات',
+  [PERMISSIONS.REFUNDS_EDIT]: 'معالجة المرتجعات',
+  [PERMISSIONS.EMPLOYEES_VIEW]: 'عرض الموظفين',
+  [PERMISSIONS.EMPLOYEES_EDIT]: 'إدارة الموظفين',
 }
 
 export default function UsersPage() {
@@ -37,10 +54,21 @@ export default function UsersPage() {
   const permissionLabels = language === 'ar' ? permissionLabelsAr : permissionLabelsEn
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [employees, setEmployees] = useState([])
 
   useEffect(() => {
     fetchUsers()
+    fetchEmployees()
   }, [])
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await employeesApi.getAll()
+      setEmployees(response.data || [])
+    } catch (err) {
+      console.error('Failed to fetch employees:', err)
+    }
+  }
 
   // Only managers can access this page
   if (currentUser?.role !== 'MANAGER') {
@@ -97,11 +125,11 @@ export default function UsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.fullName')}</th>
-                <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.role')}</th>
-                <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.permissions')}</th>
-                <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.status')}</th>
-                <th className="text-right p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
+                <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.fullName')}</th>
+                <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.role')}</th>
+                <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.employee')}</th>
+                <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.status')}</th>
+                <th className="text-end p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -121,7 +149,7 @@ export default function UsersPage() {
                   <td className="p-4">
                     {user.id === 1 ? (
                       <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                        {language === 'ar' ? 'مدير (محمي)' : 'Admin (Protected)'}
+                        {t('users.adminProtected')}
                       </span>
                     ) : (
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
@@ -138,20 +166,16 @@ export default function UsersPage() {
                     )}
                   </td>
                   <td className="p-4">
-                    <div className="flex flex-wrap gap-1 max-w-xs">
-                      {user.id === 1 || user.role === 'MANAGER' ? (
-                        <span className="text-xs text-green-600 dark:text-green-400 font-medium">{t('users.allPermissions')}</span>
-                      ) : (
-                        user.permissions?.slice(0, 3).map(perm => (
-                          <span key={perm} className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
-                            {permissionLabels[perm]?.split(' ')[0] || perm}
-                          </span>
-                        ))
-                      )}
-                      {user.permissions?.length > 3 && user.id !== 1 && user.role !== 'MANAGER' && (
-                        <span className="text-xs text-gray-500">+{user.permissions.length - 3}</span>
-                      )}
-                    </div>
+                    {user.employee ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                          <UserCheck className="w-3 h-3 text-green-600" />
+                        </div>
+                        <span className="text-sm">{user.employee.name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
                   </td>
                   <td className="p-4">
                     <button
@@ -197,6 +221,7 @@ export default function UsersPage() {
       {showForm && (
         <UserForm
           user={editingUser}
+          employees={employees}
           onSave={async (userData) => {
             let result
             if (editingUser) {
@@ -207,6 +232,7 @@ export default function UsersPage() {
             if (result?.success !== false) {
               setShowForm(false)
               setEditingUser(null)
+              fetchUsers()
             }
           }}
           onClose={() => {
@@ -219,7 +245,7 @@ export default function UsersPage() {
   )
 }
 
-function UserForm({ user, onSave, onClose }) {
+function UserForm({ user, employees, onSave, onClose }) {
   const { t, language } = useAppStore()
   const permissionLabels = language === 'ar' ? permissionLabelsAr : permissionLabelsEn
   const [formData, setFormData] = useState({
@@ -228,6 +254,7 @@ function UserForm({ user, onSave, onClose }) {
     fullName: user?.fullName || '',
     role: user?.role || 'CASHIER',
     permissions: user?.permissions || ROLES.CASHIER.permissions,
+    employeeId: user?.employee_id || '',
   })
 
   const handleChange = (e) => {
@@ -259,12 +286,13 @@ function UserForm({ user, onSave, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!user && !formData.password) {
-      alert(language === 'ar' ? 'كلمة المرور مطلوبة للمستخدمين الجدد' : 'Password is required for new users')
+      alert(t('users.passwordRequired'))
       return
     }
     await onSave({
       ...formData,
       password: formData.password || undefined,
+      employeeId: formData.employeeId || null,
     })
   }
 
@@ -297,7 +325,7 @@ function UserForm({ user, onSave, onClose }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-              placeholder={language === 'ar' ? 'محمد أحمد' : 'John Doe'}
+              placeholder={t('users.namePlaceholder')}
             />
           </div>
 
@@ -312,7 +340,7 @@ function UserForm({ user, onSave, onClose }) {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-              placeholder={language === 'ar' ? 'ahmed' : 'johndoe'}
+              placeholder={t('users.usernamePlaceholder')}
             />
           </div>
 
@@ -342,6 +370,23 @@ function UserForm({ user, onSave, onClose }) {
             >
               {Object.entries(ROLES).map(([key, role]) => (
                 <option key={key} value={key}>{language === 'ar' ? role.nameAr : role.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('users.employee')}
+            </label>
+            <select
+              name="employeeId"
+              value={formData.employeeId}
+              onChange={handleChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+            >
+              <option value="">{t('users.noEmployee')}</option>
+              {employees.filter(e => e.is_active).map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.name} - {emp.role}</option>
               ))}
             </select>
           </div>

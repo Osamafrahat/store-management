@@ -258,7 +258,7 @@ export default function PromotionsPage() {
                     <button
                       onClick={() => handleSendNotification(promo.id)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
-                      title="Send notification to customers"
+                      title={t('promotions.sendNotification')}
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -298,7 +298,7 @@ export default function PromotionsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl max-h-[80vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold">WhatsApp Messages</h2>
+              <h2 className="text-xl font-semibold">{t('promotions.whatsappMessages')}</h2>
               <button
                 onClick={() => setWhatsappLinks([])}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -322,7 +322,7 @@ export default function PromotionsPage() {
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium"
                   >
-                    Open WhatsApp
+                    {t('promotions.openWhatsApp')}
                   </a>
                 </div>
               ))}

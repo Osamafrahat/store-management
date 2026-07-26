@@ -100,9 +100,9 @@ export default function POSPage() {
   })
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4">
+    <div className="flex h-[calc(100vh-8rem)] gap-4 overflow-hidden">
       {/* Left side - Products */}
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
         {/* Search and Filters */}
         <div className="flex gap-3">
           <div className="flex-1 relative">
@@ -160,7 +160,7 @@ export default function POSPage() {
       </div>
 
       {/* Right side - Cart */}
-      <div className="w-96 flex-shrink-0 flex flex-col gap-3">
+      <div className="w-80 xl:w-96 flex-shrink-0 flex flex-col gap-3 min-w-0 overflow-hidden">
         {/* Customer Selection */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
           <div className="flex items-center gap-2 mb-2">

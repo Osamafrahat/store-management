@@ -41,7 +41,7 @@ export default function PaymentModal({ onClose, onComplete }) {
 
     // Allow small floating point tolerance (0.01)
     if (amount > remaining + 0.01) {
-      alert('Payment amount exceeds remaining balance')
+      alert(t('payment.exceedsBalance'))
       return
     }
 
@@ -60,7 +60,7 @@ export default function PaymentModal({ onClose, onComplete }) {
 
   const handleComplete = () => {
     if (remaining > 0.01) {
-      alert('Payment is not complete')
+      alert(t('payment.notComplete'))
       return
     }
     onComplete({ method: payments[0]?.method || 'cash', payments })
@@ -166,7 +166,7 @@ export default function PaymentModal({ onClose, onComplete }) {
                 autoFocus
               />
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Full amount: {formatCurrency(remaining)}
+                {t('payment.fullAmount')}: {formatCurrency(remaining)}
               </p>
             </div>
           )}
@@ -185,7 +185,7 @@ export default function PaymentModal({ onClose, onComplete }) {
                 autoFocus
               />
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Full amount: {formatCurrency(remaining)}
+                {t('payment.fullAmount')}: {formatCurrency(remaining)}
               </p>
             </div>
           )}

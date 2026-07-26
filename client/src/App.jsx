@@ -19,6 +19,12 @@ import CustomersPage from './pages/CustomersPage'
 import EmployeesPage from './pages/EmployeesPage'
 import ExpensesPage from './pages/ExpensesPage'
 import RefundsPage from './pages/RefundsPage'
+import ActivitiesPage from './pages/ActivitiesPage'
+import ProfilePage from './pages/ProfilePage'
+import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
+import JournalEntriesPage from './pages/JournalEntriesPage'
+import AccountingReportsPage from './pages/AccountingReportsPage'
+import PaymentsPage from './pages/PaymentsPage'
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -129,6 +135,36 @@ function App() {
             <Route path="/refunds" element={
               <ProtectedRoute>
                 <Layout><RefundsPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/activities" element={
+              <ProtectedRoute>
+                <Layout><ActivitiesPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Layout><ProfilePage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/accounting/accounts" element={
+              <ProtectedRoute>
+                <Layout><ChartOfAccountsPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/accounting/journals" element={
+              <ProtectedRoute>
+                <Layout><JournalEntriesPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/accounting/reports" element={
+              <ProtectedRoute>
+                <Layout><AccountingReportsPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/accounting/payments" element={
+              <ProtectedRoute>
+                <Layout><PaymentsPage /></Layout>
               </ProtectedRoute>
             } />
 

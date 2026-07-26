@@ -16,7 +16,7 @@ export default function Cart({ onCheckout }) {
       applyPromo(promoInput, 10)
       setPromoError('')
     } catch (err) {
-      setPromoError('Invalid promo code')
+      setPromoError(t('cart.invalidPromo'))
     }
   }
 
@@ -27,7 +27,7 @@ export default function Cart({ onCheckout }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">

@@ -64,7 +64,7 @@ router.post('/register', [
   body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('role').isIn(['MANAGER', 'CASHIER', 'INVENTORY_CLERK', 'VIEWER']).withMessage('Invalid role'),
+  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER']).withMessage('Invalid role'),
 ], async (req, res) => {
   try {
     const errors = validationResult(req)
@@ -166,6 +166,54 @@ router.post('/change-password', authenticateToken, [
     res.json({ message: 'Password updated successfully' })
   } catch (err) {
     console.error('Change password error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get profile
+router.get('/profile', authenticateToken, async (req, res) => {
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, username, full_name, phone, email, role, permissions, is_active, last_login, created_at, updated_at')
+      .eq('id', req.user.id)
+      .single()
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    res.json(user)
+  } catch (err) {
+    console.error('Get profile error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Update profile (phone and email)
+router.put('/profile', authenticateToken, [
+  body('phone').optional().trim(),
+  body('email').optional().trim().isEmail().withMessage('Invalid email format'),
+], async (req, res) => {
+  try {
+    const { phone, email } = req.body
+
+    const updateData = { updated_at: new Date().toISOString() }
+    if (phone !== undefined) updateData.phone = phone || null
+    if (email !== undefined) updateData.email = email || null
+
+    const { data: user, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', req.user.id)
+      .select('id, username, full_name, phone, email, role, permissions, is_active, last_login, created_at, updated_at')
+      .single()
+
+    if (error) throw error
+
+    res.json(user)
+  } catch (err) {
+    console.error('Update profile error:', err)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

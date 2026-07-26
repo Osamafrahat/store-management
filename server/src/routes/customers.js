@@ -91,6 +91,7 @@ router.post('/', [
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'created', entity_type: 'customer', entity_name: data.name })
     res.status(201).json(data)
   } catch (err) {
     next(err)
@@ -138,6 +139,7 @@ router.put('/:id', [
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'updated', entity_type: 'customer', entity_id: req.params.id })
     res.json(data)
   } catch (err) {
     next(err)
@@ -155,6 +157,7 @@ router.delete('/:id', [
       .eq('id', req.params.id)
 
     if (error) throw error
+    req.logActivity({ action: 'deleted', entity_type: 'customer', entity_id: req.params.id })
     res.json({ message: 'Customer deleted successfully' })
   } catch (err) {
     next(err)

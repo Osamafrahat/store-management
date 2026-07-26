@@ -94,7 +94,7 @@ router.post('/', [
   body('cost_price').optional().isFloat({ min: 0 }),
 ], validate, async (req, res, next) => {
   try {
-    const { name, sku, barcode, category_id, price, cost_price,
+    const { name, sku, barcode, category_id, supplier_id, price, cost_price,
             stock_quantity, low_stock_threshold, image_url, description } = req.body
 
     // Check for duplicate SKU
@@ -128,6 +128,7 @@ router.post('/', [
         sku: sku || null,
         barcode: barcode || null,
         category_id: category_id || null,
+        supplier_id: supplier_id || null,
         price,
         cost_price: cost_price || 0,
         stock_quantity: stock_quantity || 0,
@@ -139,6 +140,7 @@ router.post('/', [
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'created', entity_type: 'product', entity_name: data.name })
     res.status(201).json(data)
   } catch (err) {
     next(err)
@@ -164,7 +166,7 @@ router.put('/:id', [
       return res.status(404).json({ error: 'Product not found' })
     }
 
-    const { name, sku, barcode, category_id, price, cost_price,
+    const { name, sku, barcode, category_id, supplier_id, price, cost_price,
             stock_quantity, low_stock_threshold, image_url, description, is_active } = req.body
 
     // Check for duplicate SKU (excluding current product)
@@ -200,6 +202,7 @@ router.put('/:id', [
         sku: sku ?? existing.sku,
         barcode: barcode ?? existing.barcode,
         category_id: category_id ?? existing.category_id,
+        supplier_id: supplier_id !== undefined ? (supplier_id || null) : existing.supplier_id,
         price: price ?? existing.price,
         cost_price: cost_price ?? existing.cost_price,
         stock_quantity: stock_quantity ?? existing.stock_quantity,
@@ -214,6 +217,7 @@ router.put('/:id', [
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'updated', entity_type: 'product', entity_id: req.params.id, entity_name: data.name })
     res.json(data)
   } catch (err) {
     next(err)
@@ -241,6 +245,7 @@ router.delete('/:id', [
       .eq('id', req.params.id)
 
     if (error) throw error
+    req.logActivity({ action: 'deleted', entity_type: 'product', entity_id: req.params.id })
     res.json({ message: 'Product deleted successfully' })
   } catch (err) {
     next(err)

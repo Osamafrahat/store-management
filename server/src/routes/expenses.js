@@ -109,6 +109,16 @@ router.post('/', [
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'created', entity_type: 'expense', entity_name: data.category })
+
+    // Auto-post to accounting journal
+    try {
+      const { postExpenseJournal } = await import('../services/accountingEngine.js')
+      await postExpenseJournal(data)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.status(201).json(data)
   } catch (err) {
     next(err)
@@ -138,6 +148,7 @@ router.put('/:id', [
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'updated', entity_type: 'expense', entity_id: req.params.id })
     res.json(data)
   } catch (err) {
     next(err)
@@ -155,6 +166,7 @@ router.delete('/:id', [
       .eq('id', req.params.id)
 
     if (error) throw error
+    req.logActivity({ action: 'deleted', entity_type: 'expense', entity_id: req.params.id })
     res.json({ message: 'Expense deleted successfully' })
   } catch (err) {
     next(err)

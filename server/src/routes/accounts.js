@@ -1,0 +1,158 @@
+import { Router } from 'express'
+import supabase from '../db/supabase.js'
+import { seedChartOfAccounts } from '../services/accountingEngine.js'
+
+const router = Router()
+
+// Get all accounts
+router.get('/', async (req, res) => {
+  try {
+    const { type, search } = req.query
+    let query = supabase.from('accounts').select('*').order('code')
+
+    if (type) query = query.eq('account_type', type)
+    if (search) query = query.or(`name.ilike.%${search}%,code.ilike.%${search}%`)
+
+    const { data, error } = await query
+    if (error) throw error
+    res.json(data)
+  } catch (err) {
+    console.error('Get accounts error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get single account
+router.get('/:id', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
+
+    if (error || !data) return res.status(404).json({ error: 'Account not found' })
+    res.json(data)
+  } catch (err) {
+    console.error('Get account error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Create account
+router.post('/', async (req, res) => {
+  try {
+    const { code, name, account_type, parent_id, description } = req.body
+    if (!code || !name || !account_type) {
+      return res.status(400).json({ error: 'Code, name, and type are required' })
+    }
+
+    const { data, error } = await supabase
+      .from('accounts')
+      .insert({ code, name, account_type, parent_id: parent_id || null, description: description || null })
+      .select()
+      .single()
+
+    if (error) {
+      if (error.code === '23505') return res.status(400).json({ error: 'Account code already exists' })
+      throw error
+    }
+    res.status(201).json(data)
+  } catch (err) {
+    console.error('Create account error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Update account
+router.put('/:id', async (req, res) => {
+  try {
+    const { code, name, account_type, parent_id, description, is_active } = req.body
+    const updateData = { updated_at: new Date().toISOString() }
+    if (code !== undefined) updateData.code = code
+    if (name !== undefined) updateData.name = name
+    if (account_type !== undefined) updateData.account_type = account_type
+    if (parent_id !== undefined) updateData.parent_id = parent_id || null
+    if (description !== undefined) updateData.description = description
+    if (is_active !== undefined) updateData.is_active = is_active
+
+    const { data, error } = await supabase
+      .from('accounts')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json(data)
+  } catch (err) {
+    console.error('Update account error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Delete account
+router.delete('/:id', async (req, res) => {
+  try {
+    // Check if account has journal entry lines
+    const { count } = await supabase
+      .from('journal_entry_lines')
+      .select('*', { count: 'exact', head: true })
+      .eq('account_id', req.params.id)
+
+    if (count > 0) {
+      return res.status(400).json({ error: 'Cannot delete account with existing journal entries' })
+    }
+
+    const { error } = await supabase.from('accounts').delete().eq('id', req.params.id)
+    if (error) throw error
+    res.json({ message: 'Account deleted' })
+  } catch (err) {
+    console.error('Delete account error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Seed default chart of accounts
+router.post('/seed', async (req, res) => {
+  try {
+    await seedChartOfAccounts()
+    res.json({ message: 'Chart of accounts seeded successfully' })
+  } catch (err) {
+    console.error('Seed accounts error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Recalculate all account balances from journal entries
+router.post('/recalculate-balances', async (req, res) => {
+  try {
+    const { data: accounts } = await supabase.from('accounts').select('id, code, account_type')
+
+    for (const account of accounts || []) {
+      const { data: lines } = await supabase
+        .from('journal_entry_lines')
+        .select('debit, credit')
+        .eq('account_id', account.id)
+
+      const totalDebit = (lines || []).reduce((s, l) => s + parseFloat(l.debit), 0)
+      const totalCredit = (lines || []).reduce((s, l) => s + parseFloat(l.credit), 0)
+
+      let balance = 0
+      if (['asset', 'expense'].includes(account.account_type)) {
+        balance = totalDebit - totalCredit
+      } else {
+        balance = totalCredit - totalDebit
+      }
+
+      await supabase.from('accounts').update({ balance, updated_at: new Date().toISOString() }).eq('id', account.id)
+    }
+
+    res.json({ message: 'All account balances recalculated' })
+  } catch (err) {
+    console.error('Recalculate balances error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+export { router as accountsRouter }

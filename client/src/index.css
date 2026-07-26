@@ -25,6 +25,14 @@ body {
   text-align: right;
 }
 
+.rtl table {
+  direction: rtl;
+}
+
+.rtl th, .rtl td {
+  text-align: start;
+}
+
 .rtl .flex-row-reverse {
   flex-direction: row;
 }

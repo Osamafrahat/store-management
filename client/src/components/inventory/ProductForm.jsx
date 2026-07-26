@@ -3,13 +3,14 @@ import { useAppStore } from '../../stores/appStore'
 import { generateSKU } from '../../lib/utils'
 import { X, Package, RefreshCw } from 'lucide-react'
 
-export default function ProductForm({ product, categories, onSave, onClose }) {
+export default function ProductForm({ product, categories, suppliers, onSave, onClose }) {
   const { t } = useAppStore()
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
     barcode: '',
     category_id: '',
+    supplier_id: '',
     price: '',
     cost_price: '',
     stock_quantity: '0',
@@ -26,6 +27,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
         sku: product.sku || '',
         barcode: product.barcode || '',
         category_id: product.category_id || '',
+        supplier_id: product.supplier_id || '',
         price: product.price || '',
         cost_price: product.cost_price || '',
         stock_quantity: product.stock_quantity?.toString() || '0',
@@ -58,6 +60,7 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
       stock_quantity: parseInt(formData.stock_quantity),
       low_stock_threshold: parseInt(formData.low_stock_threshold),
       category_id: formData.category_id ? parseInt(formData.category_id) : null,
+      supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : null,
     })
   }
 
@@ -146,6 +149,23 @@ export default function ProductForm({ product, categories, onSave, onClose }) {
                 <option value="">{t('inventory.selectCategory')}</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('inventory.supplier')}
+              </label>
+              <select
+                name="supplier_id"
+                value={formData.supplier_id}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              >
+                <option value="">{t('inventory.selectSupplier')}</option>
+                {(suppliers || []).map(sup => (
+                  <option key={sup.id} value={sup.id}>{sup.name}</option>
                 ))}
               </select>
             </div>

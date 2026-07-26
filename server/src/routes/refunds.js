@@ -136,6 +136,23 @@ router.post('/', [
       }
     }
 
+    // Log activity
+    req.logActivity({
+      action: 'refunded',
+      entity_type: 'order',
+      entity_id: order.id,
+      entity_name: order.order_number,
+      details: { amount, reason, original_total: order.total }
+    })
+
+    // Auto-post to accounting journal
+    try {
+      const { postRefundJournal } = await import('../services/accountingEngine.js')
+      await postRefundJournal(refund)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.status(201).json(refund)
   } catch (err) {
     console.error('Failed to create refund:', err)

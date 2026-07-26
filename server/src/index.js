@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler.js'
+import { activityLogger } from './middleware/activityLogger.js'
 import { authRouter } from './routes/auth.js'
 import { authenticateToken } from './middleware/auth.js'
 import supabase from './db/supabase.js'
@@ -26,6 +27,11 @@ import employeesRouter from './routes/employees.js'
 import expensesRouter from './routes/expenses.js'
 import refundsRouter from './routes/refunds.js'
 import notificationsRouter from './routes/notifications.js'
+import activitiesRouter from './routes/activities.js'
+import { accountsRouter } from './routes/accounts.js'
+import { journalsRouter } from './routes/journals.js'
+import { accountingReportsRouter } from './routes/accountingReports.js'
+import { paymentsRouter } from './routes/payments.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -77,20 +83,28 @@ app.disable('x-powered-by')
 app.use('/api/auth', authRouter)
 
 // Protected API Routes
-app.use('/api/products', authenticateToken, productsRouter)
-app.use('/api/categories', authenticateToken, categoriesRouter)
-app.use('/api/orders', authenticateToken, ordersRouter)
-app.use('/api/stock', authenticateToken, stockRouter)
-app.use('/api/suppliers', authenticateToken, suppliersRouter)
-app.use('/api/promotions', authenticateToken, promotionsRouter)
-app.use('/api/reports', authenticateToken, reportsRouter)
-app.use('/api/settings', authenticateToken, settingsRouter)
-app.use('/api/users', authenticateToken, usersRouter)
-app.use('/api/customers', authenticateToken, customersRouter)
-app.use('/api/employees', authenticateToken, employeesRouter)
-app.use('/api/expenses', authenticateToken, expensesRouter)
-app.use('/api/refunds', authenticateToken, refundsRouter)
-app.use('/api/notifications', authenticateToken, notificationsRouter)
+app.use('/api/products', authenticateToken, activityLogger, productsRouter)
+app.use('/api/categories', authenticateToken, activityLogger, categoriesRouter)
+app.use('/api/orders', authenticateToken, activityLogger, ordersRouter)
+app.use('/api/stock', authenticateToken, activityLogger, stockRouter)
+app.use('/api/suppliers', authenticateToken, activityLogger, suppliersRouter)
+app.use('/api/promotions', authenticateToken, activityLogger, promotionsRouter)
+app.use('/api/reports', authenticateToken, activityLogger, reportsRouter)
+app.use('/api/settings', authenticateToken, activityLogger, settingsRouter)
+app.use('/api/users', authenticateToken, activityLogger, usersRouter)
+app.use('/api/customers', authenticateToken, activityLogger, customersRouter)
+app.use('/api/employees', authenticateToken, activityLogger, employeesRouter)
+app.use('/api/expenses', authenticateToken, activityLogger, expensesRouter)
+app.use('/api/refunds', authenticateToken, activityLogger, refundsRouter)
+app.use('/api/notifications', authenticateToken, activityLogger, notificationsRouter)
+app.use('/api/activities', authenticateToken, activitiesRouter)
+app.use('/api/activities', authenticateToken, activitiesRouter)
+
+// Accounting Routes
+app.use('/api/accounting/accounts', authenticateToken, activityLogger, accountsRouter)
+app.use('/api/accounting/journals', authenticateToken, activityLogger, journalsRouter)
+app.use('/api/accounting/reports', authenticateToken, accountingReportsRouter)
+app.use('/api/accounting/payments', authenticateToken, activityLogger, paymentsRouter)
 
 // Health check
 app.get('/api/health', async (req, res) => {

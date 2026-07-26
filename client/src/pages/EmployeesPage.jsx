@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { employeesApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, UserCheck, Phone, Mail, Calendar, DollarSign } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign } from 'lucide-react'
 
-const EMPLOYEE_ROLES = [
-  { value: 'MANAGER', label: 'Manager' },
-  { value: 'CASHIER', label: 'Cashier' },
-  { value: 'INVENTORY_CLERK', label: 'Inventory Clerk' },
-  { value: 'SALES', label: 'Sales' },
-  { value: 'OTHER', label: 'Other' },
+const EMPLOYEE_ROLES = (t) => [
+  { value: 'MANAGER', label: t('role.manager') },
+  { value: 'CASHIER', label: t('role.cashier') },
+  { value: 'INVENTORY_CLERK', label: t('role.inventoryClerk') },
+  { value: 'SALES', label: t('role.sales') },
+  { value: 'OTHER', label: t('role.other') },
 ]
 
 export default function EmployeesPage() {
@@ -92,8 +92,8 @@ export default function EmployeesPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Employees</h1>
-          <p className="text-gray-500 dark:text-gray-400">Manage your team members</p>
+          <h1 className="text-2xl font-bold">{t('employees.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('employees.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -103,7 +103,7 @@ export default function EmployeesPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
           <Plus className="w-4 h-4" />
-          Add Employee
+          {t('employees.addEmployee')}
         </button>
       </div>
 
@@ -111,8 +111,8 @@ export default function EmployeesPage() {
       {employees.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <UserCheck className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Employees Yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">Add your first team member to get started</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('employees.noEmployees')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('employees.addFirst')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -129,7 +129,7 @@ export default function EmployeesPage() {
                   <div>
                     <h3 className="font-semibold">{employee.name}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleColor(employee.role)}`}>
-                      {EMPLOYEE_ROLES.find(r => r.value === employee.role)?.label || employee.role}
+                      {EMPLOYEE_ROLES(t).find(r => r.value === employee.role)?.label || employee.role}
                     </span>
                   </div>
                 </div>
@@ -165,21 +165,29 @@ export default function EmployeesPage() {
                 {employee.hire_date && (
                   <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <Calendar className="w-4 h-4" />
-                    <span>Hired: {new Date(employee.hire_date).toLocaleDateString()}</span>
+                    <span>{t('employees.hired')} {new Date(employee.hire_date).toLocaleDateString()}</span>
                   </div>
                 )}
                 {employee.salary > 0 && (
                   <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <DollarSign className="w-4 h-4" />
-                    <span>Salary: ${employee.salary.toLocaleString()}</span>
+                    <span>{t('employees.salaryLabel')} ${employee.salary.toLocaleString()}</span>
                   </div>
                 )}
               </div>
 
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <span className={`text-xs px-2 py-1 rounded-full ${employee.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                  {employee.is_active ? 'Active' : 'Inactive'}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs px-2 py-1 rounded-full ${employee.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                    {employee.is_active ? t('employees.active') : t('employees.inactive')}
+                  </span>
+                  {employee.user && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {employee.user.username}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -202,6 +210,7 @@ export default function EmployeesPage() {
 }
 
 function EmployeeForm({ employee, onSave, onClose }) {
+  const { t } = useAppStore()
   const [formData, setFormData] = useState({
     name: employee?.name || '',
     role: employee?.role || 'CASHIER',
@@ -230,7 +239,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
-            {employee ? 'Edit Employee' : 'Add New Employee'}
+            {employee ? t('employees.editEmployee') : t('employees.addEmployee')}
           </h2>
           <button
             onClick={onClose}
@@ -243,7 +252,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Employee Name *
+              {t('employees.name')} *
             </label>
             <input
               type="text"
@@ -257,7 +266,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Role *
+              {t('employees.role')} *
             </label>
             <select
               name="role"
@@ -266,7 +275,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
               required
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             >
-              {EMPLOYEE_ROLES.map(role => (
+              {EMPLOYEE_ROLES(t).map(role => (
                 <option key={role.value} value={role.value}>{role.label}</option>
               ))}
             </select>
@@ -275,7 +284,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Phone
+                {t('employees.phone')}
               </label>
               <input
                 type="tel"
@@ -287,7 +296,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
+                {t('employees.email')}
               </label>
               <input
                 type="email"
@@ -302,7 +311,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Salary
+                {t('employees.salary')}
               </label>
               <input
                 type="number"
@@ -316,7 +325,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Hire Date
+                {t('employees.hireDate')}
               </label>
               <input
                 type="date"
@@ -330,7 +339,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes
+              {t('employees.notes')}
             </label>
             <textarea
               name="notes"
@@ -347,13 +356,13 @@ function EmployeeForm({ employee, onSave, onClose }) {
               onClick={onClose}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
-              {employee ? 'Update' : 'Add'} Employee
+              {employee ? t('common.edit') : t('common.add')}
             </button>
           </div>
         </form>

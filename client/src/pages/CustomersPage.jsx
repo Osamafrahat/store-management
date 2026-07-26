@@ -80,8 +80,8 @@ export default function CustomersPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Customers</h1>
-          <p className="text-gray-500 dark:text-gray-400">Manage your customer database</p>
+          <h1 className="text-2xl font-bold">{t('customers.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('customers.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -91,7 +91,7 @@ export default function CustomersPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
           <Plus className="w-4 h-4" />
-          Add Customer
+          {t('customers.addCustomer')}
         </button>
       </div>
 
@@ -99,7 +99,7 @@ export default function CustomersPage() {
       <form onSubmit={handleSearch} className="flex gap-2">
         <input
           type="text"
-          placeholder="Search by name or phone..."
+          placeholder={t('customers.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
@@ -108,7 +108,7 @@ export default function CustomersPage() {
           type="submit"
           className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
         >
-          Search
+          {t('common.search')}
         </button>
       </form>
 
@@ -116,8 +116,8 @@ export default function CustomersPage() {
       {customers.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <User className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Customers Yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">Add your first customer to get started</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('customers.noCustomers')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('customers.addFirst')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -133,7 +133,7 @@ export default function CustomersPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">{customer.name}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Since {new Date(customer.created_at).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('customers.since')} {new Date(customer.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -176,10 +176,10 @@ export default function CustomersPage() {
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-sm">
                 <div className="flex items-center gap-1 text-yellow-600">
                   <Star className="w-4 h-4" />
-                  <span>{customer.loyalty_points || 0} points</span>
+                  <span>{customer.loyalty_points || 0} {t('customers.points')}</span>
                 </div>
                 <div className="text-gray-500 dark:text-gray-400">
-                  Total: ${customer.total_spent?.toFixed(2) || '0.00'}
+                  {t('customers.totalLabel')} ${customer.total_spent?.toFixed(2) || '0.00'}
                 </div>
               </div>
             </div>
@@ -203,6 +203,7 @@ export default function CustomersPage() {
 }
 
 function CustomerForm({ customer, onSave, onClose }) {
+  const { t } = useAppStore()
   // Parse existing phone to extract country code and number
   const parsePhone = (phone) => {
     if (!phone) return { countryCode: '+20', number: '' }
@@ -225,20 +226,20 @@ function CustomerForm({ customer, onSave, onClose }) {
   })
 
   const countryCodes = [
-    { code: '+20', name: 'Egypt', flag: '🇪🇬' },
-    { code: '+966', name: 'Saudi Arabia', flag: '🇸🇦' },
-    { code: '+971', name: 'UAE', flag: '🇦🇪' },
-    { code: '+965', name: 'Kuwait', flag: '🇰🇼' },
-    { code: '+973', name: 'Bahrain', flag: '🇧🇭' },
-    { code: '+974', name: 'Qatar', flag: '🇶🇦' },
-    { code: '+968', name: 'Oman', flag: '🇴🇲' },
-    { code: '+962', name: 'Jordan', flag: '🇯🇴' },
-    { code: '+961', name: 'Lebanon', flag: '🇱🇧' },
-    { code: '+216', name: 'Tunisia', flag: '🇹🇳' },
-    { code: '+212', name: 'Morocco', flag: '🇲🇦' },
-    { code: '+213', name: 'Algeria', flag: '🇩🇿' },
-    { code: '+1', name: 'USA/Canada', flag: '🇺🇸' },
-    { code: '+44', name: 'UK', flag: '🇬🇧' },
+    { code: '+20', name: t('country.egypt'), flag: '🇪🇬' },
+    { code: '+966', name: t('country.saudiArabia'), flag: '🇸🇦' },
+    { code: '+971', name: t('country.uae'), flag: '🇦🇪' },
+    { code: '+965', name: t('country.kuwait'), flag: '🇰🇼' },
+    { code: '+973', name: t('country.bahrain'), flag: '🇧🇭' },
+    { code: '+974', name: t('country.qatar'), flag: '🇶🇦' },
+    { code: '+968', name: t('country.oman'), flag: '🇴🇲' },
+    { code: '+962', name: t('country.jordan'), flag: '🇯🇴' },
+    { code: '+961', name: t('country.lebanon'), flag: '🇱🇧' },
+    { code: '+216', name: t('country.tunisia'), flag: '🇹🇳' },
+    { code: '+212', name: t('country.morocco'), flag: '🇲🇦' },
+    { code: '+213', name: t('country.algeria'), flag: '🇩🇿' },
+    { code: '+1', name: t('country.usaCanada'), flag: '🇺🇸' },
+    { code: '+44', name: t('country.uk'), flag: '🇬🇧' },
   ]
 
   const handleChange = (e) => {
@@ -258,7 +259,7 @@ function CustomerForm({ customer, onSave, onClose }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
-            {customer ? 'Edit Customer' : 'Add New Customer'}
+            {customer ? t('customers.editCustomer') : t('customers.addCustomer')}
           </h2>
           <button
             onClick={onClose}
@@ -271,7 +272,7 @@ function CustomerForm({ customer, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Customer Name *
+              {t('customers.name')} *
             </label>
             <input
               type="text"
@@ -285,7 +286,7 @@ function CustomerForm({ customer, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Phone
+              {t('customers.phone')}
             </label>
             <div className="flex gap-2">
               <select
@@ -311,7 +312,7 @@ function CustomerForm({ customer, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
+              {t('customers.email')}
             </label>
             <input
               type="email"
@@ -324,7 +325,7 @@ function CustomerForm({ customer, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Address
+              {t('customers.address')}
             </label>
             <textarea
               name="address"
@@ -337,7 +338,7 @@ function CustomerForm({ customer, onSave, onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes
+              {t('customers.notes')}
             </label>
             <textarea
               name="notes"
@@ -354,13 +355,13 @@ function CustomerForm({ customer, onSave, onClose }) {
               onClick={onClose}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
-              {customer ? 'Update' : 'Add'} Customer
+              {customer ? t('common.edit') : t('common.add')} {t('customers.name')}
             </button>
           </div>
         </form>

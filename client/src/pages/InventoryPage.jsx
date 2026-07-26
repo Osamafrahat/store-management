@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useProductStore } from '../stores/productStore'
 import { useAppStore } from '../stores/appStore'
-import { productsApi, categoriesApi } from '../lib/api'
+import { useUserStore } from '../stores/userStore'
+import { productsApi, categoriesApi, suppliersApi } from '../lib/api'
 import ProductList from '../components/inventory/ProductList'
 import ProductForm from '../components/inventory/ProductForm'
 import CategoryManager from '../components/inventory/CategoryManager'
 import BarcodePrinter from '../components/BarcodePrinter'
-import { Plus, Package, Tag } from 'lucide-react'
+import InventoryPrintSheet from '../components/inventory/InventoryPrintSheet'
+import { Plus, Package, Tag, Printer, X } from 'lucide-react'
 
 export default function InventoryPage() {
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
-  const { t } = useAppStore()
+  const { t, settings } = useAppStore()
+  const { currentUser } = useUserStore()
   const [showProductForm, setShowProductForm] = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [activeTab, setActiveTab] = useState('products')
   const [barcodeProduct, setBarcodeProduct] = useState(null)
+  const [showPrintSheet, setShowPrintSheet] = useState(false)
+  const [suppliers, setSuppliers] = useState([])
 
   useEffect(() => {
     fetchData()
@@ -24,12 +29,14 @@ export default function InventoryPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
+      const [productsRes, categoriesRes, suppliersRes] = await Promise.all([
         productsApi.getAll(),
-        categoriesApi.getAll()
+        categoriesApi.getAll(),
+        suppliersApi.getAll()
       ])
       setProducts(productsRes.data)
       setCategories(categoriesRes.data)
+      setSuppliers(suppliersRes.data)
     } catch (err) {
       setError(err.message)
       console.error('Failed to fetch data:', err)
@@ -84,6 +91,13 @@ export default function InventoryPage() {
           <p className="text-gray-500 dark:text-gray-400">{t('inventory.subtitle')}</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowPrintSheet(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+          >
+            <Printer className="w-4 h-4" />
+            {t('inventory.printReport') || 'Print Report'}
+          </button>
           <button
             onClick={() => setShowCategoryManager(true)}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -143,6 +157,7 @@ export default function InventoryPage() {
         <ProductForm
           product={editingProduct}
           categories={categories}
+          suppliers={suppliers}
           onSave={handleSaveProduct}
           onClose={() => {
             setShowProductForm(false)
@@ -166,6 +181,31 @@ export default function InventoryPage() {
           product={barcodeProduct}
           onClose={() => setBarcodeProduct(null)}
         />
+      )}
+
+      {/* Print Inventory Sheet Modal */}
+      {showPrintSheet && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-10 pb-10 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-6xl mx-4 shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 no-print">
+              <h2 className="text-xl font-semibold">{t('inventory.inventoryReport') || 'Inventory Report'}</h2>
+              <button
+                onClick={() => setShowPrintSheet(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <InventoryPrintSheet
+                products={products}
+                categories={categories}
+                settings={settings}
+                user={currentUser}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

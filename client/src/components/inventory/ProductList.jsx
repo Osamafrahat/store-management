@@ -82,28 +82,28 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('name')} className="flex items-center gap-1">
                   {t('inventory.name')} <SortIcon field="name" />
                 </button>
               </th>
-              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('sku')} className="flex items-center gap-1">
                   {t('inventory.sku')} <SortIcon field="sku" />
                 </button>
               </th>
-              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('price')} className="flex items-center gap-1">
                   {t('inventory.price')} <SortIcon field="price" />
                 </button>
               </th>
-              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">
                 <button onClick={() => handleSort('stock_quantity')} className="flex items-center gap-1">
                   {t('inventory.stock')} <SortIcon field="stock_quantity" />
                 </button>
               </th>
-              <th className="text-left p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.status')}</th>
-              <th className="text-right p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.status')}</th>
+              <th className="text-end p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">

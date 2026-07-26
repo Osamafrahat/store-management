@@ -15,6 +15,17 @@ export const PERMISSIONS = {
   SETTINGS_VIEW: 'settings_view',
   SETTINGS_EDIT: 'settings_edit',
   USER_MANAGE: 'user_manage',
+  CUSTOMERS_VIEW: 'customers_view',
+  CUSTOMERS_EDIT: 'customers_edit',
+  EXPENSES_VIEW: 'expenses_view',
+  EXPENSES_EDIT: 'expenses_edit',
+  REFUNDS_VIEW: 'refunds_view',
+  REFUNDS_EDIT: 'refunds_edit',
+  EMPLOYEES_VIEW: 'employees_view',
+  EMPLOYEES_EDIT: 'employees_edit',
+  ACCOUNTING_VIEW: 'accounting_view',
+  ACCOUNTING_EDIT: 'accounting_edit',
+  ACCOUNTING_POST: 'accounting_post',
 }
 
 // Role definitions with default permissions
@@ -24,12 +35,47 @@ export const ROLES = {
     nameAr: 'مدير',
     permissions: Object.values(PERMISSIONS),
   },
+  SALES_MANAGER: {
+    name: 'Sales Manager',
+    nameAr: 'مدير المبيعات',
+    permissions: [
+      PERMISSIONS.POS_ACCESS,
+      PERMISSIONS.INVENTORY_VIEW,
+      PERMISSIONS.REPORTS_VIEW,
+      PERMISSIONS.SUPPLIERS_VIEW,
+      PERMISSIONS.PROMOTIONS_VIEW,
+      PERMISSIONS.PROMOTIONS_EDIT,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.CUSTOMERS_EDIT,
+      PERMISSIONS.REFUNDS_VIEW,
+      PERMISSIONS.REFUNDS_EDIT,
+      PERMISSIONS.EXPENSES_VIEW,
+      PERMISSIONS.EMPLOYEES_VIEW,
+    ],
+  },
   CASHIER: {
     name: 'Cashier',
     nameAr: 'كاشير',
     permissions: [
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.REPORTS_VIEW,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.CUSTOMERS_EDIT,
+      PERMISSIONS.REFUNDS_VIEW,
+    ],
+  },
+  SENIOR_CASHIER: {
+    name: 'Senior Cashier',
+    nameAr: 'كاشير أول',
+    permissions: [
+      PERMISSIONS.POS_ACCESS,
+      PERMISSIONS.INVENTORY_VIEW,
+      PERMISSIONS.REPORTS_VIEW,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.CUSTOMERS_EDIT,
+      PERMISSIONS.REFUNDS_VIEW,
+      PERMISSIONS.REFUNDS_EDIT,
+      PERMISSIONS.PROMOTIONS_VIEW,
     ],
   },
   INVENTORY_CLERK: {
@@ -39,6 +85,19 @@ export const ROLES = {
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.INVENTORY_EDIT,
       PERMISSIONS.POS_ACCESS,
+      PERMISSIONS.SUPPLIERS_VIEW,
+      PERMISSIONS.SUPPLIERS_EDIT,
+    ],
+  },
+  SALES_ASSOCIATE: {
+    name: 'Sales Associate',
+    nameAr: 'موظف مبيعات',
+    permissions: [
+      PERMISSIONS.POS_ACCESS,
+      PERMISSIONS.INVENTORY_VIEW,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.CUSTOMERS_EDIT,
+      PERMISSIONS.PROMOTIONS_VIEW,
     ],
   },
   VIEWER: {
@@ -50,6 +109,25 @@ export const ROLES = {
       PERMISSIONS.REPORTS_VIEW,
       PERMISSIONS.SUPPLIERS_VIEW,
       PERMISSIONS.PROMOTIONS_VIEW,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.EXPENSES_VIEW,
+      PERMISSIONS.REFUNDS_VIEW,
+      PERMISSIONS.EMPLOYEES_VIEW,
+    ],
+  },
+  ACCOUNTANT: {
+    name: 'Accountant',
+    nameAr: 'محاسب',
+    permissions: [
+      PERMISSIONS.ACCOUNTING_VIEW,
+      PERMISSIONS.ACCOUNTING_EDIT,
+      PERMISSIONS.ACCOUNTING_POST,
+      PERMISSIONS.REPORTS_VIEW,
+      PERMISSIONS.EXPENSES_VIEW,
+      PERMISSIONS.EXPENSES_EDIT,
+      PERMISSIONS.SUPPLIERS_VIEW,
+      PERMISSIONS.CUSTOMERS_VIEW,
+      PERMISSIONS.EMPLOYEES_VIEW,
     ],
   },
 }
@@ -75,14 +153,22 @@ export const useUserStore = create(
           // Store token
           localStorage.setItem('auth_token', token)
 
+          // Map snake_case to camelCase
+          const mappedUser = {
+            ...user,
+            fullName: user.full_name,
+            phone: user.phone,
+            email: user.email,
+          }
+
           set({
-            currentUser: user,
+            currentUser: mappedUser,
             isAuthenticated: true,
             lastActivity: Date.now(),
             token
           })
 
-          return { success: true, user }
+          return { success: true, user: mappedUser }
         } catch (err) {
           const message = err.response?.data?.error || 'Login failed'
           return { success: false, error: message }
@@ -156,10 +242,10 @@ export const useUserStore = create(
           '/promotions': PERMISSIONS.PROMOTIONS_VIEW,
           '/settings': PERMISSIONS.SETTINGS_VIEW,
           '/users': PERMISSIONS.USER_MANAGE,
-          '/customers': PERMISSIONS.POS_ACCESS,
-          '/employees': PERMISSIONS.USER_MANAGE,
-          '/expenses': PERMISSIONS.REPORTS_VIEW,
-          '/refunds': PERMISSIONS.POS_ACCESS,
+          '/customers': PERMISSIONS.CUSTOMERS_VIEW,
+          '/employees': PERMISSIONS.EMPLOYEES_VIEW,
+          '/expenses': PERMISSIONS.EXPENSES_VIEW,
+          '/refunds': PERMISSIONS.REFUNDS_VIEW,
         }
 
         const requiredPermission = routePermissions[route]
@@ -210,6 +296,8 @@ export const useUserStore = create(
             isActive: u.is_active,
             mustChangePassword: u.must_change_password,
             lastLogin: u.last_login,
+            employeeId: u.employee_id,
+            employee: u.employee || null,
             createdAt: u.created_at,
             updatedAt: u.updated_at,
           }))
@@ -228,6 +316,7 @@ export const useUserStore = create(
             fullName: userData.fullName,
             role: userData.role,
             permissions: userData.permissions,
+            employeeId: userData.employeeId || null,
           })
           const mapped = {
             id: data.id,
@@ -237,6 +326,7 @@ export const useUserStore = create(
             permissions: typeof data.permissions === 'string' ? JSON.parse(data.permissions) : (data.permissions || []),
             isActive: data.is_active,
             mustChangePassword: data.must_change_password,
+            employeeId: data.employee_id,
           }
           set(state => ({ users: [mapped, ...state.users] }))
           return { success: true }
@@ -253,6 +343,7 @@ export const useUserStore = create(
           if (userData.role) payload.role = userData.role
           if (userData.permissions) payload.permissions = userData.permissions
           if (userData.password) payload.password = userData.password
+          if (userData.employeeId !== undefined) payload.employeeId = userData.employeeId
 
           const { data } = await usersApi.update(userId, payload)
           const mapped = {
@@ -263,6 +354,7 @@ export const useUserStore = create(
             permissions: typeof data.permissions === 'string' ? JSON.parse(data.permissions) : (data.permissions || []),
             isActive: data.is_active,
             mustChangePassword: data.must_change_password,
+            employeeId: data.employee_id,
           }
           set(state => ({
             users: state.users.map(u => u.id === userId ? mapped : u)

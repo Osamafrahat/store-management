@@ -109,8 +109,8 @@ export default function ExpensesPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Expenses</h1>
-          <p className="text-gray-500 dark:text-gray-400">Track and manage business expenses</p>
+          <h1 className="text-2xl font-bold">{t('expenses.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('expenses.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -120,7 +120,7 @@ export default function ExpensesPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
           <Plus className="w-4 h-4" />
-          Add Expense
+          {t('expenses.addExpense')}
         </button>
       </div>
 
@@ -132,7 +132,7 @@ export default function ExpensesPage() {
               <DollarSign className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Expenses</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('expenses.totalExpenses')}</p>
               <p className="text-xl font-bold">${summary.total?.toFixed(2) || '0.00'}</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function ExpensesPage() {
               <Receipt className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Total Records</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('expenses.totalRecords')}</p>
               <p className="text-xl font-bold">{expenses.length}</p>
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function ExpensesPage() {
               <TrendingDown className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Categories</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('expenses.categories')}</p>
               <p className="text-xl font-bold">{Object.keys(summary.summary || {}).length}</p>
             </div>
           </div>
@@ -164,11 +164,11 @@ export default function ExpensesPage() {
       {/* Category Summary */}
       {Object.keys(summary.summary || {}).length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <h3 className="font-semibold mb-3">Expenses by Category</h3>
+          <h3 className="font-semibold mb-3">{t('expenses.byCategory')}</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {Object.entries(summary.summary).map(([category, amount]) => (
               <div key={category} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                <p className="text-sm text-gray-500 dark:text-gray-400">{category}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('expense.' + category.toLowerCase()) || category}</p>
                 <p className="font-semibold">${amount.toFixed(2)}</p>
               </div>
             ))}
@@ -186,7 +186,7 @@ export default function ExpensesPage() {
             onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
             className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
           />
-          <span className="text-gray-500">to</span>
+          <span className="text-gray-500">{t('expenses.to')}</span>
           <input
             type="date"
             value={dateFilter.end}
@@ -199,9 +199,9 @@ export default function ExpensesPage() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
         >
-          <option value="">All Categories</option>
+          <option value="">{t('expenses.allCategories')}</option>
           {EXPENSE_CATEGORIES.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat}>{t('expense.' + cat.toLowerCase()) || cat}</option>
           ))}
         </select>
       </div>
@@ -210,19 +210,19 @@ export default function ExpensesPage() {
       {expenses.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <Receipt className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Expenses Yet</h3>
-          <p className="text-gray-500 dark:text-gray-400">Record your first expense to get started</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('expenses.noExpenses')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('expenses.addFirst')}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Date</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Category</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Description</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Amount</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.date')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.category')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.description')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.amount')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -231,7 +231,7 @@ export default function ExpensesPage() {
                   <td className="px-4 py-3 text-sm">{new Date(expense.expense_date).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-sm">
                     <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700">
-                      {expense.category}
+                      {t('expense.' + expense.category.toLowerCase()) || expense.category}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{expense.description || '-'}</td>
@@ -275,6 +275,7 @@ export default function ExpensesPage() {
 }
 
 function ExpenseForm({ expense, onSave, onClose }) {
+  const { t } = useAppStore()
   const [formData, setFormData] = useState({
     category: expense?.category || EXPENSE_CATEGORIES[0],
     amount: expense?.amount || '',
@@ -300,7 +301,7 @@ function ExpenseForm({ expense, onSave, onClose }) {
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
-            {expense ? 'Edit Expense' : 'Add New Expense'}
+            {expense ? t('expenses.editExpense') : t('expenses.addExpense')}
           </h2>
           <button
             onClick={onClose}
@@ -314,7 +315,7 @@ function ExpenseForm({ expense, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category *
+                {t('expenses.category')} *
               </label>
               <select
                 name="category"
@@ -324,13 +325,13 @@ function ExpenseForm({ expense, onSave, onClose }) {
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               >
                 {EXPENSE_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>{t('expense.' + cat.toLowerCase()) || cat}</option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Amount *
+                {t('expenses.amount')} *
               </label>
               <input
                 type="number"
@@ -346,9 +347,9 @@ function ExpenseForm({ expense, onSave, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Date
-            </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('expenses.date')}
+              </label>
             <input
               type="date"
               name="expense_date"
@@ -359,9 +360,9 @@ function ExpenseForm({ expense, onSave, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('expenses.description')}
+              </label>
             <textarea
               name="description"
               value={formData.description}
@@ -377,13 +378,13 @@ function ExpenseForm({ expense, onSave, onClose }) {
               onClick={onClose}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
-              {expense ? 'Update' : 'Add'} Expense
+              {expense ? t('common.edit') : t('common.add')} {t('expenses.title')}
             </button>
           </div>
         </form>
