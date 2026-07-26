@@ -45,7 +45,7 @@ app.use(helmet({
 // CORS Configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173']
+    ? (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean).concat(['http://localhost:5173'])
     : '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
