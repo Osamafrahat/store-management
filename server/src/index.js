@@ -2,10 +2,14 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler.js'
 import { authRouter } from './routes/auth.js'
 import { authenticateToken } from './middleware/auth.js'
 import supabase from './db/supabase.js'
+
+// Load environment variables
+dotenv.config()
 
 // Routes
 import productsRouter from './routes/products.js'
@@ -17,6 +21,11 @@ import promotionsRouter from './routes/promotions.js'
 import reportsRouter from './routes/reports.js'
 import settingsRouter from './routes/settings.js'
 import usersRouter from './routes/users.js'
+import customersRouter from './routes/customers.js'
+import employeesRouter from './routes/employees.js'
+import expensesRouter from './routes/expenses.js'
+import refundsRouter from './routes/refunds.js'
+import notificationsRouter from './routes/notifications.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -77,6 +86,11 @@ app.use('/api/promotions', authenticateToken, promotionsRouter)
 app.use('/api/reports', authenticateToken, reportsRouter)
 app.use('/api/settings', authenticateToken, settingsRouter)
 app.use('/api/users', authenticateToken, usersRouter)
+app.use('/api/customers', authenticateToken, customersRouter)
+app.use('/api/employees', authenticateToken, employeesRouter)
+app.use('/api/expenses', authenticateToken, expensesRouter)
+app.use('/api/refunds', authenticateToken, refundsRouter)
+app.use('/api/notifications', authenticateToken, notificationsRouter)
 
 // Health check
 app.get('/api/health', async (req, res) => {

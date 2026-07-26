@@ -36,6 +36,25 @@ export const useAppStore = create(
       sidebarOpen: true,
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
+      // Toast notifications
+      toasts: [],
+      addToast: (toast) => {
+        const id = Date.now() + Math.random()
+        set((state) => ({
+          toasts: [...state.toasts, { ...toast, id }]
+        }))
+        return id
+      },
+      removeToast: (id) => set((state) => ({
+        toasts: state.toasts.filter(t => t.id !== id)
+      })),
+
+      // Helper functions for toasts
+      toastSuccess: (message, title) => get().addToast({ type: 'success', message, title }),
+      toastError: (message, title) => get().addToast({ type: 'error', message, title }),
+      toastWarning: (message, title) => get().addToast({ type: 'warning', message, title }),
+      toastInfo: (message, title) => get().addToast({ type: 'info', message, title }),
+
       // Notifications
       notifications: [],
       addNotification: (notification) => set((state) => ({

@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useAppStore } from '../stores/appStore'
-import { productsApi, categoriesApi, promotionsApi, ordersApi } from '../lib/api'
+import { useUserStore } from '../stores/userStore'
+import { productsApi, categoriesApi, promotionsApi, ordersApi, customersApi } from '../lib/api'
 import { formatCurrency, generateOrderNumber } from '../lib/utils'
 import ProductGrid from '../components/pos/ProductGrid'
 import Cart from '../components/pos/Cart'
 import PaymentModal from '../components/pos/PaymentModal'
 import BarcodeScanner from '../components/pos/BarcodeScanner'
 import ReceiptModal from '../components/pos/ReceiptModal'
-import { Search, ShoppingCart, Zap } from 'lucide-react'
+import { Search, ShoppingCart, Zap, User } from 'lucide-react'
 
 export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -18,13 +19,17 @@ export default function POSPage() {
   const [showScanner, setShowScanner] = useState(false)
   const [lastOrder, setLastOrder] = useState(null)
   const [showReceipt, setShowReceipt] = useState(false)
+  const [customers, setCustomers] = useState([])
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [customerSearch, setCustomerSearch] = useState('')
   const searchInputRef = useRef(null)
 
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
   const { addItem, items, getTotal } = useCartStore()
   const { settings, t } = useAppStore()
+  const { currentUser } = useUserStore()
 
-  // Fetch products and categories on mount
+  // Fetch products, categories, and customers on mount
   useEffect(() => {
     fetchData()
   }, [])
@@ -37,12 +42,14 @@ export default function POSPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
+      const [productsRes, categoriesRes, customersRes] = await Promise.all([
         productsApi.getAll(),
-        categoriesApi.getAll()
+        categoriesApi.getAll(),
+        customersApi.getAll()
       ])
       setProducts(productsRes.data)
       setCategories(categoriesRes.data)
+      setCustomers(customersRes.data)
     } catch (err) {
       setError(err.message)
       console.error('Failed to fetch data:', err)
@@ -84,6 +91,12 @@ export default function POSPage() {
       )
     }
     return true
+  })
+
+  const filteredCustomers = customers.filter(c => {
+    if (!customerSearch) return true
+    const query = customerSearch.toLowerCase()
+    return c.name?.toLowerCase().includes(query) || c.phone?.includes(query)
   })
 
   return (
@@ -147,8 +160,59 @@ export default function POSPage() {
       </div>
 
       {/* Right side - Cart */}
-      <div className="w-96 flex-shrink-0">
-        <Cart onCheckout={() => setShowPayment(true)} />
+      <div className="w-96 flex-shrink-0 flex flex-col gap-3">
+        {/* Customer Selection */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('pos.selectCustomer')}</span>
+          </div>
+          {selectedCustomer ? (
+            <div className="flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 rounded-lg p-2">
+              <div>
+                <p className="font-medium text-sm">{selectedCustomer.name}</p>
+                <p className="text-xs text-gray-500">{selectedCustomer.phone || ''} | {selectedCustomer.loyalty_points || 0} pts</p>
+              </div>
+              <button
+                onClick={() => setSelectedCustomer(null)}
+                className="text-gray-400 hover:text-red-500 text-sm"
+              >
+                {t('pos.remove')}
+              </button>
+            </div>
+          ) : (
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={t('pos.searchCustomer')}
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              />
+              {customerSearch && filteredCustomers.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-auto">
+                  {filteredCustomers.slice(0, 5).map(customer => (
+                    <button
+                      key={customer.id}
+                      onClick={() => {
+                        setSelectedCustomer(customer)
+                        setCustomerSearch('')
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <p className="font-medium">{customer.name}</p>
+                      <p className="text-xs text-gray-500">{customer.phone || ''}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1">
+          <Cart onCheckout={() => setShowPayment(true)} />
+        </div>
       </div>
 
       {/* Payment Modal */}
@@ -172,20 +236,32 @@ export default function POSPage() {
                 payment_method: paymentData.method,
                 payment_status: 'paid',
                 payments: paymentData.payments,
+                user_id: currentUser?.id,
+                customer_id: selectedCustomer?.id || null,
                 created_at: new Date().toISOString(),
               }
               const response = await ordersApi.create(orderData)
-              const completedOrder = {
-                ...orderData,
-                id: response.data?.id,
-                order_number: orderData.order_number,
-                items: items.map(item => ({
-                  product_name: item.product.name,
-                  quantity: item.quantity,
-                  unit_price: item.product.price,
-                })),
+              // Fetch the full order with user data for receipt
+              let completedOrder
+              if (response.data?.id) {
+                const fullOrderRes = await ordersApi.getById(response.data.id)
+                completedOrder = {
+                  ...fullOrderRes.data,
+                  items: items.map(item => ({
+                    product_name: item.product.name,
+                    quantity: item.quantity,
+                    unit_price: item.product.price,
+                  })),
+                }
+              } else {
+                completedOrder = {
+                  ...orderData,
+                  users: currentUser ? { full_name: currentUser.fullName } : null,
+                  customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                }
               }
               setLastOrder(completedOrder)
+              setSelectedCustomer(null)
               useCartStore.getState().clearCart()
               setShowPayment(false)
               setShowReceipt(true)

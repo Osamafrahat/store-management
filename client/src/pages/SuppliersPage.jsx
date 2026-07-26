@@ -4,7 +4,7 @@ import { suppliersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, Truck, Phone, Mail, MapPin } from 'lucide-react'
 
 export default function SuppliersPage() {
-  const { t } = useAppStore()
+  const { t, toastSuccess, toastError } = useAppStore()
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -35,10 +35,11 @@ export default function SuppliersPage() {
     if (!confirm(t('suppliers.deleteConfirm'))) return
     try {
       await suppliersApi.delete(id)
+      toastSuccess(t('suppliers.deleted') || 'Supplier deleted successfully')
       fetchSuppliers()
     } catch (err) {
       console.error('Failed to delete supplier:', err)
-      alert(t('suppliers.failedToDelete'))
+      toastError(t('suppliers.failedToDelete'))
     }
   }
 
@@ -46,15 +47,17 @@ export default function SuppliersPage() {
     try {
       if (editingSupplier) {
         await suppliersApi.update(editingSupplier.id, supplierData)
+        toastSuccess(t('suppliers.updated') || 'Supplier updated successfully')
       } else {
         await suppliersApi.create(supplierData)
+        toastSuccess(t('suppliers.created') || 'Supplier added successfully')
       }
       setShowForm(false)
       setEditingSupplier(null)
       fetchSuppliers()
     } catch (err) {
       console.error('Failed to save supplier:', err)
-      alert(t('suppliers.failedToSave'))
+      toastError(t('suppliers.failedToSave'))
     }
   }
 

@@ -156,6 +156,10 @@ export const useUserStore = create(
           '/promotions': PERMISSIONS.PROMOTIONS_VIEW,
           '/settings': PERMISSIONS.SETTINGS_VIEW,
           '/users': PERMISSIONS.USER_MANAGE,
+          '/customers': PERMISSIONS.POS_ACCESS,
+          '/employees': PERMISSIONS.USER_MANAGE,
+          '/expenses': PERMISSIONS.REPORTS_VIEW,
+          '/refunds': PERMISSIONS.POS_ACCESS,
         }
 
         const requiredPermission = routePermissions[route]

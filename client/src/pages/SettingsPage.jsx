@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { settingsApi } from '../lib/api'
 import { languageNames } from '../lib/translations'
-import { Save, Store, Percent, Receipt, AlertTriangle, Globe } from 'lucide-react'
+import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { settings, updateSettings, language, setLanguage, t } = useAppStore()
+  const { settings, updateSettings, language, setLanguage, t, toastSuccess, toastError } = useAppStore()
   const [formData, setFormData] = useState(settings)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   const handleChange = (e) => {
     const { name, value, type } = e.target
@@ -24,11 +23,10 @@ export default function SettingsPage() {
     try {
       await settingsApi.update(formData)
       updateSettings(formData)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      toastSuccess(t('settings.saved'))
     } catch (err) {
       console.error('Failed to save settings:', err)
-      alert(t('common.error'))
+      toastError(t('common.error') || 'Failed to save settings')
     } finally {
       setSaving(false)
     }
@@ -240,6 +238,34 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Loyalty Points Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <Star className="w-5 h-5 text-yellow-600" />
+            </div>
+            <h2 className="text-lg font-semibold">{t('settings.loyaltyPoints')}</h2>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('settings.loyaltyPointsPerCurrency')}
+            </label>
+            <input
+              type="number"
+              name="loyaltyPointsPerCurrency"
+              value={formData.loyaltyPointsPerCurrency || 0}
+              onChange={handleChange}
+              min="0"
+              step="0.1"
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+            />
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t('settings.loyaltyPointsDesc')} (e.g., 1 = 1 point per $1 spent)
+            </p>
+          </div>
+        </div>
+
         {/* Save Button */}
         <div className="flex justify-end">
           <button
@@ -248,7 +274,7 @@ export default function SettingsPage() {
             className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5" />
-            {saving ? t('common.loading') : saved ? t('settings.saved') : t('settings.save')}
+            {saving ? t('common.loading') : t('settings.save')}
           </button>
         </div>
       </form>

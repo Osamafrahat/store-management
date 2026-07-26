@@ -115,4 +115,47 @@ export const usersApi = {
   delete: (id) => api.delete(`/users/${id}`),
 }
 
+// Customers API
+export const customersApi = {
+  getAll: (params) => api.get('/customers', { params }),
+  getById: (id) => api.get(`/customers/${id}`),
+  create: (data) => api.post('/customers', data),
+  update: (id, data) => api.put(`/customers/${id}`, data),
+  delete: (id) => api.delete(`/customers/${id}`),
+}
+
+// Employees API
+export const employeesApi = {
+  getAll: () => api.get('/employees'),
+  getById: (id) => api.get(`/employees/${id}`),
+  create: (data) => api.post('/employees', data),
+  update: (id, data) => api.put(`/employees/${id}`, data),
+  delete: (id) => api.delete(`/employees/${id}`),
+}
+
+// Expenses API
+export const expensesApi = {
+  getAll: (params) => api.get('/expenses', { params }),
+  getSummary: (params) => api.get('/expenses/summary', { params }),
+  create: (data) => api.post('/expenses', data),
+  update: (id, data) => api.put(`/expenses/${id}`, data),
+  delete: (id) => api.delete(`/expenses/${id}`),
+}
+
+// Refunds API
+export const refundsApi = {
+  getAll: () => api.get('/refunds'),
+  getById: (id) => api.get(`/refunds/${id}`),
+  create: (data) => api.post('/refunds', data),
+}
+
+// Notifications API
+export const notificationsApi = {
+  getAll: () => api.get('/notifications'),
+  sendPromotion: (promotionId, options = {}) => api.post('/notifications/promotion', { promotion_id: promotionId, ...options }),
+  sendCustom: (data) => api.post('/notifications/custom', data),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  sendWhatsApp: (data) => api.post('/notifications/whatsapp', data),
+}
+
 export default api

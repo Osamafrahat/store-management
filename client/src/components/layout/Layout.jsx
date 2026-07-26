@@ -21,6 +21,9 @@ import {
   LogOut,
   User,
   LayoutDashboard,
+  UserCheck,
+  Receipt,
+  RotateCcw,
 } from 'lucide-react'
 
 export default function Layout({ children }) {
@@ -56,7 +59,19 @@ export default function Layout({ children }) {
     navigation.push({ name: t('nav.settings'), href: '/settings', icon: Settings })
   }
   if (hasPermission(PERMISSIONS.USER_MANAGE)) {
-    navigation.push({ name: 'Users', href: '/users', icon: Users })
+    navigation.push({ name: t('nav.users') || 'Users', href: '/users', icon: Users })
+  }
+  if (canAccess('/customers')) {
+    navigation.push({ name: t('nav.customers') || 'Customers', href: '/customers', icon: UserCheck })
+  }
+  if (canAccess('/employees')) {
+    navigation.push({ name: t('nav.employees') || 'Employees', href: '/employees', icon: Users })
+  }
+  if (canAccess('/expenses')) {
+    navigation.push({ name: t('nav.expenses') || 'Expenses', href: '/expenses', icon: Receipt })
+  }
+  if (canAccess('/refunds')) {
+    navigation.push({ name: t('nav.refunds') || 'Refunds', href: '/refunds', icon: RotateCcw })
   }
 
   const handleLogout = () => {
@@ -313,33 +328,22 @@ export default function Layout({ children }) {
                 {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
 
-              {/* User Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <User className="w-4 h-4 text-primary-600" />
-                  </div>
-                  <span className="hidden sm:block text-sm font-medium">{currentUser?.fullName}</span>
-                </button>
-                {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
-                    <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                      <p className="font-medium text-sm">{currentUser?.fullName}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{currentUser?.role}</p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
+              {/* User Info */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary-600" />
+                </div>
+                <span className="text-sm font-medium">{currentUser?.fullName}</span>
               </div>
+
+              {/* Sign Out Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline text-sm font-medium">{t('users.signOut')}</span>
+              </button>
             </div>
           </div>
         </header>

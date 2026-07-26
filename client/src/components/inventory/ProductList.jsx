@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
-import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle } from 'lucide-react'
+import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle, QrCode } from 'lucide-react'
 
-export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
+export default function ProductList({ products, onEdit, onDelete, onPrintBarcode, onRefresh }) {
   const { t } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState('name')
@@ -156,6 +156,13 @@ export default function ProductList({ products, onEdit, onDelete, onRefresh }) {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => onPrintBarcode?.(product)}
+                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
+                      title="Print Barcode"
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => onEdit(product)}
                       className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"

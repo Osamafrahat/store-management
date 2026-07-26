@@ -5,6 +5,7 @@ import { productsApi, categoriesApi } from '../lib/api'
 import ProductList from '../components/inventory/ProductList'
 import ProductForm from '../components/inventory/ProductForm'
 import CategoryManager from '../components/inventory/CategoryManager'
+import BarcodePrinter from '../components/BarcodePrinter'
 import { Plus, Package, Tag } from 'lucide-react'
 
 export default function InventoryPage() {
@@ -14,6 +15,7 @@ export default function InventoryPage() {
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [activeTab, setActiveTab] = useState('products')
+  const [barcodeProduct, setBarcodeProduct] = useState(null)
 
   useEffect(() => {
     fetchData()
@@ -132,6 +134,7 @@ export default function InventoryPage() {
         }
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
+        onPrintBarcode={(product) => setBarcodeProduct(product)}
         onRefresh={fetchData}
       />
 
@@ -154,6 +157,14 @@ export default function InventoryPage() {
           categories={categories}
           onClose={() => setShowCategoryManager(false)}
           onRefresh={fetchData}
+        />
+      )}
+
+      {/* Barcode Printer Modal */}
+      {barcodeProduct && (
+        <BarcodePrinter
+          product={barcodeProduct}
+          onClose={() => setBarcodeProduct(null)}
         />
       )}
     </div>

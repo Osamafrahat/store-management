@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAppStore } from './stores/appStore'
 import { useUserStore } from './stores/userStore'
 import Layout from './components/layout/Layout'
+import Toast from './components/Toast'
 import SessionTimeout from './components/SessionTimeout'
 import ForcePasswordChange from './components/ForcePasswordChange'
 import LoginPage from './pages/LoginPage'
@@ -14,6 +15,10 @@ import SuppliersPage from './pages/SuppliersPage'
 import PromotionsPage from './pages/PromotionsPage'
 import SettingsPage from './pages/SettingsPage'
 import UsersPage from './pages/UsersPage'
+import CustomersPage from './pages/CustomersPage'
+import EmployeesPage from './pages/EmployeesPage'
+import ExpensesPage from './pages/ExpensesPage'
+import RefundsPage from './pages/RefundsPage'
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -41,6 +46,9 @@ function App() {
     <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <Router>
+          {/* Toast Notifications */}
+          <Toast />
+
           {/* Session Timeout Handler */}
           <SessionTimeout />
 
@@ -94,6 +102,26 @@ function App() {
             <Route path="/users" element={
               <ProtectedRoute>
                 <Layout><UsersPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/customers" element={
+              <ProtectedRoute>
+                <Layout><CustomersPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/employees" element={
+              <ProtectedRoute>
+                <Layout><EmployeesPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/expenses" element={
+              <ProtectedRoute>
+                <Layout><ExpensesPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/refunds" element={
+              <ProtectedRoute>
+                <Layout><RefundsPage /></Layout>
               </ProtectedRoute>
             } />
 

@@ -53,6 +53,12 @@ export default function ReceiptModal({ order, onClose }) {
           <span>${t('receipt.date')}:</span>
           <span>${formatDateTime(order.created_at || new Date())}</span>
         </div>
+        ${order.users?.full_name ? `
+          <div class="row">
+            <span>Cashier:</span>
+            <span>${order.users.full_name}</span>
+          </div>
+        ` : ''}
         <div class="divider"></div>
         <div style="font-weight: bold; margin-bottom: 5px;">${t('receipt.items')}:</div>
         ${order.items.map(item => `
@@ -143,10 +149,16 @@ export default function ReceiptModal({ order, onClose }) {
               <span className="text-gray-500">{t('receipt.orderNumber')}:</span>
               <span className="font-semibold">{order.order_number}</span>
             </div>
-            <div className="flex justify-between mb-3">
+            <div className="flex justify-between mb-1">
               <span className="text-gray-500">{t('receipt.date')}:</span>
               <span>{formatDateTime(order.created_at || new Date())}</span>
             </div>
+            {order.users?.full_name && (
+              <div className="flex justify-between mb-3">
+                <span className="text-gray-500">Cashier:</span>
+                <span>{order.users.full_name}</span>
+              </div>
+            )}
 
             <hr className="border-dashed border-gray-300 my-3" />
 

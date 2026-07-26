@@ -24,7 +24,22 @@ router.get('/', async (req, res, next) => {
     const { data, error } = await query
     if (error) throw error
 
-    res.json(data)
+    // Enrich with user and customer names
+    const enriched = await Promise.all((data || []).map(async (order) => {
+      let user_name = null
+      let customer_name = null
+      if (order.user_id) {
+        const { data: u } = await supabase.from('users').select('full_name').eq('id', order.user_id).single()
+        user_name = u?.full_name || null
+      }
+      if (order.customer_id) {
+        const { data: c } = await supabase.from('customers').select('name').eq('id', order.customer_id).single()
+        customer_name = c?.name || null
+      }
+      return { ...order, users: user_name ? { full_name: user_name } : null, customers: customer_name ? { name: customer_name } : null }
+    }))
+
+    res.json(enriched)
   } catch (err) {
     next(err)
   }
@@ -43,6 +58,20 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ error: 'Order not found' })
     }
 
+    // Get user name
+    let user_name = null
+    if (order.user_id) {
+      const { data: u } = await supabase.from('users').select('full_name').eq('id', order.user_id).single()
+      user_name = u?.full_name || null
+    }
+
+    // Get customer name
+    let customer_name = null
+    if (order.customer_id) {
+      const { data: c } = await supabase.from('customers').select('name').eq('id', order.customer_id).single()
+      customer_name = c?.name || null
+    }
+
     // Get order items
     const { data: items } = await supabase
       .from('order_items')
@@ -55,7 +84,13 @@ router.get('/:id', async (req, res, next) => {
       .select('*')
       .eq('order_id', order.id)
 
-    res.json({ ...order, items: items || [], payments: payments || [] })
+    res.json({
+      ...order,
+      users: user_name ? { full_name: user_name } : null,
+      customers: customer_name ? { name: customer_name } : null,
+      items: items || [],
+      payments: payments || []
+    })
   } catch (err) {
     next(err)
   }
@@ -65,7 +100,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { order_number, items, subtotal, discount_amount, tax_amount, total,
-      payment_method, payment_status, payments } = req.body
+      payment_method, payment_status, payments, user_id, customer_id } = req.body
 
     if (!order_number || !items || items.length === 0) {
       return res.status(400).json({ error: 'Order number and items are required' })
@@ -82,12 +117,65 @@ router.post('/', async (req, res, next) => {
         total,
         payment_method: payment_method || 'cash',
         payment_status: payment_status || 'paid',
+        user_id: user_id || req.user?.id || null,
+        customer_id: customer_id || null,
         completed_at: new Date().toISOString()
       })
       .select()
       .single()
 
     if (orderError) throw orderError
+
+    // Award loyalty points to customer if linked
+    if (customer_id) {
+      // Get loyalty points setting
+      const { data: setting } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'loyaltyPointsPerCurrency')
+        .single()
+
+      const pointsPerCurrency = parseFloat(setting?.value) || 0
+
+      if (pointsPerCurrency > 0) {
+        const pointsEarned = Math.floor(total * pointsPerCurrency)
+
+        // Update customer loyalty points and total spent
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('loyalty_points, total_spent')
+          .eq('id', customer_id)
+          .single()
+
+        if (customer) {
+          await supabase
+            .from('customers')
+            .update({
+              loyalty_points: (customer.loyalty_points || 0) + pointsEarned,
+              total_spent: (customer.total_spent || 0) + total,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', customer_id)
+        }
+      } else {
+        // Still update total spent even if no points
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('total_spent')
+          .eq('id', customer_id)
+          .single()
+
+        if (customer) {
+          await supabase
+            .from('customers')
+            .update({
+              total_spent: (customer.total_spent || 0) + total,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', customer_id)
+        }
+      }
+    }
 
     // Create order items and update stock
     for (const item of items) {

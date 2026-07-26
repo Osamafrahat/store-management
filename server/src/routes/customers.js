@@ -1,0 +1,164 @@
+import { Router } from 'express'
+import { body, param, validationResult } from 'express-validator'
+import supabase from '../db/supabase.js'
+
+const router = Router()
+
+const validate = (req, res, next) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: errors.array()[0].msg })
+  }
+  next()
+}
+
+// Get all customers
+router.get('/', async (req, res, next) => {
+  try {
+    const { search } = req.query
+    let query = supabase
+      .from('customers')
+      .select('*')
+      .eq('is_active', true)
+      .order('name')
+
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    res.json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Get customer by ID
+router.get('/:id', [
+  param('id').isNumeric().withMessage('Invalid customer ID'),
+], validate, async (req, res, next) => {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Customer not found' })
+    }
+
+    res.json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Create customer
+router.post('/', [
+  body('name').trim().notEmpty().withMessage('Customer name is required'),
+], validate, async (req, res, next) => {
+  try {
+    const { name, phone, email, address, notes } = req.body
+
+    // Check if phone number already exists
+    if (phone) {
+      const { data: existing } = await supabase
+        .from('customers')
+        .select('id, name')
+        .eq('phone', phone)
+        .eq('is_active', true)
+        .single()
+
+      if (existing) {
+        return res.status(400).json({
+          error: `This phone number is already registered to: ${existing.name}`
+        })
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .insert({
+        name,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        notes: notes || null
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    res.status(201).json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Update customer
+router.put('/:id', [
+  param('id').isNumeric().withMessage('Invalid customer ID'),
+  body('name').trim().notEmpty().withMessage('Customer name is required'),
+], validate, async (req, res, next) => {
+  try {
+    const { name, phone, email, address, notes, loyalty_points } = req.body
+
+    // Check if phone number already exists (excluding current customer)
+    if (phone) {
+      const { data: existing } = await supabase
+        .from('customers')
+        .select('id, name')
+        .eq('phone', phone)
+        .eq('is_active', true)
+        .neq('id', req.params.id)
+        .single()
+
+      if (existing) {
+        return res.status(400).json({
+          error: `This phone number is already registered to: ${existing.name}`
+        })
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .update({
+        name,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        notes: notes || null,
+        loyalty_points: loyalty_points ?? undefined,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Delete customer (soft delete)
+router.delete('/:id', [
+  param('id').isNumeric().withMessage('Invalid customer ID'),
+], validate, async (req, res, next) => {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .update({ is_active: false })
+      .eq('id', req.params.id)
+
+    if (error) throw error
+    res.json({ message: 'Customer deleted successfully' })
+  } catch (err) {
+    next(err)
+  }
+})
+
+export default router
