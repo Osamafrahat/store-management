@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { body, validationResult } from 'express-validator'
-import { generateToken, generateSessionToken, authenticateToken } from '../middleware/auth.js'
+import { generateToken, generateSessionToken, clearSessionCache, authenticateToken } from '../middleware/auth.js'
 import supabase from '../db/supabase.js'
 
 const router = Router()
@@ -39,6 +39,9 @@ router.post('/login', [
 
     // Generate new session token (invalidates any other active session)
     const newSessionToken = generateSessionToken()
+
+    // Clear cached session for this user
+    clearSessionCache(user.id)
 
     // Save session token and update last login
     await supabase
