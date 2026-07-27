@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { body, validationResult } from 'express-validator'
-import { generateToken, generateSessionToken, clearSessionCache, authenticateToken } from '../middleware/auth.js'
+import { generateToken, generateSessionToken, authenticateToken } from '../middleware/auth.js'
 import supabase from '../db/supabase.js'
 
 const router = Router()
@@ -40,11 +40,8 @@ router.post('/login', [
     // Generate new session token (invalidates any other active session)
     const newSessionToken = generateSessionToken()
 
-    // Clear cached session for this user
-    clearSessionCache(user.id)
-
     // Save session token and update last login
-    await supabase
+    const { error: updateError } = await supabase
       .from('users')
       .update({ 
         last_login: new Date().toISOString(),
@@ -52,11 +49,19 @@ router.post('/login', [
       })
       .eq('id', user.id)
 
-    // Generate token with session token
-    const token = generateToken({ ...user, session_token: newSessionToken })
+    // If session_token column doesn't exist, just update last_login
+    if (updateError) {
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id)
+    }
 
-    // Return user info (without password, without session_token)
-    const { password: _, session_token: __, ...userWithoutPassword } = user
+    // Generate token with session token
+    const token = generateToken({ ...user, session_token: updateError ? null : newSessionToken })
+
+    // Return user info (without password)
+    const { password: _, ...userWithoutPassword } = user
 
     res.json({
       token,
