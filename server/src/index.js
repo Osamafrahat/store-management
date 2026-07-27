@@ -36,6 +36,9 @@ import { paymentsRouter } from './routes/payments.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Trust proxy (required for rate limiting behind Railway/Render/etc.)
+app.set('trust proxy', 1)
+
 // Security Headers (relaxed CSP for development)
 app.use(helmet({
   contentSecurityPolicy: false,
