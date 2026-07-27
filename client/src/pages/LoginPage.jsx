@@ -1,18 +1,26 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useUserStore } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
-import { Store, User, Lock, AlertCircle } from 'lucide-react'
+import { Store, User, Lock, AlertCircle, Info } from 'lucide-react'
 
 export default function LoginPage() {
   const { t, settings } = useAppStore()
   const { login } = useUserStore()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const sessionExpired = searchParams.get('expired') === '1'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (sessionExpired) {
+      setError(t('password.sessionExpired') || 'Your session expired. Another login was detected. Please login again.')
+    }
+  }, [sessionExpired, t])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -46,8 +54,12 @@ export default function LoginPage() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                sessionExpired 
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                  : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+              }`}>
+                {sessionExpired ? <Info className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
                 <span className="text-sm">{error}</span>
               </div>
             )}

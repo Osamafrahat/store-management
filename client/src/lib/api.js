@@ -25,11 +25,20 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      // Token expired or invalid - redirect to login
+    const status = error.response?.status
+    const sessionExpired = error.response?.data?.sessionExpired
+    const isLoginPage = window.location.pathname === '/login'
+
+    if ((status === 401 || status === 403) && !isLoginPage) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
-      window.location.href = '/login'
+      localStorage.removeItem('user-storage')
+      localStorage.removeItem('cart-storage')
+      if (sessionExpired) {
+        window.location.href = '/login?expired=1'
+      } else {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
