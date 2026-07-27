@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   permissions JSONB DEFAULT '[]',
   is_active BOOLEAN DEFAULT true,
   must_change_password BOOLEAN DEFAULT false,
+  session_token TEXT,
   last_login TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

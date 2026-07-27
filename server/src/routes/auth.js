@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { body, validationResult } from 'express-validator'
-import { generateToken, authenticateToken } from '../middleware/auth.js'
+import { generateToken, generateSessionToken, authenticateToken } from '../middleware/auth.js'
 import supabase from '../db/supabase.js'
 
 const router = Router()
@@ -37,17 +37,23 @@ router.post('/login', [
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 
-    // Update last login
+    // Generate new session token (invalidates any other active session)
+    const newSessionToken = generateSessionToken()
+
+    // Save session token and update last login
     await supabase
       .from('users')
-      .update({ last_login: new Date().toISOString() })
+      .update({ 
+        last_login: new Date().toISOString(),
+        session_token: newSessionToken
+      })
       .eq('id', user.id)
 
-    // Generate token
-    const token = generateToken(user)
+    // Generate token with session token
+    const token = generateToken({ ...user, session_token: newSessionToken })
 
-    // Return user info (without password)
-    const { password: _, ...userWithoutPassword } = user
+    // Return user info (without password, without session_token)
+    const { password: _, session_token: __, ...userWithoutPassword } = user
 
     res.json({
       token,
@@ -64,7 +70,7 @@ router.post('/register', [
   body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER']).withMessage('Invalid role'),
+  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
 ], async (req, res) => {
   try {
     const errors = validationResult(req)

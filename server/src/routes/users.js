@@ -72,7 +72,7 @@ router.post('/', [
   body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER']).withMessage('Invalid role'),
+  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
 ], validate, async (req, res, next) => {
   try {
     const { username, password, fullName, role, permissions, employeeId } = req.body
@@ -124,7 +124,7 @@ router.post('/', [
 router.put('/:id', [
   param('id').isNumeric().withMessage('Invalid user ID'),
   body('fullName').optional().trim().notEmpty().withMessage('Full name cannot be empty'),
-  body('role').optional().isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER']).withMessage('Invalid role'),
+  body('role').optional().isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
   body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ], validate, async (req, res, next) => {
   try {
