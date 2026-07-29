@@ -113,7 +113,7 @@ export const reportsApi = {
 
 // Settings API
 export const settingsApi = {
-  get: () => api.get('/settings'),
+  get: () => api.get('/settings', { skipAuthRedirect: true }),
   update: (data) => api.put('/settings', data),
 }
 
