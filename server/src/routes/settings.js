@@ -3,16 +3,20 @@ import supabase from '../db/supabase.js'
 
 const router = Router()
 
-// Get all settings
+const ALLOWED_SETTINGS = [
+  'storeName', 'storeAddress', 'storePhone',
+  'taxRate', 'currency', 'currencySymbol',
+  'receiptFooter', 'lowStockThreshold'
+]
+
 router.get('/', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('store_settings')
-      .select('*')
+      .select('key, value')
 
     if (error) throw error
 
-    // Convert array to object
     const settings = {}
     data.forEach(s => {
       settings[s.key] = s.value
@@ -24,17 +28,25 @@ router.get('/', async (req, res, next) => {
   }
 })
 
-// Update settings
 router.put('/', async (req, res, next) => {
   try {
     const settings = req.body
 
-    // Upsert each setting
-    for (const [key, value] of Object.entries(settings)) {
-      await supabase
-        .from('store_settings')
-        .upsert({ key, value: String(value) }, { onConflict: 'key' })
+    const entries = Object.entries(settings).filter(([key]) => 
+      ALLOWED_SETTINGS.includes(key)
+    )
+
+    if (entries.length === 0) {
+      return res.status(400).json({ error: 'No valid settings provided' })
     }
+
+    const rows = entries.map(([key, value]) => ({ key, value: String(value) }))
+
+    const { error } = await supabase
+      .from('store_settings')
+      .upsert(rows, { onConflict: 'key' })
+
+    if (error) throw error
 
     res.json({ message: 'Settings updated successfully' })
   } catch (err) {

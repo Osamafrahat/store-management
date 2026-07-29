@@ -138,7 +138,7 @@ router.put('/:id', [
       return res.status(404).json({ error: 'User not found' })
     }
 
-    const { fullName, role, permissions, password, employeeId } = req.body
+    const { fullName, role, password, employeeId } = req.body
 
     const updateData = {
       updated_at: new Date().toISOString()
@@ -146,7 +146,6 @@ router.put('/:id', [
 
     if (fullName !== undefined) updateData.full_name = fullName
     if (role !== undefined) updateData.role = role
-    if (permissions !== undefined) updateData.permissions = permissions
     if (employeeId !== undefined) updateData.employee_id = employeeId || null
 
     if (password) {

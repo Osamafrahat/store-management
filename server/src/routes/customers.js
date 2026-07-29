@@ -104,7 +104,7 @@ router.put('/:id', [
   body('name').trim().notEmpty().withMessage('Customer name is required'),
 ], validate, async (req, res, next) => {
   try {
-    const { name, phone, email, address, notes, loyalty_points } = req.body
+    const { name, phone, email, address, notes } = req.body
 
     // Check if phone number already exists (excluding current customer)
     if (phone) {
@@ -131,7 +131,6 @@ router.put('/:id', [
         email: email || null,
         address: address || null,
         notes: notes || null,
-        loyalty_points: loyalty_points ?? undefined,
         updated_at: new Date().toISOString()
       })
       .eq('id', req.params.id)

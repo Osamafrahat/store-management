@@ -100,11 +100,14 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { order_number, items, subtotal, discount_amount, tax_amount, total,
-      payment_method, payment_status, payments, user_id, customer_id } = req.body
+      payment_method, payment_status, payments, customer_id } = req.body
 
     if (!order_number || !items || items.length === 0) {
       return res.status(400).json({ error: 'Order number and items are required' })
     }
+
+    // Always use authenticated user's ID
+    const userId = req.user.id
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -117,7 +120,7 @@ router.post('/', async (req, res, next) => {
         total,
         payment_method: payment_method || 'cash',
         payment_status: payment_status || 'paid',
-        user_id: user_id || req.user?.id || null,
+        user_id: userId,
         customer_id: customer_id || null,
         completed_at: new Date().toISOString()
       })

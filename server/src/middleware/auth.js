@@ -2,8 +2,13 @@ import jwt from 'jsonwebtoken'
 import supabase from '../db/supabase.js'
 import crypto from 'crypto'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-change-in-production'
-const JWT_EXPIRES_IN = '24h'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required')
+  process.exit(1)
+}
+
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
 
 export function generateSessionToken() {
   return crypto.randomUUID()
@@ -33,7 +38,6 @@ export async function authenticateToken(req, res, next) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET)
 
-    // Check session token against DB (single session enforcement)
     try {
       const { data: user } = await supabase
         .from('users')
@@ -49,7 +53,7 @@ export async function authenticateToken(req, res, next) {
         return res.status(401).json({ error: 'Session expired. Another login was detected.', sessionExpired: true })
       }
     } catch {
-      // If session_token column doesn't exist yet, skip check
+      // session_token column may not exist yet
     }
 
     req.user = decoded
@@ -66,4 +70,11 @@ export function requireRole(...roles) {
     }
     next()
   }
+}
+
+export function requireManager(req, res, next) {
+  if (!req.user || req.user.role !== 'MANAGER') {
+    return res.status(403).json({ error: 'Manager access required' })
+  }
+  next()
 }

@@ -6,13 +6,11 @@ import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler.js'
 import { activityLogger } from './middleware/activityLogger.js'
 import { authRouter } from './routes/auth.js'
-import { authenticateToken } from './middleware/auth.js'
+import { authenticateToken, requireManager } from './middleware/auth.js'
 import supabase from './db/supabase.js'
 
-// Load environment variables
 dotenv.config()
 
-// Routes
 import productsRouter from './routes/products.js'
 import categoriesRouter from './routes/categories.js'
 import ordersRouter from './routes/orders.js'
@@ -36,19 +34,23 @@ import { paymentsRouter } from './routes/payments.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Trust proxy (required for rate limiting behind Railway/Render/etc.)
 app.set('trust proxy', 1)
 
-// Security Headers (relaxed CSP for development)
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }))
 
-// CORS Configuration
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean)
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean).concat(['http://localhost:5173'])
+    ? (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true)
+        } else {
+          callback(new Error('Not allowed by CORS'))
+        }
+      }
     : '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -57,35 +59,32 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 
-// Body Parser with size limits
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 500,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 })
 app.use('/api/', limiter)
 
-// Auth rate limit
 const authLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 1000,
-  message: { error: 'Too many login attempts, please try again later.' },
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 })
 app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/register', authLimiter)
 
-// Disable X-Powered-By
 app.disable('x-powered-by')
 
-// Auth Routes (public)
 app.use('/api/auth', authRouter)
 
-// Protected API Routes
 app.use('/api/products', authenticateToken, activityLogger, productsRouter)
 app.use('/api/categories', authenticateToken, activityLogger, categoriesRouter)
 app.use('/api/orders', authenticateToken, activityLogger, ordersRouter)
@@ -93,26 +92,22 @@ app.use('/api/stock', authenticateToken, activityLogger, stockRouter)
 app.use('/api/suppliers', authenticateToken, activityLogger, suppliersRouter)
 app.use('/api/promotions', authenticateToken, activityLogger, promotionsRouter)
 app.use('/api/reports', authenticateToken, activityLogger, reportsRouter)
-app.use('/api/settings', authenticateToken, activityLogger, settingsRouter)
-app.use('/api/users', authenticateToken, activityLogger, usersRouter)
+app.use('/api/settings', authenticateToken, requireManager, activityLogger, settingsRouter)
+app.use('/api/users', authenticateToken, requireManager, activityLogger, usersRouter)
 app.use('/api/customers', authenticateToken, activityLogger, customersRouter)
 app.use('/api/employees', authenticateToken, activityLogger, employeesRouter)
 app.use('/api/expenses', authenticateToken, activityLogger, expensesRouter)
 app.use('/api/refunds', authenticateToken, activityLogger, refundsRouter)
 app.use('/api/notifications', authenticateToken, activityLogger, notificationsRouter)
-app.use('/api/activities', authenticateToken, activitiesRouter)
-app.use('/api/activities', authenticateToken, activitiesRouter)
+app.use('/api/activities', authenticateToken, requireManager, activitiesRouter)
 
-// Accounting Routes
 app.use('/api/accounting/accounts', authenticateToken, activityLogger, accountsRouter)
 app.use('/api/accounting/journals', authenticateToken, activityLogger, journalsRouter)
 app.use('/api/accounting/reports', authenticateToken, accountingReportsRouter)
 app.use('/api/accounting/payments', authenticateToken, activityLogger, paymentsRouter)
 
-// Health check
 app.get('/api/health', async (req, res) => {
   try {
-    // Test Supabase connection
     const { error } = await supabase.from('users').select('id').limit(1)
     if (error) throw error
     res.json({ status: 'ok', database: 'supabase', timestamp: new Date().toISOString() })
@@ -121,24 +116,14 @@ app.get('/api/health', async (req, res) => {
   }
 })
 
-// 404 handler
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' })
 })
 
-// Error handling
 app.use(errorHandler)
 
-// Start server
 app.listen(PORT, () => {
-  console.log(`
-  ╔══════════════════════════════════════════════╗
-  ║   Store Management Server (Supabase)          ║
-  ║   Running on http://localhost:${PORT}          ║
-  ║   API: http://localhost:${PORT}/api            ║
-  ║   Database: Supabase                         ║
-  ╚══════════════════════════════════════════════╝
-  `)
+  console.log(`Server running on port ${PORT}`)
 })
 
 export default app

@@ -195,7 +195,7 @@ ON CONFLICT (key) DO NOTHING;
       process.exit(1)
     }
 
-    console.log('Default admin user created (admin / admin123)')
+    console.log('Default admin user created')
   } else {
     console.log('Admin user already exists')
   }

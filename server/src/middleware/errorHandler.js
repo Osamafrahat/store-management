@@ -1,10 +1,8 @@
 export function errorHandler(err, req, res, next) {
   console.error('Error:', err)
 
-  // Don't expose error details in production
   const isProduction = process.env.NODE_ENV === 'production'
 
-  // Handle specific error types
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({ error: 'Invalid JSON' })
   }
@@ -17,16 +15,21 @@ export function errorHandler(err, req, res, next) {
     return res.status(413).json({ error: 'File too large' })
   }
 
-  // SQLite constraint errors
-  if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+  // PostgreSQL unique constraint violation
+  if (err.code === '23505') {
     return res.status(409).json({ error: 'Resource already exists' })
   }
 
-  if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+  // PostgreSQL foreign key violation
+  if (err.code === '23503') {
     return res.status(400).json({ error: 'Related resource not found' })
   }
 
-  // Default error
+  // PostgreSQL not null violation
+  if (err.code === '23502') {
+    return res.status(400).json({ error: 'Required field is missing' })
+  }
+
   const statusCode = err.statusCode || 500
   const message = isProduction 
     ? 'Internal server error' 
