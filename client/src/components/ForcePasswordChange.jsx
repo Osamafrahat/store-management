@@ -6,7 +6,7 @@ import { authApi } from '../lib/api'
 import { Lock, AlertTriangle, Check } from 'lucide-react'
 
 export default function ForcePasswordChange() {
-  const { logout, markPasswordChanged } = useUserStore()
+  const { logout } = useUserStore()
   const { t } = useAppStore()
   const navigate = useNavigate()
 
@@ -43,9 +43,6 @@ export default function ForcePasswordChange() {
         currentPassword,
         newPassword
       })
-
-      // Clear must_change_password in store
-      markPasswordChanged()
 
       setSuccess(true)
 
