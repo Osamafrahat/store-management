@@ -28,10 +28,9 @@ api.interceptors.response.use(
     const status = error.response?.status
     const sessionExpired = error.response?.data?.sessionExpired
     const isLoginPage = window.location.pathname === '/login'
-    const url = error.config?.url || ''
-    const isPasswordOrProfile = url.includes('/auth/change-password') || url.includes('/auth/profile')
+    const skipRedirect = error.config?.skipAuthRedirect
 
-    if ((status === 401 || status === 403) && !isLoginPage && !isPasswordOrProfile) {
+    if ((status === 401 || status === 403) && !isLoginPage && !skipRedirect) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
       localStorage.removeItem('user-storage')
@@ -50,7 +49,7 @@ api.interceptors.response.use(
 export const authApi = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (data) => api.post('/auth/register', data),
-  changePassword: (data) => api.post('/auth/change-password', data),
+  changePassword: (data) => api.post('/auth/change-password', data, { skipAuthRedirect: true }),
   getProfile: () => api.get('/auth/profile'),
   updateProfile: (data) => api.put('/auth/profile', data),
 }

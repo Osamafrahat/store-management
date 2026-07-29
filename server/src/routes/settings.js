@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { requireManager } from '../middleware/auth.js'
 import supabase from '../db/supabase.js'
 
 const router = Router()
@@ -28,7 +29,7 @@ router.get('/', async (req, res, next) => {
   }
 })
 
-router.put('/', async (req, res, next) => {
+router.put('/', requireManager, async (req, res, next) => {
   try {
     const settings = req.body
 
