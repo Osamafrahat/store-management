@@ -3,14 +3,6 @@ import { useAppStore } from '../stores/appStore'
 import { employeesApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign, Shield } from 'lucide-react'
 
-const EMPLOYEE_ROLES = (t) => [
-  { value: 'MANAGER', label: t('role.manager') },
-  { value: 'CASHIER', label: t('role.cashier') },
-  { value: 'INVENTORY_CLERK', label: t('role.inventoryClerk') },
-  { value: 'SALES', label: t('role.sales') },
-  { value: 'OTHER', label: t('role.other') },
-]
-
 const USER_ROLES = (t) => [
   { value: 'MANAGER', label: t('role.manager') },
   { value: 'SALES_MANAGER', label: t('role.salesManager') || 'Sales Manager' },
@@ -83,12 +75,15 @@ export default function EmployeesPage() {
   const getRoleColor = (role) => {
     const colors = {
       MANAGER: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+      SALES_MANAGER: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
       CASHIER: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+      SENIOR_CASHIER: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       INVENTORY_CLERK: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      SALES: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-      OTHER: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+      SALES_ASSOCIATE: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      ACCOUNTANT: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+      VIEWER: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
     }
-    return colors[role] || colors.OTHER
+    return colors[role] || colors.VIEWER
   }
 
   if (loading) {
@@ -140,7 +135,7 @@ export default function EmployeesPage() {
                   <div>
                     <h3 className="font-semibold">{employee.name}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleColor(employee.role)}`}>
-                      {EMPLOYEE_ROLES(t).find(r => r.value === employee.role)?.label || employee.role}
+                      {USER_ROLES(t).find(r => r.value === employee.role)?.label || employee.role}
                     </span>
                   </div>
                 </div>
@@ -224,7 +219,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
   const { t } = useAppStore()
   const [formData, setFormData] = useState({
     name: employee?.name || '',
-    role: employee?.role || 'CASHIER',
+    role: employee?.user?.role || employee?.role || 'CASHIER',
     phone: employee?.phone || '',
     email: employee?.email || '',
     salary: employee?.salary || '',
@@ -233,7 +228,6 @@ function EmployeeForm({ employee, onSave, onClose }) {
     create_user: !employee,
     username: employee?.user?.username || '',
     password: '',
-    user_role: employee?.user?.role || 'CASHIER',
   })
 
   const handleChange = (e) => {
@@ -256,14 +250,14 @@ function EmployeeForm({ employee, onSave, onClose }) {
       payload.create_user = true
       payload.username = formData.username
       payload.password = formData.password || 'changeme123'
-      payload.user_role = formData.user_role
+      payload.user_role = formData.role
     }
     onSave(payload)
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold">
             {employee ? t('employees.editEmployee') : t('employees.addEmployee')}
@@ -276,7 +270,7 @@ function EmployeeForm({ employee, onSave, onClose }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('employees.name')} *
@@ -302,10 +296,15 @@ function EmployeeForm({ employee, onSave, onClose }) {
               required
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             >
-              {EMPLOYEE_ROLES(t).map(role => (
+              {USER_ROLES(t).map(role => (
                 <option key={role.value} value={role.value}>{role.label}</option>
               ))}
             </select>
+            {!employee && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {t('employees.roleHint') || 'This role determines the user login permissions.'}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -430,24 +429,8 @@ function EmployeeForm({ employee, onSave, onClose }) {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      {t('employees.userRole')} *
-                    </label>
-                    <select
-                      name="user_role"
-                      value={formData.user_role}
-                      onChange={handleChange}
-                      required={formData.create_user}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
-                    >
-                      {USER_ROLES(t).map(role => (
-                        <option key={role.value} value={role.value}>{role.label}</option>
-                      ))}
-                    </select>
-                  </div>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {t('employees.userRoleHint') || 'Permissions are automatically assigned based on the selected role.'}
+                    {t('employees.userRoleHint') || 'The user role and permissions will match the employee role selected above.'}
                   </p>
                 </div>
               )}

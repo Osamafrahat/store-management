@@ -367,7 +367,8 @@ export const translations = {
     'employees.password': 'Password',
     'employees.passwordPlaceholder': 'Min 6 characters',
     'employees.userRole': 'User Role',
-    'employees.userRoleHint': 'Permissions are automatically assigned based on the selected role.',
+    'employees.userRoleHint': 'The user role and permissions will match the employee role selected above.',
+    'employees.roleHint': 'This role determines the user login permissions.',
 
     // Expenses
     'expenses.title': 'Expenses',
@@ -1130,7 +1131,8 @@ export const translations = {
     'employees.password': 'كلمة المرور',
     'employees.passwordPlaceholder': '6 أحرف على الأقل',
     'employees.userRole': 'دور المستخدم',
-    'employees.userRoleHint': 'يتم تعيين الصلاحيات تلقائياً بناءً على الدور المحدد.',
+    'employees.userRoleHint': 'دور المستخدم والصلاحيات ستكون مطابقة لدور الموظف المحدد أعلاه.',
+    'employees.roleHint': 'هذا الدور يحدد صلاحيات دخول المستخدم.',
 
     // Expenses
     'expenses.title': 'المصروفات',
