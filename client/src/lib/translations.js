@@ -360,6 +360,14 @@ export const translations = {
     'employees.failedToSave': 'Failed to save employee',
     'employees.failedToDelete': 'Failed to delete employee',
     'employees.deleteConfirm': 'Are you sure you want to delete this employee?',
+    'employees.userAccount': 'Create User Account',
+    'employees.createUser': 'Create login account for this employee',
+    'employees.username': 'Username',
+    'employees.usernamePlaceholder': 'e.g. john_doe',
+    'employees.password': 'Password',
+    'employees.passwordPlaceholder': 'Min 6 characters',
+    'employees.userRole': 'User Role',
+    'employees.userRoleHint': 'Permissions are automatically assigned based on the selected role.',
 
     // Expenses
     'expenses.title': 'Expenses',
@@ -498,6 +506,11 @@ export const translations = {
     'role.inventoryClerk': 'Inventory Clerk',
     'role.sales': 'Sales',
     'role.other': 'Other',
+    'role.salesManager': 'Sales Manager',
+    'role.seniorCashier': 'Senior Cashier',
+    'role.salesAssociate': 'Sales Associate',
+    'role.accountant': 'Accountant',
+    'role.viewer': 'Viewer',
 
     // Settings Helpers
     'settings.currentRate': 'Current rate: ',
@@ -1110,6 +1123,14 @@ export const translations = {
     'employees.failedToSave': 'فشل حفظ الموظف',
     'employees.failedToDelete': 'فشل حذف الموظف',
     'employees.deleteConfirm': 'هل أنت متأكد من حذف هذا الموظف؟',
+    'employees.userAccount': 'إنشاء حساب مستخدم',
+    'employees.createUser': 'إنشاء حساب دخول لهذا الموظف',
+    'employees.username': 'اسم المستخدم',
+    'employees.usernamePlaceholder': 'مثال: john_doe',
+    'employees.password': 'كلمة المرور',
+    'employees.passwordPlaceholder': '6 أحرف على الأقل',
+    'employees.userRole': 'دور المستخدم',
+    'employees.userRoleHint': 'يتم تعيين الصلاحيات تلقائياً بناءً على الدور المحدد.',
 
     // Expenses
     'expenses.title': 'المصروفات',
@@ -1250,6 +1271,11 @@ export const translations = {
     'role.inventoryClerk': 'مسؤول مخزون',
     'role.sales': 'مبيعات',
     'role.other': 'أخرى',
+    'role.salesManager': 'مدير المبيعات',
+    'role.seniorCashier': 'كاشير أول',
+    'role.salesAssociate': 'موظف مبيعات',
+    'role.accountant': 'محاسب',
+    'role.viewer': 'مشاهد',
 
     // Settings Helpers
     'settings.currentRate': 'النسبة الحالية: ',

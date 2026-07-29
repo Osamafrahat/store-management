@@ -29,6 +29,7 @@ export const PERMISSIONS = {
 }
 
 // Role definitions with default permissions
+// Admin-only permissions (MANAGER only): SETTINGS_VIEW, SETTINGS_EDIT, USER_MANAGE, EMPLOYEES_VIEW, EMPLOYEES_EDIT
 export const ROLES = {
   MANAGER: {
     name: 'Manager',
@@ -50,7 +51,6 @@ export const ROLES = {
       PERMISSIONS.REFUNDS_VIEW,
       PERMISSIONS.REFUNDS_EDIT,
       PERMISSIONS.EXPENSES_VIEW,
-      PERMISSIONS.EMPLOYEES_VIEW,
     ],
   },
   CASHIER: {
@@ -82,11 +82,12 @@ export const ROLES = {
     name: 'Inventory Clerk',
     nameAr: 'موظف مخزون',
     permissions: [
+      PERMISSIONS.POS_ACCESS,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.INVENTORY_EDIT,
-      PERMISSIONS.POS_ACCESS,
       PERMISSIONS.SUPPLIERS_VIEW,
       PERMISSIONS.SUPPLIERS_EDIT,
+      PERMISSIONS.REPORTS_VIEW,
     ],
   },
   SALES_ASSOCIATE: {
@@ -98,6 +99,7 @@ export const ROLES = {
       PERMISSIONS.CUSTOMERS_VIEW,
       PERMISSIONS.CUSTOMERS_EDIT,
       PERMISSIONS.PROMOTIONS_VIEW,
+      PERMISSIONS.REPORTS_VIEW,
     ],
   },
   VIEWER: {
@@ -112,13 +114,13 @@ export const ROLES = {
       PERMISSIONS.CUSTOMERS_VIEW,
       PERMISSIONS.EXPENSES_VIEW,
       PERMISSIONS.REFUNDS_VIEW,
-      PERMISSIONS.EMPLOYEES_VIEW,
     ],
   },
   ACCOUNTANT: {
     name: 'Accountant',
     nameAr: 'محاسب',
     permissions: [
+      PERMISSIONS.POS_ACCESS,
       PERMISSIONS.ACCOUNTING_VIEW,
       PERMISSIONS.ACCOUNTING_EDIT,
       PERMISSIONS.ACCOUNTING_POST,
@@ -127,10 +129,12 @@ export const ROLES = {
       PERMISSIONS.EXPENSES_EDIT,
       PERMISSIONS.SUPPLIERS_VIEW,
       PERMISSIONS.CUSTOMERS_VIEW,
-      PERMISSIONS.EMPLOYEES_VIEW,
     ],
   },
 }
+
+// Check if a role has admin-only access (settings, users, employees management)
+export const isAdminRole = (role) => role === 'MANAGER'
 
 // Session timeout: 30 minutes in milliseconds
 const SESSION_TIMEOUT = 30 * 60 * 1000

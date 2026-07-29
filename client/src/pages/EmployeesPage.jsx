@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { employeesApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign, Shield } from 'lucide-react'
 
 const EMPLOYEE_ROLES = (t) => [
   { value: 'MANAGER', label: t('role.manager') },
@@ -9,6 +9,17 @@ const EMPLOYEE_ROLES = (t) => [
   { value: 'INVENTORY_CLERK', label: t('role.inventoryClerk') },
   { value: 'SALES', label: t('role.sales') },
   { value: 'OTHER', label: t('role.other') },
+]
+
+const USER_ROLES = (t) => [
+  { value: 'MANAGER', label: t('role.manager') },
+  { value: 'SALES_MANAGER', label: t('role.salesManager') || 'Sales Manager' },
+  { value: 'CASHIER', label: t('role.cashier') },
+  { value: 'SENIOR_CASHIER', label: t('role.seniorCashier') || 'Senior Cashier' },
+  { value: 'INVENTORY_CLERK', label: t('role.inventoryClerk') },
+  { value: 'SALES_ASSOCIATE', label: t('role.salesAssociate') || 'Sales Associate' },
+  { value: 'ACCOUNTANT', label: t('role.accountant') || 'Accountant' },
+  { value: 'VIEWER', label: t('role.viewer') || 'Viewer' },
 ]
 
 export default function EmployeesPage() {
@@ -219,19 +230,35 @@ function EmployeeForm({ employee, onSave, onClose }) {
     salary: employee?.salary || '',
     hire_date: employee?.hire_date || '',
     notes: employee?.notes || '',
+    create_user: !employee,
+    username: employee?.user?.username || '',
+    password: '',
+    user_role: employee?.user?.role || 'CASHIER',
   })
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const { name, value, type, checked } = e.target
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSave({
-      ...formData,
+    const payload = {
+      name: formData.name,
+      role: formData.role,
+      phone: formData.phone || null,
+      email: formData.email || null,
       salary: formData.salary ? parseFloat(formData.salary) : 0,
-    })
+      hire_date: formData.hire_date || null,
+      notes: formData.notes || null,
+    }
+    if (!employee && formData.create_user && formData.username) {
+      payload.create_user = true
+      payload.username = formData.username
+      payload.password = formData.password || 'changeme123'
+      payload.user_role = formData.user_role
+    }
+    onSave(payload)
   }
 
   return (
@@ -349,6 +376,83 @@ function EmployeeForm({ employee, onSave, onClose }) {
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
           </div>
+
+          {/* User Account Section */}
+          {!employee && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-4 h-4 text-primary-600" />
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  {t('employees.userAccount') || 'Create User Account'}
+                </span>
+              </div>
+              <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="create_user"
+                  checked={formData.create_user}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-primary-600 rounded"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {t('employees.createUser') || 'Create login account for this employee'}
+                </span>
+              </label>
+              {formData.create_user && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        {t('employees.username')} *
+                      </label>
+                      <input
+                        type="text"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required={formData.create_user}
+                        placeholder={t('employees.usernamePlaceholder') || 'e.g. john_doe'}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        {t('employees.password')} *
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required={formData.create_user}
+                        placeholder={t('employees.passwordPlaceholder') || 'Min 6 characters'}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      {t('employees.userRole')} *
+                    </label>
+                    <select
+                      name="user_role"
+                      value={formData.user_role}
+                      onChange={handleChange}
+                      required={formData.create_user}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                    >
+                      {USER_ROLES(t).map(role => (
+                        <option key={role.value} value={role.value}>{role.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {t('employees.userRoleHint') || 'Permissions are automatically assigned based on the selected role.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <button

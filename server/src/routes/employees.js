@@ -1,8 +1,22 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
+import bcrypt from 'bcryptjs'
 import supabase from '../db/supabase.js'
+import { requireManager } from '../middleware/auth.js'
 
 const router = Router()
+
+// Role-based permissions mapping (mirrors frontend ROLES in userStore.js)
+const ROLE_PERMISSIONS = {
+  MANAGER: ['pos_access','inventory_view','inventory_edit','reports_view','suppliers_view','suppliers_edit','promotions_view','promotions_edit','settings_view','settings_edit','user_manage','customers_view','customers_edit','expenses_view','expenses_edit','refunds_view','refunds_edit','employees_view','employees_edit','accounting_view','accounting_edit','accounting_post'],
+  SALES_MANAGER: ['pos_access','inventory_view','reports_view','suppliers_view','promotions_view','promotions_edit','customers_view','customers_edit','refunds_view','refunds_edit','expenses_view'],
+  CASHIER: ['pos_access','reports_view','customers_view','customers_edit','refunds_view'],
+  SENIOR_CASHIER: ['pos_access','inventory_view','reports_view','customers_view','customers_edit','refunds_view','refunds_edit','promotions_view'],
+  INVENTORY_CLERK: ['pos_access','inventory_view','inventory_edit','suppliers_view','suppliers_edit','reports_view'],
+  SALES_ASSOCIATE: ['pos_access','inventory_view','customers_view','customers_edit','promotions_view','reports_view'],
+  VIEWER: ['pos_access','inventory_view','reports_view','suppliers_view','promotions_view','customers_view','expenses_view','refunds_view'],
+  ACCOUNTANT: ['pos_access','accounting_view','accounting_edit','accounting_post','reports_view','expenses_view','expenses_edit','suppliers_view','customers_view'],
+}
 
 const validate = (req, res, next) => {
   const errors = validationResult(req)
@@ -59,14 +73,15 @@ router.get('/:id', [
   }
 })
 
-// Create employee
-router.post('/', [
+// Create employee (admin-only)
+router.post('/', requireManager, [
   body('name').trim().notEmpty().withMessage('Employee name is required'),
   body('role').trim().notEmpty().withMessage('Employee role is required'),
 ], validate, async (req, res, next) => {
   try {
-    const { name, role, phone, email, salary, hire_date, notes, user_id } = req.body
+    const { name, role, phone, email, salary, hire_date, notes, create_user, username, password, user_role } = req.body
 
+    // Create employee
     const { data, error } = await supabase
       .from('employees')
       .insert({
@@ -77,27 +92,57 @@ router.post('/', [
         salary: salary || 0,
         hire_date: hire_date || null,
         notes: notes || null,
-        user_id: user_id || null
       })
       .select()
       .single()
 
     if (error) throw error
 
-    // Link user back to this employee if user_id provided
-    if (user_id) {
-      await supabase.from('users').update({ employee_id: data.id, updated_at: new Date().toISOString() }).eq('id', user_id)
+    // Auto-create user account if requested
+    let user = null
+    if (create_user && username) {
+      const validRole = ['MANAGER','SALES_MANAGER','CASHIER','SENIOR_CASHIER','INVENTORY_CLERK','SALES_ASSOCIATE','VIEWER','ACCOUNTANT'].includes(user_role) ? user_role : 'CASHIER'
+
+      // Check username uniqueness
+      const { data: existingUser } = await supabase.from('users').select('id').eq('username', username).single()
+      if (existingUser) {
+        return res.status(409).json({ error: `Username "${username}" already exists` })
+      }
+
+      const salt = await bcrypt.genSalt(10)
+      const hashedPassword = await bcrypt.hash(password || 'changeme123', salt)
+
+      const { data: newUser, error: userError } = await supabase
+        .from('users')
+        .insert({
+          username,
+          password: hashedPassword,
+          full_name: name,
+          role: validRole,
+          permissions: ROLE_PERMISSIONS[validRole] || ROLE_PERMISSIONS.CASHIER,
+          is_active: true,
+          must_change_password: true,
+          employee_id: data.id,
+        })
+        .select('id, username, full_name, role, permissions, is_active, must_change_password, last_login, employee_id, created_at, updated_at')
+        .single()
+
+      if (userError) throw userError
+
+      // Link employee back to user
+      await supabase.from('employees').update({ user_id: newUser.id, updated_at: new Date().toISOString() }).eq('id', data.id)
+      user = newUser
     }
 
     req.logActivity({ action: 'created', entity_type: 'employee', entity_name: data.name })
-    res.status(201).json(data)
+    res.status(201).json({ ...data, user })
   } catch (err) {
     next(err)
   }
 })
 
-// Update employee
-router.put('/:id', [
+// Update employee (admin-only)
+router.put('/:id', requireManager, [
   param('id').isNumeric().withMessage('Invalid employee ID'),
   body('name').trim().notEmpty().withMessage('Employee name is required'),
   body('role').trim().notEmpty().withMessage('Employee role is required'),
@@ -159,8 +204,8 @@ router.put('/:id', [
   }
 })
 
-// Delete employee (soft delete) - also deactivates linked user
-router.delete('/:id', [
+// Delete employee (soft delete) - admin-only, also deactivates linked user
+router.delete('/:id', requireManager, [
   param('id').isNumeric().withMessage('Invalid employee ID'),
 ], validate, async (req, res, next) => {
   try {

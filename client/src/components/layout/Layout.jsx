@@ -114,9 +114,9 @@ export default function Layout({ children }) {
     groups.push({ key: 'accounting', label: t('nav.groupAccounting') || 'Accounting', items: accountingItems })
   }
 
-  // -- HR --
+  // -- HR (Admin-only: employees management) --
   const hrItems = []
-  if (canAccess('/employees')) {
+  if (currentUser?.role === 'MANAGER') {
     hrItems.push({ name: t('nav.employees') || 'Employees', href: '/employees', icon: Users })
   }
   if (hrItems.length > 0) {
@@ -134,15 +134,11 @@ export default function Layout({ children }) {
     })
   }
 
-  // -- Settings --
+  // -- Settings (Admin-only: users, activities, settings) --
   const settingsItems = []
-  if (hasPermission(PERMISSIONS.USER_MANAGE)) {
+  if (currentUser?.role === 'MANAGER') {
     settingsItems.push({ name: t('nav.users') || 'Users', href: '/users', icon: Users })
-  }
-  if (hasPermission(PERMISSIONS.USER_MANAGE)) {
     settingsItems.push({ name: t('nav.activities') || 'Activity Log', href: '/activities', icon: Activity })
-  }
-  if (canAccess('/settings')) {
     settingsItems.push({ name: t('nav.settings'), href: '/settings', icon: Settings })
   }
   if (settingsItems.length > 0) {
