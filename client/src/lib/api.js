@@ -28,8 +28,10 @@ api.interceptors.response.use(
     const status = error.response?.status
     const sessionExpired = error.response?.data?.sessionExpired
     const isLoginPage = window.location.pathname === '/login'
+    const url = error.config?.url || ''
+    const isPasswordOrProfile = url.includes('/auth/change-password') || url.includes('/auth/profile')
 
-    if ((status === 401 || status === 403) && !isLoginPage) {
+    if ((status === 401 || status === 403) && !isLoginPage && !isPasswordOrProfile) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
       localStorage.removeItem('user-storage')
