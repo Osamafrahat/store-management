@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
-import { productsApi, ordersApi, reportsApi, suppliersApi, promotionsApi } from '../lib/api'
+import { productsApi, ordersApi, reportsApi, suppliersApi, promotionsApi, expensesApi, accountingReportsApi, paymentsApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
 import {
   ShoppingCart,
@@ -21,6 +21,8 @@ import {
   UserCheck,
   RotateCcw,
   ClipboardList,
+  BookOpen,
+  Receipt,
 } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -36,6 +38,14 @@ export default function DashboardPage() {
     recentOrders: [],
     lowStockProducts: [],
     topProducts: [],
+    totalExpenses: 0,
+    recentExpenses: [],
+    recentPayments: [],
+    totalInbound: 0,
+    totalOutbound: 0,
+    netCashFlow: 0,
+    recentJournals: [],
+    accountCount: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -70,6 +80,14 @@ export default function DashboardPage() {
       if (hasPermission(PERMISSIONS.PROMOTIONS_VIEW)) {
         promises.push(
           promotionsApi.getAll().catch(() => ({ data: [] }))
+        )
+      }
+
+      if (hasPermission(PERMISSIONS.ACCOUNTING_VIEW)) {
+        promises.push(
+          expensesApi.getAll({ limit: 10 }).catch(() => ({ data: [] })),
+          paymentsApi.getAll({ limit: 10 }).catch(() => ({ data: [] })),
+          accountingReportsApi.getTrialBalance().catch(() => ({ data: { accounts: [] } })),
         )
       }
 
@@ -112,6 +130,26 @@ export default function DashboardPage() {
         setStats(prev => ({ ...prev, activePromotions: active.length }))
         resultIndex += 1
       }
+
+      if (hasPermission(PERMISSIONS.ACCOUNTING_VIEW)) {
+        const expenses = results[resultIndex]?.data || []
+        const payments = results[resultIndex + 1]?.data || []
+        const trialBalance = results[resultIndex + 2]?.data || { accounts: [] }
+        const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0)
+        const totalInbound = payments.filter(p => p.type === 'inbound').reduce((sum, p) => sum + (p.amount || 0), 0)
+        const totalOutbound = payments.filter(p => p.type === 'outbound').reduce((sum, p) => sum + (p.amount || 0), 0)
+        setStats(prev => ({
+          ...prev,
+          totalExpenses,
+          recentExpenses: Array.isArray(expenses) ? expenses.slice(0, 5) : [],
+          recentPayments: Array.isArray(payments) ? payments.slice(0, 5) : [],
+          totalInbound,
+          totalOutbound,
+          netCashFlow: totalInbound - totalOutbound,
+          accountCount: trialBalance.accounts?.length || 0,
+        }))
+        resultIndex += 3
+      }
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err)
     } finally {
@@ -140,6 +178,7 @@ export default function DashboardPage() {
   const isCashier = role === 'CASHIER' || role === 'SENIOR_CASHIER'
   const isInventoryClerk = role === 'INVENTORY_CLERK'
   const isSalesAssociate = role === 'SALES_ASSOCIATE'
+  const isAccountant = role === 'ACCOUNTANT'
   const isViewer = role === 'VIEWER'
 
   return (
@@ -225,6 +264,20 @@ export default function DashboardPage() {
         </>
       )}
 
+      {/* ===== ACCOUNTANT: Financial Focus ===== */}
+      {isAccountant && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={DollarSign} label={t('dashboard.totalInbound')} value={formatCurrency(stats.totalInbound)} color="green" href="/accounting/payments" />
+            <StatCard icon={DollarSign} label={t('dashboard.totalOutbound')} value={formatCurrency(stats.totalOutbound)} color="red" href="/accounting/payments" />
+            <StatCard icon={TrendingUp} label={t('dashboard.netCashFlow')} value={formatCurrency(stats.netCashFlow)} color={stats.netCashFlow >= 0 ? 'green' : 'red'} href="/accounting/payments" />
+            <StatCard icon={DollarSign} label={t('dashboard.totalExpenses')} value={formatCurrency(stats.totalExpenses)} color="amber" href="/expenses" />
+          </div>
+          <AccountantQuickActions />
+          <AccountantDashboard stats={stats} t={t} />
+        </>
+      )}
+
       {/* ===== VIEWER: Read-Only Overview ===== */}
       {isViewer && (
         <>
@@ -263,6 +316,7 @@ const ROLES_LABELS = {
   SENIOR_CASHIER: 'Senior Cashier / كاشير أول',
   INVENTORY_CLERK: 'Inventory Clerk /موظف مخزون',
   SALES_ASSOCIATE: 'Sales Associate /موظف مبيعات',
+  ACCOUNTANT: 'Accountant / محاسب',
   VIEWER: 'Viewer / مشاهد',
 }
 
@@ -333,6 +387,104 @@ function InventoryDashboard({ stats, t }) {
 }
 
 // ===== Shared Components =====
+function AccountantQuickActions() {
+  const { t } = useAppStore()
+
+  const actions = [
+    { label: t('dashboard.chartOfAccounts'), icon: ClipboardList, href: '/accounting/accounts', color: 'bg-indigo-600 hover:bg-indigo-700' },
+    { label: t('dashboard.journalEntries'), icon: BookOpen, href: '/accounting/journals', color: 'bg-purple-600 hover:bg-purple-700' },
+    { label: t('dashboard.viewPayments'), icon: DollarSign, href: '/accounting/payments', color: 'bg-green-600 hover:bg-green-700' },
+    { label: t('dashboard.manageExpenses'), icon: Receipt, href: '/expenses', color: 'bg-amber-600 hover:bg-amber-700' },
+    { label: t('dashboard.viewReports'), icon: BarChart3, href: '/accounting/reports', color: 'bg-blue-600 hover:bg-blue-700' },
+  ]
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {actions.map((action) => (
+        <Link
+          key={action.href}
+          to={action.href}
+          className={`${action.color} text-white rounded-xl p-4 flex items-center gap-3 transition-colors`}
+        >
+          <action.icon className="w-6 h-6" />
+          <div>
+            <p className="font-semibold text-sm">{action.label}</p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+function AccountantDashboard({ stats, t }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {stats.recentPayments.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">{t('dashboard.recentPayments')}</h3>
+            <Link to="/accounting/payments" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
+              {t('dashboard.viewAll')} <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {stats.recentPayments.map((payment) => (
+              <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div>
+                  <p className="font-medium">{payment.description || payment.reference || `Payment #${payment.id}`}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(payment.created_at || payment.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${payment.type === 'inbound' ? 'text-green-600' : 'text-red-600'}`}>
+                    {payment.type === 'inbound' ? '+' : '-'}{formatCurrency(payment.amount)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                    {payment.type}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {stats.recentExpenses.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">{t('dashboard.recentExpenses')}</h3>
+            <Link to="/expenses" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
+              {t('dashboard.viewAll')} <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {stats.recentExpenses.map((expense) => (
+              <div key={expense.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div>
+                  <p className="font-medium">{expense.description || expense.category}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {expense.category} — {new Date(expense.created_at || expense.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <span className="font-semibold text-red-600">-{formatCurrency(expense.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {stats.recentPayments.length === 0 && stats.recentExpenses.length === 0 && (
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <DollarSign className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
+          <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StatCard({ icon: Icon, label, value, color, href }) {
   const colorClasses = {
     green: 'bg-green-100 dark:bg-green-900/30 text-green-600',

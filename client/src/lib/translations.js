@@ -28,6 +28,26 @@ export const translations = {
     'dashboard.createPromotion': 'Create Promotion',
     'dashboard.createPromotionDesc': 'Set up discount codes',
 
+    // Accountant Dashboard
+    'dashboard.totalRevenue': 'Total Revenue',
+    'dashboard.totalExpenses': 'Total Expenses',
+    'dashboard.netProfit': 'Net Profit',
+    'dashboard.totalAssets': 'Total Assets',
+    'dashboard.totalLiabilities': 'Total Liabilities',
+    'dashboard.totalEquity': 'Total Equity',
+    'dashboard.recentPayments': 'Recent Payments',
+    'dashboard.recentExpenses': 'Recent Expenses',
+    'dashboard.expenseSummary': 'Expense Summary',
+    'dashboard.quickLinks': 'Quick Links',
+    'dashboard.viewReports': 'View Reports',
+    'dashboard.chartOfAccounts': 'Chart of Accounts',
+    'dashboard.journalEntries': 'Journal Entries',
+    'dashboard.manageExpenses': 'Manage Expenses',
+    'dashboard.viewPayments': 'View Payments',
+    'dashboard.totalInbound': 'Total Inbound',
+    'dashboard.totalOutbound': 'Total Outbound',
+    'dashboard.netCashFlow': 'Net Cash Flow',
+
     // Navigation
     'nav.dashboard': 'Dashboard',
     'nav.pos': 'POS',
@@ -780,6 +800,26 @@ export const translations = {
     'dashboard.addSupplierDesc': 'إدارة الموردين',
     'dashboard.createPromotion': 'إنشاء عرض',
     'dashboard.createPromotionDesc': 'إعداد أكواد الخصم',
+
+    // Accountant Dashboard
+    'dashboard.totalRevenue': 'إجمالي الإيرادات',
+    'dashboard.totalExpenses': 'إجمالي المصروفات',
+    'dashboard.netProfit': 'صافي الربح',
+    'dashboard.totalAssets': 'إجمالي الأصول',
+    'dashboard.totalLiabilities': 'إجمالي الخصوم',
+    'dashboard.totalEquity': 'إجمالي حقوق الملكية',
+    'dashboard.recentPayments': 'المدفوعات الأخيرة',
+    'dashboard.recentExpenses': 'المصروفات الأخيرة',
+    'dashboard.expenseSummary': 'ملخص المصروفات',
+    'dashboard.quickLinks': 'روابط سريعة',
+    'dashboard.viewReports': 'عرض التقارير',
+    'dashboard.chartOfAccounts': 'دليل الحسابات',
+    'dashboard.journalEntries': 'القيود اليومية',
+    'dashboard.manageExpenses': 'إدارة المصروفات',
+    'dashboard.viewPayments': 'عرض المدفوعات',
+    'dashboard.totalInbound': 'إجمالي الوارد',
+    'dashboard.totalOutbound': 'إجمالي الصادر',
+    'dashboard.netCashFlow': 'صافي التدفق النقدي',
 
     // Navigation
     'nav.pos': 'نقطة البيع',
