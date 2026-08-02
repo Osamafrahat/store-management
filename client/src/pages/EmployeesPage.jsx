@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { useUserStore } from '../stores/userStore'
 import { employeesApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign, Shield } from 'lucide-react'
 
@@ -16,6 +17,7 @@ const USER_ROLES = (t) => [
 
 export default function EmployeesPage() {
   const { t, toastSuccess, toastError } = useAppStore()
+  const { fetchUsers } = useUserStore()
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -48,6 +50,7 @@ export default function EmployeesPage() {
       await employeesApi.delete(id)
       toastSuccess(t('employees.deleted') || 'Employee deleted successfully')
       fetchEmployees()
+      fetchUsers()
     } catch (err) {
       console.error('Failed to delete employee:', err)
       toastError(t('employees.failedToDelete') || 'Failed to delete employee')
@@ -58,6 +61,7 @@ export default function EmployeesPage() {
     try {
       await employeesApi.toggleActive(id)
       fetchEmployees()
+      fetchUsers()
     } catch (err) {
       console.error('Failed to toggle employee status:', err)
       toastError(t('employees.failedToToggle') || 'Failed to toggle employee status')
