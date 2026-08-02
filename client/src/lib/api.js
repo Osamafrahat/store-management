@@ -143,6 +143,7 @@ export const employeesApi = {
   create: (data) => api.post('/employees', data),
   update: (id, data) => api.put(`/employees/${id}`, data),
   delete: (id) => api.delete(`/employees/${id}`),
+  toggleActive: (id) => api.patch(`/employees/${id}/toggle-active`),
 }
 
 // Expenses API

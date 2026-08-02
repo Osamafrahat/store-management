@@ -204,6 +204,44 @@ router.put('/:id', requireManager, [
   }
 })
 
+// Toggle employee active status - admin-only, also toggles linked user
+router.patch('/:id/toggle-active', requireManager, [
+  param('id').isNumeric().withMessage('Invalid employee ID'),
+], validate, async (req, res, next) => {
+  try {
+    const { data: existing } = await supabase
+      .from('employees')
+      .select('id, user_id, is_active')
+      .eq('id', req.params.id)
+      .single()
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee not found' })
+    }
+
+    const newActiveState = !existing.is_active
+
+    const { data, error } = await supabase
+      .from('employees')
+      .update({ is_active: newActiveState, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Sync linked user's active status
+    if (existing.user_id) {
+      await supabase.from('users').update({ is_active: newActiveState, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+    }
+
+    req.logActivity({ action: newActiveState ? 'activated' : 'deactivated', entity_type: 'employee', entity_id: req.params.id })
+    res.json(data)
+  } catch (err) {
+    next(err)
+  }
+})
+
 // Delete employee (soft delete) - admin-only, also deactivates linked user
 router.delete('/:id', requireManager, [
   param('id').isNumeric().withMessage('Invalid employee ID'),

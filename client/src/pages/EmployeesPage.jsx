@@ -54,6 +54,16 @@ export default function EmployeesPage() {
     }
   }
 
+  const handleToggleActive = async (id) => {
+    try {
+      await employeesApi.toggleActive(id)
+      fetchEmployees()
+    } catch (err) {
+      console.error('Failed to toggle employee status:', err)
+      toastError(t('employees.failedToToggle') || 'Failed to toggle employee status')
+    }
+  }
+
   const handleSave = async (employeeData) => {
     try {
       if (editingEmployee) {
@@ -184,9 +194,16 @@ export default function EmployeesPage() {
 
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs px-2 py-1 rounded-full ${employee.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                  <button
+                    onClick={() => handleToggleActive(employee.id)}
+                    className={`text-xs px-2 py-1 rounded-full cursor-pointer transition-colors ${
+                      employee.is_active
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                    }`}
+                  >
                     {employee.is_active ? t('employees.active') : t('employees.inactive')}
-                  </span>
+                  </button>
                   {employee.user && (
                     <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                       <User className="w-3 h-3" />
