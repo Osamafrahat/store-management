@@ -160,7 +160,7 @@ export default function POSPage() {
       </div>
 
       {/* Right side - Cart */}
-      <div className="w-80 xl:w-96 flex-shrink-0 flex flex-col gap-3 min-w-0 overflow-hidden">
+      <div className="w-80 xl:w-96 flex-shrink-0 flex flex-col gap-3 min-w-0 overflow-y-auto">
         {/* Customer Selection */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
           <div className="flex items-center gap-2 mb-2">
