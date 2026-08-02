@@ -242,7 +242,7 @@ router.patch('/:id/toggle-active', requireManager, [
   }
 })
 
-// Delete employee (soft delete) - admin-only, also deactivates linked user
+// Delete employee (hard delete) - admin-only, unlinks and deactivates linked user
 router.delete('/:id', requireManager, [
   param('id').isNumeric().withMessage('Invalid employee ID'),
 ], validate, async (req, res, next) => {
@@ -257,14 +257,14 @@ router.delete('/:id', requireManager, [
       return res.status(404).json({ error: 'Employee not found' })
     }
 
-    // Deactivate linked user
+    // Unlink and deactivate linked user
     if (existing.user_id) {
       await supabase.from('users').update({ is_active: false, employee_id: null, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
     }
 
     const { error } = await supabase
       .from('employees')
-      .update({ is_active: false, user_id: null })
+      .delete()
       .eq('id', req.params.id)
 
     if (error) throw error
