@@ -257,9 +257,9 @@ router.delete('/:id', requireManager, [
       return res.status(404).json({ error: 'Employee not found' })
     }
 
-    // Unlink and deactivate linked user
+    // Delete linked user
     if (existing.user_id) {
-      await supabase.from('users').update({ is_active: false, employee_id: null, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+      await supabase.from('users').delete().eq('id', existing.user_id)
     }
 
     const { error } = await supabase
