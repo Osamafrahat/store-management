@@ -394,9 +394,16 @@ export const useUserStore = create(
       toggleUserActive: async (userId) => {
         try {
           const { data } = await usersApi.toggleActive(userId)
-          set(state => ({
-            users: state.users.map(u => u.id === userId ? { ...u, isActive: data.is_active } : u)
-          }))
+          set(state => {
+            const newState = {
+              users: state.users.map(u => u.id === userId ? { ...u, isActive: data.is_active } : u)
+            }
+            // Also update currentUser if toggling self
+            if (state.currentUser?.id === userId) {
+              newState.currentUser = { ...state.currentUser, isActive: data.is_active }
+            }
+            return newState
+          })
         } catch (err) {
           console.error('Failed to toggle user:', err)
         }

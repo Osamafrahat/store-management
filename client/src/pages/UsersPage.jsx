@@ -98,6 +98,7 @@ export default function UsersPage() {
 
   const handleToggleActive = async (userId) => {
     await toggleUserActive(userId)
+    fetchUsers()
   }
 
   return (
