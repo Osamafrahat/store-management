@@ -119,7 +119,7 @@ export const settingsApi = {
 
 // Users API
 export const usersApi = {
-  getAll: () => api.get('/users'),
+  getAll: () => api.get('/users', { params: { _: Date.now() } }),
   getById: (id) => api.get(`/users/${id}`),
   create: (data) => api.post('/users', data),
   update: (id, data) => api.put(`/users/${id}`, data),

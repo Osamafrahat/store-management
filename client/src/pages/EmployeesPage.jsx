@@ -49,8 +49,8 @@ export default function EmployeesPage() {
     try {
       await employeesApi.delete(id)
       toastSuccess(t('employees.deleted') || 'Employee deleted successfully')
-      fetchEmployees()
-      fetchUsers()
+      await fetchEmployees()
+      await fetchUsers()
     } catch (err) {
       console.error('Failed to delete employee:', err)
       toastError(t('employees.failedToDelete') || 'Failed to delete employee')
@@ -60,8 +60,8 @@ export default function EmployeesPage() {
   const handleToggleActive = async (id) => {
     try {
       await employeesApi.toggleActive(id)
-      fetchEmployees()
-      fetchUsers()
+      await fetchEmployees()
+      await fetchUsers()
     } catch (err) {
       console.error('Failed to toggle employee status:', err)
       toastError(t('employees.failedToToggle') || 'Failed to toggle employee status')
