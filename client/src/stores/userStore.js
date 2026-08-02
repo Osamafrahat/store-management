@@ -343,6 +343,7 @@ export const useUserStore = create(
       updateUser: async (userId, userData) => {
         try {
           const payload = {}
+          if (userData.username) payload.username = userData.username
           if (userData.fullName) payload.fullName = userData.fullName
           if (userData.role) payload.role = userData.role
           if (userData.permissions) payload.permissions = userData.permissions
