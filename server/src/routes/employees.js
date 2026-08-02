@@ -232,7 +232,8 @@ router.patch('/:id/toggle-active', requireManager, [
 
     // Sync linked user's active status
     if (existing.user_id) {
-      await supabase.from('users').update({ is_active: newActiveState, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+      const { error: userUpdateError } = await supabase.from('users').update({ is_active: newActiveState, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+      if (userUpdateError) console.error('Failed to sync user active status:', userUpdateError)
     }
 
     req.logActivity({ action: newActiveState ? 'activated' : 'deactivated', entity_type: 'employee', entity_id: req.params.id })
