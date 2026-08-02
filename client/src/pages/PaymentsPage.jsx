@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { paymentsApi } from '../lib/api'
-import { DollarSign, Plus, Search, Trash2, Save, X, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { DollarSign, Plus, Search, Trash2, Save, X, ArrowUpRight, ArrowDownRight, Pencil } from 'lucide-react'
 
 export default function PaymentsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -10,6 +10,7 @@ export default function PaymentsPage() {
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [formData, setFormData] = useState({
     payment_type: 'inbound',
     method: 'cash',
@@ -29,12 +30,31 @@ export default function PaymentsPage() {
     finally { setLoading(false) }
   }
 
+  const handleEdit = (payment) => {
+    setEditingId(payment.id)
+    setFormData({
+      payment_type: payment.payment_type,
+      method: payment.method,
+      amount: payment.amount.toString(),
+      reference: payment.reference || '',
+      notes: payment.notes || '',
+      payment_date: payment.payment_date,
+    })
+    setShowForm(true)
+  }
+
   const handleSubmit = async () => {
     if (!formData.amount || parseFloat(formData.amount) <= 0) return toastError(t('accounting.enterAmount'))
     try {
-      await paymentsApi.create(formData)
-      toastSuccess(t('accounting.paymentRecorded'))
+      if (editingId) {
+        await paymentsApi.update(editingId, formData)
+        toastSuccess(t('common.updated') || 'Updated successfully')
+      } else {
+        await paymentsApi.create(formData)
+        toastSuccess(t('accounting.paymentRecorded'))
+      }
       setShowForm(false)
+      setEditingId(null)
       setFormData({ payment_type: 'inbound', method: 'cash', amount: '', reference: '', notes: '', payment_date: new Date().toISOString().split('T')[0] })
       fetchPayments()
     } catch (err) {
@@ -103,7 +123,7 @@ export default function PaymentsPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-4">
-            <h3 className="text-lg font-bold">{t('accounting.newPayment') || 'New Payment'}</h3>
+            <h3 className="text-lg font-bold">{editingId ? (t('accounting.editPayment') || 'Edit Payment') : (t('accounting.newPayment') || 'New Payment')}</h3>
             <div className="grid grid-cols-2 gap-3">
               <select value={formData.payment_type} onChange={e => setFormData({ ...formData, payment_type: e.target.value })} className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500">
                 <option value="inbound">{t('accounting.inbound')} ({t('accounting.received')})</option>
@@ -124,7 +144,7 @@ export default function PaymentsPage() {
               <button onClick={handleSubmit} className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
                 <Save className="w-4 h-4" /> {t('common.save') || 'Save'}
               </button>
-              <button onClick={() => setShowForm(false)} className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2">
+              <button onClick={() => { setShowForm(false); setEditingId(null); setFormData({ payment_type: 'inbound', method: 'cash', amount: '', reference: '', notes: '', payment_date: new Date().toISOString().split('T')[0] }) }} className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2">
                 <X className="w-4 h-4" /> {t('common.cancel') || 'Cancel'}
               </button>
             </div>
@@ -165,7 +185,10 @@ export default function PaymentsPage() {
                   <td className="px-6 py-3 text-sm text-gray-500">{payment.reference || '-'}</td>
                   <td className="px-6 py-3 text-end">
                     {!payment.journal_entry_id && (
-                      <button onClick={() => handleDelete(payment.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => handleEdit(payment)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(payment.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     )}
                   </td>
                 </tr>

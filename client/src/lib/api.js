@@ -209,6 +209,7 @@ export const accountingReportsApi = {
 export const paymentsApi = {
   getAll: (params) => api.get('/accounting/payments', { params }),
   create: (data) => api.post('/accounting/payments', data),
+  update: (id, data) => api.put(`/accounting/payments/${id}`, data),
   delete: (id) => api.delete(`/accounting/payments/${id}`),
 }
 

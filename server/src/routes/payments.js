@@ -105,6 +105,42 @@ router.post('/', async (req, res) => {
   }
 })
 
+// Update payment (only if not posted)
+router.put('/:id', async (req, res) => {
+  try {
+    const { data: existing } = await supabase.from('payments').select('journal_entry_id').eq('id', req.params.id).single()
+    if (existing?.journal_entry_id) {
+      return res.status(400).json({ error: 'Cannot edit posted payment' })
+    }
+
+    const { payment_type, method, amount, reference, notes, payment_date } = req.body
+
+    if (!payment_type || !method || !amount) {
+      return res.status(400).json({ error: 'Payment type, method, and amount are required' })
+    }
+
+    const { data: payment, error } = await supabase
+      .from('payments')
+      .update({
+        payment_type,
+        method,
+        amount: parseFloat(amount),
+        reference: reference || null,
+        notes: notes || null,
+        payment_date,
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+    res.json(payment)
+  } catch (err) {
+    console.error('Update payment error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 // Delete payment (only if not posted)
 router.delete('/:id', async (req, res) => {
   try {
