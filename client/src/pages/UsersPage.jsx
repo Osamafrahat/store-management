@@ -50,7 +50,7 @@ const permissionLabelsAr = {
 }
 
 export default function UsersPage() {
-  const { users, currentUser, addUser, updateUser, deleteUser, toggleUserActive, fetchUsers } = useUserStore()
+  const { users, currentUser, addUser, updateUser, deleteUser, toggleUserActive } = useUserStore()
   const { t, language } = useAppStore()
   const permissionLabels = language === 'ar' ? permissionLabelsAr : permissionLabelsEn
   const location = useLocation()
@@ -58,13 +58,36 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState(null)
   const [employees, setEmployees] = useState([])
 
+  const loadUsers = async () => {
+    try {
+      const { data } = await usersApi.getAll()
+      const mapped = data.map(u => ({
+        id: u.id,
+        username: u.username,
+        fullName: u.full_name,
+        role: u.role,
+        permissions: typeof u.permissions === 'string' ? JSON.parse(u.permissions) : (u.permissions || []),
+        isActive: u.is_active,
+        mustChangePassword: u.must_change_password,
+        lastLogin: u.last_login,
+        employeeId: u.employee_id,
+        employee: u.employee || null,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at,
+      }))
+      useUserStore.setState({ users: mapped })
+    } catch (err) {
+      console.error('Failed to fetch users:', err)
+    }
+  }
+
   useEffect(() => {
-    fetchUsers()
+    loadUsers()
     fetchEmployees()
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        fetchUsers()
+        loadUsers()
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
@@ -108,7 +131,7 @@ export default function UsersPage() {
 
   const handleToggleActive = async (userId) => {
     await toggleUserActive(userId)
-    fetchUsers()
+    loadUsers()
   }
 
   return (
@@ -243,7 +266,7 @@ export default function UsersPage() {
             if (result?.success !== false) {
               setShowForm(false)
               setEditingUser(null)
-              fetchUsers()
+              loadUsers()
             }
           }}
           onClose={() => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useUserStore } from '../stores/userStore'
-import { employeesApi } from '../lib/api'
+import { employeesApi, usersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign, Shield } from 'lucide-react'
 
 const USER_ROLES = (t) => [
@@ -17,7 +17,6 @@ const USER_ROLES = (t) => [
 
 export default function EmployeesPage() {
   const { t, toastSuccess, toastError } = useAppStore()
-  const { fetchUsers } = useUserStore()
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -44,13 +43,36 @@ export default function EmployeesPage() {
     setShowForm(true)
   }
 
+  const refreshUsers = async () => {
+    try {
+      const { data } = await usersApi.getAll()
+      const mapped = data.map(u => ({
+        id: u.id,
+        username: u.username,
+        fullName: u.full_name,
+        role: u.role,
+        permissions: typeof u.permissions === 'string' ? JSON.parse(u.permissions) : (u.permissions || []),
+        isActive: u.is_active,
+        mustChangePassword: u.must_change_password,
+        lastLogin: u.last_login,
+        employeeId: u.employee_id,
+        employee: u.employee || null,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at,
+      }))
+      useUserStore.setState({ users: mapped })
+    } catch (err) {
+      console.error('Failed to refresh users:', err)
+    }
+  }
+
   const handleDelete = async (id) => {
     if (!confirm(t('employees.deleteConfirm') || 'Are you sure you want to delete this employee?')) return
     try {
       await employeesApi.delete(id)
       toastSuccess(t('employees.deleted') || 'Employee deleted successfully')
       await fetchEmployees()
-      await fetchUsers()
+      await refreshUsers()
     } catch (err) {
       console.error('Failed to delete employee:', err)
       toastError(t('employees.failedToDelete') || 'Failed to delete employee')
@@ -61,7 +83,7 @@ export default function EmployeesPage() {
     try {
       await employeesApi.toggleActive(id)
       await fetchEmployees()
-      await fetchUsers()
+      await refreshUsers()
     } catch (err) {
       console.error('Failed to toggle employee status:', err)
       toastError(t('employees.failedToToggle') || 'Failed to toggle employee status')
