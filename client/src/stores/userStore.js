@@ -360,9 +360,16 @@ export const useUserStore = create(
             mustChangePassword: data.must_change_password,
             employeeId: data.employee_id,
           }
-          set(state => ({
-            users: state.users.map(u => u.id === userId ? mapped : u)
-          }))
+          set(state => {
+            const newState = {
+              users: state.users.map(u => u.id === userId ? mapped : u)
+            }
+            // Also update currentUser if the updated user is the logged-in user
+            if (state.currentUser?.id === userId) {
+              newState.currentUser = { ...state.currentUser, ...mapped }
+            }
+            return newState
+          })
           return { success: true }
         } catch (err) {
           return { success: false, error: err.response?.data?.error || 'Failed to update user' }
