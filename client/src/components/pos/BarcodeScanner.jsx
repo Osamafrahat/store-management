@@ -1,14 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAppStore } from '../../stores/appStore'
-import { X, Camera, Keyboard } from 'lucide-react'
+import { X, Camera, Keyboard, Check } from 'lucide-react'
 
 export default function BarcodeScanner({ onScan, onClose }) {
   const { t } = useAppStore()
   const [mode, setMode] = useState('manual')
   const [manualInput, setManualInput] = useState('')
   const [isScanning, setIsScanning] = useState(false)
+  const [scanCount, setScanCount] = useState(0)
+  const [lastScanned, setLastScanned] = useState('')
+  const [flash, setFlash] = useState(false)
   const inputRef = useRef(null)
   const scannerRef = useRef(null)
+  const lastScanRef = useRef('')
+  const lastScanTimeRef = useRef(0)
 
   useEffect(() => {
     if (mode === 'manual') {
@@ -19,16 +24,30 @@ export default function BarcodeScanner({ onScan, onClose }) {
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop()
+        scannerRef.current.stop().catch(() => {})
       }
     }
   }, [])
 
+  const handleScanResult = useCallback((barcode) => {
+    const now = Date.now()
+    if (barcode === lastScanRef.current && now - lastScanTimeRef.current < 2000) return
+    lastScanRef.current = barcode
+    lastScanTimeRef.current = now
+
+    setLastScanned(barcode)
+    setScanCount(prev => prev + 1)
+    setFlash(true)
+    setTimeout(() => setFlash(false), 300)
+    onScan(barcode)
+  }, [onScan])
+
   const handleManualSubmit = (e) => {
     e.preventDefault()
     if (manualInput.trim()) {
-      onScan(manualInput.trim())
+      handleScanResult(manualInput.trim())
       setManualInput('')
+      inputRef.current?.focus()
     }
   }
 
@@ -49,9 +68,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
           qrbox: { width: 250, height: 250 },
         },
         (decodedText) => {
-          onScan(decodedText)
-          scanner.stop()
-          setIsScanning(false)
+          handleScanResult(decodedText)
         },
         () => {}
       )
@@ -65,7 +82,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
   const stopCameraScanner = () => {
     if (scannerRef.current) {
-      scannerRef.current.stop()
+      scannerRef.current.stop().catch(() => {})
       scannerRef.current = null
     }
     setIsScanning(false)
@@ -74,10 +91,17 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md mx-4 shadow-2xl">
+      <div className={`bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md mx-4 shadow-2xl transition-all ${flash ? 'ring-4 ring-green-400' : ''}`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold">{t('scanner.title')}</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold">{t('scanner.title')}</h2>
+            {scanCount > 0 && (
+              <span className="px-2.5 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded-full text-sm font-bold">
+                {scanCount} {scanCount === 1 ? 'item' : 'items'}
+              </span>
+            )}
+          </div>
           <button
             onClick={() => {
               stopCameraScanner()
@@ -88,6 +112,18 @@ export default function BarcodeScanner({ onScan, onClose }) {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Last Scanned Feedback */}
+        {lastScanned && (
+          <div className="px-4 pt-3">
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
+              <Check className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-green-700 dark:text-green-400 font-medium">
+                Last: {lastScanned}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Mode Toggle */}
         <div className="p-4">
@@ -143,7 +179,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
                 disabled={!manualInput.trim()}
                 className="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {t('scanner.lookUp')}
+                {t('scanner.add')} {manualInput.trim() ? `(${manualInput.trim()})` : ''}
               </button>
             </form>
           ) : (
@@ -155,6 +191,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
               {isScanning && (
                 <div className="text-center text-gray-500 dark:text-gray-400">
                   <p className="animate-pulse">{t('scanner.pointCamera')}</p>
+                  <p className="text-xs mt-1">{t('scanner.continuousMode')}</p>
                 </div>
               )}
               <button
@@ -171,7 +208,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
         <div className="px-4 pb-4">
           <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-400">
-              <strong>{t('scanner.tip')}</strong> {t('scanner.tipText')}
+              <strong>{t('scanner.tip')}</strong> {t('scanner.continuousTip')}
             </p>
           </div>
         </div>

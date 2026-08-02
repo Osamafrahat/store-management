@@ -288,6 +288,9 @@ export const translations = {
     'scanner.tip': 'Tip:',
     'scanner.tipText': 'Most barcode scanners work as keyboard input. Just scan the barcode while the manual input field is focused.',
     'scanner.cameraError': 'Could not access camera. Please use manual input.',
+    'scanner.add': 'Add',
+    'scanner.continuousMode': 'Continuous mode - items add automatically',
+    'scanner.continuousTip': 'Scanner stays open after each scan. Items are added to cart automatically. Close when done.',
 
     // Common
     'common.save': 'Save',
@@ -1073,6 +1076,9 @@ export const translations = {
     'scanner.tip': 'نصيحة:',
     'scanner.tipText': 'معظم ماسحات الباركود تعمل كلوحة مفاتيح. فقط امسح الباركود أثناء التركيز على حقل الإدخال.',
     'scanner.cameraError': 'لا يمكن الوصول إلى الكاميرا. يرجى استخدام الإدخال اليدوي.',
+    'scanner.add': 'إضافة',
+    'scanner.continuousMode': 'وضع مستمر - تُضاف المنتجات تلقائياً',
+    'scanner.continuousTip': 'الماسح يبقى مفتوحاً بعد كل مسح. تُضاف المنتجات للسلة تلقائياً. أغلق عند الانتهاء.',
 
     // Common
     'common.save': 'حفظ',

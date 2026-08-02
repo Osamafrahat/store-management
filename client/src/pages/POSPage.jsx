@@ -67,11 +67,9 @@ export default function POSPage() {
       const response = await productsApi.getByBarcode(barcode)
       if (response.data) {
         addItem(response.data)
-        setShowScanner(false)
       }
     } catch (err) {
-      console.error('Product not found:', err)
-      alert(t('pos.outOfStock'))
+      console.error('Product not found:', barcode, err)
     }
   }
 
