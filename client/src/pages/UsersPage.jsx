@@ -61,6 +61,14 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers()
     fetchEmployees()
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUsers()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [location.pathname])
 
   const fetchEmployees = async () => {
