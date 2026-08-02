@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useUserStore, ROLES, PERMISSIONS } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
 import { usersApi, employeesApi } from '../lib/api'
@@ -52,6 +53,7 @@ export default function UsersPage() {
   const { users, currentUser, addUser, updateUser, deleteUser, toggleUserActive, fetchUsers } = useUserStore()
   const { t, language } = useAppStore()
   const permissionLabels = language === 'ar' ? permissionLabelsAr : permissionLabelsEn
+  const location = useLocation()
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [employees, setEmployees] = useState([])
@@ -59,7 +61,7 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers()
     fetchEmployees()
-  }, [])
+  }, [location.pathname])
 
   const fetchEmployees = async () => {
     try {

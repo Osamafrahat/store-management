@@ -16,6 +16,7 @@ const validate = (req, res, next) => {
 // Get all users
 router.get('/', async (req, res, next) => {
   try {
+    res.set('Cache-Control', 'no-store')
     const { data, error } = await supabase
       .from('users')
       .select('id, username, full_name, role, permissions, is_active, must_change_password, last_login, employee_id, created_at, updated_at')
