@@ -741,6 +741,10 @@ export const translations = {
     'accounting.account.5030': 'Salary Expense',
     'accounting.account.5040': 'Rent Expense',
     'accounting.account.5050': 'Utilities Expense',
+    'inventory.receiveStock': 'Receive Stock',
+    'inventory.costPrice': 'Cost Price',
+    'inventory.costPriceHint': 'Cost price is required for accounting',
+    'inventory.received': 'Received',
 
     // Promotions extras
     'promotions.sendNotification': 'Send notification to customers',
@@ -1568,6 +1572,10 @@ export const translations = {
     'accounting.account.5030': 'مصروفات الرواتب',
     'accounting.account.5040': 'مصروفات الإيجار',
     'accounting.account.5050': 'مصروفات المرافق',
+    'inventory.receiveStock': 'استلام مخزون',
+    'inventory.costPrice': 'سعر التكلفة',
+    'inventory.costPriceHint': 'سعر التكلفة مطلوب للحسابات',
+    'inventory.received': 'تم الاستلام',
 
     // Promotions extras
     'promotions.sendNotification': 'إرسال إشعار للعملاء',

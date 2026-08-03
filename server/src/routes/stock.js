@@ -42,12 +42,12 @@ router.post('/receive', [
   body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
 ], validate, async (req, res, next) => {
   try {
-    const { product_id, quantity, notes } = req.body
+    const { product_id, quantity, cost_price, notes } = req.body
 
     // Get current stock
     const { data: product } = await supabase
       .from('products')
-      .select('stock_quantity')
+      .select('stock_quantity, cost_price')
       .eq('id', product_id)
       .single()
 
@@ -55,11 +55,15 @@ router.post('/receive', [
       return res.status(404).json({ error: 'Product not found' })
     }
 
+    // Use provided cost_price or existing product cost_price
+    const unitCost = cost_price !== undefined ? parseFloat(cost_price) : (product.cost_price || 0)
+
     // Update stock
     const { error: updateError } = await supabase
       .from('products')
       .update({
         stock_quantity: product.stock_quantity + quantity,
+        cost_price: unitCost,
         updated_at: new Date().toISOString()
       })
       .eq('id', product_id)
@@ -81,12 +85,13 @@ router.post('/receive', [
     if (error) throw error
 
     // Auto-post to accounting journal
-    try {
-      const { postStockReceiveJournal } = await import('../services/accountingEngine.js')
-      const { data: productFull } = await supabase.from('products').select('name, cost_price').eq('id', product_id).single()
-      if (productFull) await postStockReceiveJournal(data, productFull)
-    } catch (accErr) {
-      console.error('Accounting auto-post failed:', accErr.message)
+    if (unitCost > 0) {
+      try {
+        const { postStockReceiveJournal } = await import('../services/accountingEngine.js')
+        await postStockReceiveJournal(data, { name: product.name || 'Product', cost_price: unitCost })
+      } catch (accErr) {
+        console.error('Accounting auto-post failed:', accErr.message)
+      }
     }
 
     res.status(201).json(data)
