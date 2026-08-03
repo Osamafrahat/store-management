@@ -9,6 +9,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
   const [isScanning, setIsScanning] = useState(false)
   const [scanCount, setScanCount] = useState(0)
   const [lastScanned, setLastScanned] = useState('')
+  const [lastProductName, setLastProductName] = useState('')
   const [flash, setFlash] = useState(false)
   const inputRef = useRef(null)
   const scannerRef = useRef(null)
@@ -29,17 +30,19 @@ export default function BarcodeScanner({ onScan, onClose }) {
     }
   }, [])
 
-  const handleScanResult = useCallback((barcode) => {
+  const handleScanResult = useCallback(async (barcode) => {
     const now = Date.now()
     if (barcode === lastScanRef.current && now - lastScanTimeRef.current < 2000) return
     lastScanRef.current = barcode
     lastScanTimeRef.current = now
 
     setLastScanned(barcode)
+    setLastProductName('')
     setScanCount(prev => prev + 1)
     setFlash(true)
     setTimeout(() => setFlash(false), 300)
-    onScan(barcode)
+    const name = await onScan(barcode)
+    if (name) setLastProductName(name)
   }, [onScan])
 
   const handleManualSubmit = (e) => {
@@ -117,10 +120,15 @@ export default function BarcodeScanner({ onScan, onClose }) {
         {lastScanned && (
           <div className="px-4 pt-3">
             <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/30 rounded-lg">
-              <Check className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-green-700 dark:text-green-400 font-medium">
-                Last: {lastScanned}
-              </span>
+              <Check className="w-4 h-4 text-green-600 shrink-0" />
+              <div className="min-w-0">
+                {lastProductName && (
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-300 truncate">{lastProductName}</p>
+                )}
+                <span className="text-xs text-green-600 dark:text-green-500">
+                  {lastScanned}
+                </span>
+              </div>
             </div>
           </div>
         )}

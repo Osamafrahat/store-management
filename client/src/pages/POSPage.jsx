@@ -67,10 +67,12 @@ export default function POSPage() {
       const response = await productsApi.getByBarcode(barcode)
       if (response.data) {
         addItem(response.data)
+        return response.data.name
       }
     } catch (err) {
       console.error('Product not found:', barcode, err)
     }
+    return null
   }
 
   const handleQuickSale = async (product) => {
