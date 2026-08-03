@@ -280,7 +280,8 @@ export const useUserStore = create(
       // Check if must change password
       mustChangePassword: () => {
         const { currentUser } = get()
-        return currentUser?.must_change_password === 1 || currentUser?.must_change_password === true
+        const val = currentUser?.must_change_password
+        return val === true || val === 1 || val === '1' || val === 'true'
       },
 
       // Users list
