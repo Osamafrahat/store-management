@@ -137,6 +137,7 @@ router.post('/promotion', async (req, res, next) => {
         if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
           console.warn('[NOTIFICATION] SMTP not configured — skipping email')
           results.email = []
+          results.emailSkipped = true
         } else {
           const { data: emailCustomers, error: emailErr } = await supabase
             .from('customers')
