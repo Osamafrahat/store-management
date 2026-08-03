@@ -565,7 +565,7 @@ export default function Layout({ children }) {
                   <Globe className="w-5 h-5" />
                 </button>
                 {showLanguageMenu && (
-                  <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute end-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-50">
                     {Object.entries(languageNames).map(([code, name]) => (
                       <button
                         key={code}
