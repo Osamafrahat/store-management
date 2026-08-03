@@ -377,6 +377,152 @@ export async function postExpenseJournal(expense) {
   })
 }
 
+// Auto-post stock receive to journal
+export async function postStockReceiveJournal(movement, product) {
+  const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
+  const { data: apAccount } = await supabase.from('accounts').select('id').eq('code', '2010').single()
+
+  const costValue = (product.cost_price || 0) * movement.quantity
+  if (costValue <= 0) return null
+
+  const lines = []
+  if (inventoryAccount) {
+    lines.push({
+      accountId: inventoryAccount.id,
+      debit: costValue,
+      credit: 0,
+      description: `Stock in: ${product.name} x${movement.quantity}`,
+    })
+  }
+  if (apAccount) {
+    lines.push({
+      accountId: apAccount.id,
+      debit: 0,
+      credit: costValue,
+      description: `AP - ${product.name} x${movement.quantity}`,
+    })
+  }
+
+  if (lines.length === 0) return null
+
+  return createJournalEntry({
+    date: new Date().toISOString().split('T')[0],
+    description: `Stock receive - ${product.name} x${movement.quantity}`,
+    sourceType: 'stock_receive',
+    sourceId: movement.id,
+    lines,
+    createdBy: null,
+  })
+}
+
+// Auto-post stock adjustment to journal
+export async function postStockAdjustJournal(movement, product) {
+  const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
+  const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
+
+  const costValue = (product.cost_price || 0) * Math.abs(movement.quantity)
+  if (costValue <= 0) return null
+
+  const lines = []
+
+  if (movement.quantity > 0) {
+    // Stock increase: debit inventory, credit COGS
+    if (inventoryAccount) lines.push({ accountId: inventoryAccount.id, debit: costValue, credit: 0, description: `Stock adj up: ${product.name}` })
+    if (cogsAccount) lines.push({ accountId: cogsAccount.id, debit: 0, credit: costValue, description: `Stock adj up: ${product.name}` })
+  } else {
+    // Stock decrease (shrinkage): debit COGS, credit inventory
+    if (cogsAccount) lines.push({ accountId: cogsAccount.id, debit: costValue, credit: 0, description: `Stock adj down: ${product.name}` })
+    if (inventoryAccount) lines.push({ accountId: inventoryAccount.id, debit: 0, credit: costValue, description: `Stock adj down: ${product.name}` })
+  }
+
+  if (lines.length === 0) return null
+
+  return createJournalEntry({
+    date: new Date().toISOString().split('T')[0],
+    description: `Stock adjust - ${product.name} (${movement.quantity > 0 ? '+' : ''}${movement.quantity})`,
+    sourceType: 'stock_adjust',
+    sourceId: movement.id,
+    lines,
+    createdBy: null,
+  })
+}
+
+// Reverse a journal entry (creates opposite entry)
+export async function reverseJournalEntry(entryId, reason, userId) {
+  const { data: originalEntry } = await supabase
+    .from('journal_entries')
+    .select('*, journal_entry_lines(*)')
+    .eq('id', entryId)
+    .single()
+
+  if (!originalEntry) throw new Error('Journal entry not found')
+  if (originalEntry.is_reversed) throw new Error('Journal entry already reversed')
+
+  // Create reversal lines (swap debits and credits)
+  const reversalLines = originalEntry.journal_entry_lines.map(line => ({
+    accountId: line.account_id,
+    debit: line.credit,
+    credit: line.debit,
+    description: `Reversal: ${line.description}`,
+  }))
+
+  const entry = await createJournalEntry({
+    date: new Date().toISOString().split('T')[0],
+    description: `Reversal of ${originalEntry.entry_number}: ${reason}`,
+    reference: originalEntry.entry_number,
+    sourceType: 'reversal',
+    sourceId: originalEntry.id,
+    lines: reversalLines,
+    createdBy: userId,
+  })
+
+  // Mark original as reversed
+  await supabase
+    .from('journal_entries')
+    .update({ is_reversed: true, reversed_by: entry.id })
+    .eq('id', entryId)
+
+  return entry
+}
+
+// Post expense update: reverse old entry, create new entry
+export async function postExpenseUpdateJournal(oldExpense, newExpense) {
+  // Find and reverse the original journal entry
+  const { data: oldEntry } = await supabase
+    .from('journal_entries')
+    .select('id')
+    .eq('source_type', 'expense')
+    .eq('source_id', oldExpense.id)
+    .eq('is_reversed', false)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (oldEntry) {
+    await reverseJournalEntry(oldEntry.id, `Expense updated: ${newExpense.category}`, newExpense.recorded_by)
+  }
+
+  // Create new entry for updated expense
+  return postExpenseJournal(newExpense)
+}
+
+// Post payment delete: reverse the journal entry
+export async function postPaymentDeleteJournal(payment) {
+  if (!payment.journal_entry_id) return null
+
+  const { data: entry } = await supabase
+    .from('journal_entries')
+    .select('id, is_reversed')
+    .eq('id', payment.journal_entry_id)
+    .single()
+
+  if (entry && !entry.is_reversed) {
+    return reverseJournalEntry(entry.id, `Payment deleted: ${payment.payment_number}`, payment.recorded_by)
+  }
+
+  return null
+}
+
 // Seed default chart of accounts
 export async function seedChartOfAccounts() {
   const defaultAccounts = [

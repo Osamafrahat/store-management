@@ -141,16 +141,27 @@ router.put('/:id', async (req, res) => {
   }
 })
 
-// Delete payment (only if not posted)
+// Delete payment (auto-reverses journal entry if posted)
 router.delete('/:id', async (req, res) => {
   try {
-    const { data: payment } = await supabase.from('payments').select('journal_entry_id').eq('id', req.params.id).single()
-    if (payment?.journal_entry_id) {
-      return res.status(400).json({ error: 'Cannot delete posted payment' })
+    const { data: payment } = await supabase.from('payments').select('*').eq('id', req.params.id).single()
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' })
     }
 
     const { error } = await supabase.from('payments').delete().eq('id', req.params.id)
     if (error) throw error
+
+    // Auto-post accounting: reverse the journal entry if it existed
+    if (payment.journal_entry_id) {
+      try {
+        const { reverseJournalEntry } = await import('../services/accountingEngine.js')
+        await reverseJournalEntry(payment.journal_entry_id, `Payment deleted: ${payment.payment_number}`, req.user?.id)
+      } catch (accErr) {
+        console.error('Accounting auto-post failed:', accErr.message)
+      }
+    }
+
     res.json({ message: 'Payment deleted' })
   } catch (err) {
     console.error('Delete payment error:', err)

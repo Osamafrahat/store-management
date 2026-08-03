@@ -257,7 +257,16 @@ router.post('/', async (req, res, next) => {
     // Auto-post to accounting journal (fire and forget)
     try {
       const { postOrderJournal } = await import('../services/accountingEngine.js')
-      await postOrderJournal(order, items)
+      // Fetch cost_price for each item to enable COGS calculation
+      const itemsWithCost = await Promise.all(items.map(async (item) => {
+        const { data: product } = await supabase
+          .from('products')
+          .select('cost_price')
+          .eq('id', item.product_id)
+          .single()
+        return { ...item, cost_price: product?.cost_price || 0 }
+      }))
+      await postOrderJournal(order, itemsWithCost)
     } catch (accErr) {
       console.error('Accounting auto-post failed:', accErr.message)
     }

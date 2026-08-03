@@ -79,6 +79,16 @@ router.post('/receive', [
       .single()
 
     if (error) throw error
+
+    // Auto-post to accounting journal
+    try {
+      const { postStockReceiveJournal } = await import('../services/accountingEngine.js')
+      const { data: productFull } = await supabase.from('products').select('name, cost_price').eq('id', product_id).single()
+      if (productFull) await postStockReceiveJournal(data, productFull)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.status(201).json(data)
   } catch (err) {
     next(err)
@@ -130,6 +140,16 @@ router.post('/adjust', [
       .single()
 
     if (error) throw error
+
+    // Auto-post to accounting journal
+    try {
+      const { postStockAdjustJournal } = await import('../services/accountingEngine.js')
+      const { data: productFull } = await supabase.from('products').select('name, cost_price').eq('id', product_id).single()
+      if (productFull) await postStockAdjustJournal(data, productFull)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.status(201).json(data)
   } catch (err) {
     next(err)

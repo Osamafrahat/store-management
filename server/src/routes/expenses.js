@@ -149,6 +149,15 @@ router.put('/:id', [
 
     if (error) throw error
     req.logActivity({ action: 'updated', entity_type: 'expense', entity_id: req.params.id })
+
+    // Auto-post accounting: reverse old entry, create new entry
+    try {
+      const { postExpenseUpdateJournal } = await import('../services/accountingEngine.js')
+      await postExpenseUpdateJournal({ id: req.params.id }, data)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.json(data)
   } catch (err) {
     next(err)
@@ -167,6 +176,24 @@ router.delete('/:id', [
 
     if (error) throw error
     req.logActivity({ action: 'deleted', entity_type: 'expense', entity_id: req.params.id })
+
+    // Auto-post accounting: reverse the original entry
+    try {
+      const { reverseJournalEntry } = await import('../services/accountingEngine.js')
+      const { data: entry } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('source_type', 'expense')
+        .eq('source_id', req.params.id)
+        .eq('is_reversed', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (entry) await reverseJournalEntry(entry.id, 'Expense deleted', req.user?.id)
+    } catch (accErr) {
+      console.error('Accounting auto-post failed:', accErr.message)
+    }
+
     res.json({ message: 'Expense deleted successfully' })
   } catch (err) {
     next(err)
