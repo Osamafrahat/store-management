@@ -156,7 +156,7 @@ export default function AccountingReportsPage() {
                   </h3>
                   {balanceSheet.assets.items.map(acc => (
                     <div key={acc.id} className="flex justify-between py-1.5 text-sm border-b border-gray-100 dark:border-gray-700/50">
-                      <span>{acc.code} - {acc.name}</span>
+                      <span>{acc.code} - {getAccountName(acc)}</span>
                       <span className="font-mono font-medium">{formatAmount(acc.balance)}</span>
                     </div>
                   ))}
@@ -173,7 +173,7 @@ export default function AccountingReportsPage() {
                   </h3>
                   {balanceSheet.liabilities.items.map(acc => (
                     <div key={acc.id} className="flex justify-between py-1.5 text-sm border-b border-gray-100 dark:border-gray-700/50">
-                      <span>{acc.code} - {acc.name}</span>
+                      <span>{acc.code} - {getAccountName(acc)}</span>
                       <span className="font-mono font-medium">{formatAmount(acc.balance)}</span>
                     </div>
                   ))}
@@ -189,7 +189,7 @@ export default function AccountingReportsPage() {
                 <h3 className="font-bold text-purple-600 dark:text-purple-400 mb-3">{t('accounting.equity')}</h3>
                 {balanceSheet.equity.items.map(acc => (
                   <div key={acc.id} className="flex justify-between py-1.5 text-sm border-b border-gray-100 dark:border-gray-700/50">
-                    <span>{acc.code} - {acc.name}</span>
+                    <span>{acc.code} - {getAccountName(acc)}</span>
                     <span className="font-mono font-medium">{formatAmount(acc.balance)}</span>
                   </div>
                 ))}
@@ -223,7 +223,7 @@ export default function AccountingReportsPage() {
                   </h3>
                   {profitLoss.revenues.map(acc => (
                     <div key={acc.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100 dark:border-gray-700/50">
-                      <span>{acc.code} - {acc.name}</span>
+                      <span>{acc.code} - {getAccountName(acc)}</span>
                       <span className="font-mono font-medium">{formatAmount(acc.total)}</span>
                     </div>
                   ))}
@@ -240,7 +240,7 @@ export default function AccountingReportsPage() {
                   </h3>
                   {profitLoss.expenses.map(acc => (
                     <div key={acc.code} className="flex justify-between py-1.5 text-sm border-b border-gray-100 dark:border-gray-700/50">
-                      <span>{acc.code} - {acc.name}</span>
+                      <span>{acc.code} - {getAccountName(acc)}</span>
                       <span className="font-mono font-medium">{formatAmount(acc.total)}</span>
                     </div>
                   ))}

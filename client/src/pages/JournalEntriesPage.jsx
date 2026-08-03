@@ -20,6 +20,47 @@ export default function JournalEntriesPage() {
     const translated = t(key)
     return translated !== key ? translated : account.name
   }
+
+  const translateDesc = (desc) => {
+    if (!desc) return ''
+    const patterns = [
+      { en: /^Payment for (.+)$/, key: 'accounting.desc.paymentFor' },
+      { en: /^Sale - (.+)$/, key: 'accounting.desc.sale' },
+      { en: /^VAT for (.+)$/, key: 'accounting.desc.vatFor' },
+      { en: /^COGS for (.+)$/, key: 'accounting.desc.cogsFor' },
+      { en: /^Inventory out - (.+)$/, key: 'accounting.desc.inventoryOut' },
+      { en: /^Refund - Order refund$/, key: 'accounting.desc.refundOrder' },
+      { en: /^Refund payment$/, key: 'accounting.desc.refundPayment' },
+      { en: /^Inventory restored - refund$/, key: 'accounting.desc.inventoryRestored' },
+      { en: /^COGS reversed - refund$/, key: 'accounting.desc.cogsReversed' },
+      { en: /^Refund for order$/, key: 'accounting.desc.refundForOrder' },
+      { en: /^Expense: (.+)$/, key: 'accounting.desc.expense' },
+      { en: /^Payment for expense$/, key: 'accounting.desc.paymentForExpense' },
+      { en: /^Stock in: (.+)$/, key: 'accounting.desc.stockIn' },
+      { en: /^AP - (.+)$/, key: 'accounting.desc.apFor' },
+      { en: /^Stock receive - (.+)$/, key: 'accounting.desc.stockReceive' },
+      { en: /^Stock adj up: (.+)$/, key: 'accounting.desc.stockAdjUp' },
+      { en: /^Stock adj down: (.+)$/, key: 'accounting.desc.stockAdjDown' },
+      { en: /^Stock adjust - (.+)$/, key: 'accounting.desc.stockAdjust' },
+      { en: /^Reversal of (.+)$/, key: 'accounting.desc.reversalOf' },
+      { en: /^Reversal: (.+)$/, key: 'accounting.desc.reversal' },
+      { en: /^Payment received - (.+)$/, key: 'accounting.desc.paymentReceived' },
+      { en: /^AR reduction - (.+)$/, key: 'accounting.desc.arReduction' },
+      { en: /^AP reduction - (.+)$/, key: 'accounting.desc.apReduction' },
+      { en: /^Payment made - (.+)$/, key: 'accounting.desc.paymentMade' },
+      { en: /^Year-end closing for (.+)$/, key: 'accounting.desc.yearEndClosing' },
+    ]
+    for (const p of patterns) {
+      const m = desc.match(p.en)
+      if (m) {
+        const translated = t(p.key)
+        if (translated !== p.key) {
+          return m.length > 1 ? `${translated} ${m[1]}` : translated
+        }
+      }
+    }
+    return desc
+  }
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -180,7 +221,7 @@ export default function JournalEntriesPage() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-gray-500">{t('common.date')}:</span> {showDetail.date}</div>
               <div><span className="text-gray-500">{t('accounting.reference')}:</span> {showDetail.reference || '-'}</div>
-                <div className="col-span-2"><span className="text-gray-500">{t('accounting.description')}:</span> {showDetail.description}</div>
+                <div className="col-span-2"><span className="text-gray-500">{t('accounting.description')}:</span> {translateDesc(showDetail.description)}</div>
                 <div><span className="text-gray-500">{t('accounting.source')}:</span> {t('accounting.source' + (showDetail.source_type || 'manual').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}</div>
                 <div><span className="text-gray-500">{t('accounting.status')}:</span> {showDetail.is_posted ? t('accounting.posted') : t('accounting.draft')} {showDetail.is_reversed ? `(${t('accounting.reversed')})` : ''}</div>
             </div>
@@ -238,7 +279,7 @@ export default function JournalEntriesPage() {
                   <tr key={entry.id} className="border-t border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     <td className="px-6 py-3 text-sm font-mono font-bold">{entry.entry_number}</td>
                     <td className="px-6 py-3 text-sm">{entry.date}</td>
-                    <td className="px-6 py-3 text-sm">{entry.description}</td>
+                    <td className="px-6 py-3 text-sm">{translateDesc(entry.description)}</td>
                     <td className="px-6 py-3 text-sm">
                       <span className="px-2 py-0.5 rounded-md text-xs bg-gray-100 dark:bg-gray-700">{t('accounting.source' + entry.source_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}</span>
                     </td>
