@@ -17,7 +17,7 @@ router.get('/', async (req, res, next) => {
   try {
     const { category_id, is_active, search } = req.query
 
-    let query = supabase.from('products').select('*')
+    let query = supabase.from('products').select('*, suppliers(name)')
 
     if (category_id) {
       query = query.eq('category_id', category_id)

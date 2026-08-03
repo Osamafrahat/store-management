@@ -16,7 +16,8 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
         return (
           p.name.toLowerCase().includes(query) ||
           p.sku?.toLowerCase().includes(query) ||
-          p.barcode?.includes(searchQuery)
+          p.barcode?.includes(searchQuery) ||
+          p.suppliers?.name?.toLowerCase().includes(query)
         )
       }
       return true
@@ -103,6 +104,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                 </button>
               </th>
               <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.status')}</th>
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.supplier') || 'Supplier'}</th>
               <th className="text-end p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
             </tr>
           </thead>
@@ -153,6 +155,9 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                   }`}>
                     {product.is_active ? t('inventory.active') : t('inventory.inactive')}
                   </span>
+                </td>
+                <td className="p-4 text-gray-600 dark:text-gray-300">
+                  {product.suppliers?.name || '-'}
                 </td>
                 <td className="p-4">
                   <div className="flex items-center justify-end gap-2">
