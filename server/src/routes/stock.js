@@ -38,17 +38,18 @@ router.get('/movements', async (req, res, next) => {
 
 // Receive stock
 router.post('/receive', [
-  body('product_id').isNumeric().withMessage('Product ID is required'),
+  body('product_id').notEmpty().withMessage('Product ID is required'),
   body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
 ], validate, async (req, res, next) => {
   try {
     const { product_id, quantity, notes } = req.body
+    const pid = parseInt(product_id)
 
     // Get current stock and cost
     const { data: product } = await supabase
       .from('products')
       .select('stock_quantity, cost_price, name')
-      .eq('id', product_id)
+      .eq('id', pid)
       .single()
 
     if (!product) {
@@ -64,7 +65,7 @@ router.post('/receive', [
         stock_quantity: product.stock_quantity + quantity,
         updated_at: new Date().toISOString()
       })
-      .eq('id', product_id)
+      .eq('id', pid)
 
     if (updateError) throw updateError
 
@@ -72,7 +73,7 @@ router.post('/receive', [
     const { data, error } = await supabase
       .from('stock_movements')
       .insert({
-        product_id,
+        product_id: pid,
         type: 'receive',
         quantity,
         notes: notes || 'Stock received'
@@ -100,17 +101,18 @@ router.post('/receive', [
 
 // Adjust stock
 router.post('/adjust', [
-  body('product_id').isNumeric().withMessage('Product ID is required'),
+  body('product_id').notEmpty().withMessage('Product ID is required'),
   body('quantity').isInt().withMessage('Quantity is required'),
 ], validate, async (req, res, next) => {
   try {
     const { product_id, quantity, notes } = req.body
+    const pid = parseInt(product_id)
 
     // Get current stock
     const { data: product } = await supabase
       .from('products')
       .select('stock_quantity')
-      .eq('id', product_id)
+      .eq('id', pid)
       .single()
 
     if (!product) {
@@ -126,7 +128,7 @@ router.post('/adjust', [
         stock_quantity: newQuantity,
         updated_at: new Date().toISOString()
       })
-      .eq('id', product_id)
+      .eq('id', pid)
 
     if (updateError) throw updateError
 
@@ -134,7 +136,7 @@ router.post('/adjust', [
     const { data, error } = await supabase
       .from('stock_movements')
       .insert({
-        product_id,
+        product_id: pid,
         type: 'adjust',
         quantity,
         notes: notes || 'Stock adjusted'
