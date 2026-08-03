@@ -208,7 +208,12 @@ function CustomerForm({ customer, onSave, onClose }) {
     if (!phone) return { countryCode: '+20', number: '' }
     const match = phone.match(/^(\+\d{1,4})(\d+)$/)
     if (match) return { countryCode: match[1], number: match[2] }
-    return { countryCode: '+20', number: phone.replace(/[^0-9]/g, '') }
+    const digits = phone.replace(/[^0-9]/g, '')
+    // Strip leading 0 (local format) — e.g. "01012345678" → "1012345678"
+    if (digits.startsWith('0') && digits.length > 1) {
+      return { countryCode: '+20', number: digits.substring(1) }
+    }
+    return { countryCode: '+20', number: digits }
   }
 
   const parsed = parsePhone(customer?.phone)
@@ -276,7 +281,11 @@ function CustomerForm({ customer, onSave, onClose }) {
   const handleChange = (e) => {
     const { name, value } = e.target
     if (name === 'phone') {
-      const digits = value.replace(/\D/g, '')
+      let digits = value.replace(/\D/g, '')
+      // Strip leading 0 (local format) — user types "010..." → becomes "10..."
+      if (digits.startsWith('0') && digits.length > 1) {
+        digits = digits.substring(1)
+      }
       setFormData(prev => ({ ...prev, phone: digits }))
       if (phoneTouched) {
         setPhoneError(validatePhone(digits, formData.countryCode))
