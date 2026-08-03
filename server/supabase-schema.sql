@@ -185,7 +185,6 @@ CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_refunds_order ON refunds(order_id);
 CREATE INDEX IF NOT EXISTS idx_employees_user ON employees(user_id);
-CREATE INDEX IF NOT EXISTS idx_users_employee ON users(employee_id);
 
 -- Alter orders table to add user_id and customer_id
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(id);
@@ -198,6 +197,8 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS max_stock INTEGER DEFAULT 0;
 
 -- Add employee_id to users table for bidirectional link
 ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id BIGINT REFERENCES employees(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_employee ON users(employee_id);
 
 -- ============================================================
 -- ROW LEVEL SECURITY POLICIES
