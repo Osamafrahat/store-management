@@ -106,24 +106,12 @@ app.use('/api/accounting/journals', authenticateToken, activityLogger, journalsR
 app.use('/api/accounting/reports', authenticateToken, accountingReportsRouter)
 app.use('/api/accounting/payments', authenticateToken, activityLogger, paymentsRouter)
 
-app.get('/api/health', async (req, res) => {
-  try {
-    const { error } = await supabase.from('users').select('id').limit(1)
-    if (error) throw error
-    res.json({
-      status: 'ok',
-      database: 'supabase',
-      smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
-      timestamp: new Date().toISOString(),
-    })
-  } catch (err) {
-    res.json({
-      status: 'ok',
-      database: 'supabase',
-      smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
-      timestamp: new Date().toISOString(),
-    })
-  }
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    smtp: !!(process.env.SMTP_USER && process.env.SMTP_PASS),
+    timestamp: new Date().toISOString(),
+  })
 })
 
 app.use('/api', (req, res) => {

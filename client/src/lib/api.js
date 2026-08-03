@@ -176,7 +176,7 @@ export const notificationsApi = {
 
 // Health API
 export const healthApi = {
-  check: () => api.get('/health', { timeout: 5000 }),
+  check: () => api.get('/health', { timeout: 3000 }),
 }
 
 // Activities API
