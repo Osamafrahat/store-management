@@ -206,12 +206,16 @@ function CustomerForm({ customer, onSave, onClose }) {
   const { t } = useAppStore()
   const parsePhone = (phone) => {
     if (!phone) return { countryCode: '+20', number: '' }
-    const match = phone.match(/^(\+\d{1,4})(\d+)$/)
+    const match = phone.match(/^(\+\d{1,4})[\s\-]?(\d+)$/)
     if (match) return { countryCode: match[1], number: match[2] }
     const digits = phone.replace(/[^0-9]/g, '')
     // Strip leading 0 (local format) — e.g. "01012345678" → "1012345678"
     if (digits.startsWith('0') && digits.length > 1) {
       return { countryCode: '+20', number: digits.substring(1) }
+    }
+    // If digits include country code prefix (e.g. "201012345678" → "1012345678")
+    if (digits.length > 10 && digits.startsWith('20')) {
+      return { countryCode: '+20', number: digits.substring(2) }
     }
     return { countryCode: '+20', number: digits }
   }
@@ -285,6 +289,10 @@ function CustomerForm({ customer, onSave, onClose }) {
       // Strip leading 0 (local format) — user types "010..." → becomes "10..."
       if (digits.startsWith('0') && digits.length > 1) {
         digits = digits.substring(1)
+      }
+      // Strip country code prefix if pasted — "201012345678" → "1012345678"
+      if (digits.length > 10 && digits.startsWith('20')) {
+        digits = digits.substring(2)
       }
       setFormData(prev => ({ ...prev, phone: digits }))
       if (phoneTouched) {
