@@ -1,14 +1,17 @@
 -- ============================================================
--- STORE MANAGEMENT SYSTEM - COMPLETE SCHEMA
+-- STORE MANAGEMENT SYSTEM - COMPLETE INITIAL SCHEMA
 -- Run this single file in Supabase SQL Editor
--- Creates all tables, indexes, RLS policies, and admin user
+-- Creates all tables, indexes, RLS policies, admin user
+-- Password: admin123
 -- ============================================================
+
+-- Enable pgcrypto for password hashing in SQL
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ============================================================
 -- 1. CORE TABLES
 -- ============================================================
 
--- Users
 CREATE TABLE IF NOT EXISTS users (
   id BIGSERIAL PRIMARY KEY,
   username TEXT NOT NULL UNIQUE,
@@ -27,7 +30,6 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Categories
 CREATE TABLE IF NOT EXISTS categories (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -35,7 +37,6 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Suppliers
 CREATE TABLE IF NOT EXISTS suppliers (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -47,7 +48,6 @@ CREATE TABLE IF NOT EXISTS suppliers (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Products
 CREATE TABLE IF NOT EXISTS products (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -68,7 +68,6 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Customers
 CREATE TABLE IF NOT EXISTS customers (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -83,7 +82,6 @@ CREATE TABLE IF NOT EXISTS customers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Employees
 CREATE TABLE IF NOT EXISTS employees (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -99,10 +97,8 @@ CREATE TABLE IF NOT EXISTS employees (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add employee_id FK to users (after employees table exists)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id BIGINT REFERENCES employees(id) ON DELETE SET NULL;
 
--- Orders
 CREATE TABLE IF NOT EXISTS orders (
   id BIGSERIAL PRIMARY KEY,
   order_number TEXT NOT NULL UNIQUE,
@@ -119,7 +115,6 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Order Items
 CREATE TABLE IF NOT EXISTS order_items (
   id BIGSERIAL PRIMARY KEY,
   order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -130,7 +125,6 @@ CREATE TABLE IF NOT EXISTS order_items (
   total NUMERIC NOT NULL DEFAULT 0
 );
 
--- Payment Splits
 CREATE TABLE IF NOT EXISTS payment_splits (
   id BIGSERIAL PRIMARY KEY,
   order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -140,7 +134,6 @@ CREATE TABLE IF NOT EXISTS payment_splits (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Stock Movements
 CREATE TABLE IF NOT EXISTS stock_movements (
   id BIGSERIAL PRIMARY KEY,
   product_id BIGINT NOT NULL REFERENCES products(id),
@@ -152,7 +145,6 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Promotions
 CREATE TABLE IF NOT EXISTS promotions (
   id BIGSERIAL PRIMARY KEY,
   code TEXT NOT NULL UNIQUE,
@@ -167,14 +159,12 @@ CREATE TABLE IF NOT EXISTS promotions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Store Settings
 CREATE TABLE IF NOT EXISTS store_settings (
   id BIGSERIAL PRIMARY KEY,
   key TEXT NOT NULL UNIQUE,
   value TEXT
 );
 
--- Expenses
 CREATE TABLE IF NOT EXISTS expenses (
   id BIGSERIAL PRIMARY KEY,
   category TEXT NOT NULL,
@@ -186,7 +176,6 @@ CREATE TABLE IF NOT EXISTS expenses (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Refunds
 CREATE TABLE IF NOT EXISTS refunds (
   id BIGSERIAL PRIMARY KEY,
   order_id BIGINT NOT NULL REFERENCES orders(id),
@@ -197,7 +186,6 @@ CREATE TABLE IF NOT EXISTS refunds (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Notifications
 CREATE TABLE IF NOT EXISTS notifications (
   id BIGSERIAL PRIMARY KEY,
   type TEXT NOT NULL,
@@ -209,7 +197,6 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Activity Log
 CREATE TABLE IF NOT EXISTS activity_log (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
@@ -227,7 +214,6 @@ CREATE TABLE IF NOT EXISTS activity_log (
 -- 2. ACCOUNTING TABLES
 -- ============================================================
 
--- Chart of Accounts
 CREATE TABLE IF NOT EXISTS accounts (
   id BIGSERIAL PRIMARY KEY,
   code TEXT NOT NULL UNIQUE,
@@ -242,7 +228,6 @@ CREATE TABLE IF NOT EXISTS accounts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Fiscal Periods
 CREATE TABLE IF NOT EXISTS fiscal_periods (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -254,7 +239,6 @@ CREATE TABLE IF NOT EXISTS fiscal_periods (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Journal Entries (double-entry)
 CREATE TABLE IF NOT EXISTS journal_entries (
   id BIGSERIAL PRIMARY KEY,
   entry_number TEXT NOT NULL UNIQUE,
@@ -272,7 +256,6 @@ CREATE TABLE IF NOT EXISTS journal_entries (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Journal Entry Lines (debit/credit)
 CREATE TABLE IF NOT EXISTS journal_entry_lines (
   id BIGSERIAL PRIMARY KEY,
   entry_id BIGINT NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
@@ -283,7 +266,6 @@ CREATE TABLE IF NOT EXISTS journal_entry_lines (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Payments (cash/bank tracking)
 CREATE TABLE IF NOT EXISTS payments (
   id BIGSERIAL PRIMARY KEY,
   payment_number TEXT NOT NULL UNIQUE,
@@ -300,7 +282,6 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Account Balances (running totals per account per period)
 CREATE TABLE IF NOT EXISTS account_balances (
   id BIGSERIAL PRIMARY KEY,
   account_id BIGINT NOT NULL REFERENCES accounts(id),
@@ -356,60 +337,100 @@ CREATE INDEX IF NOT EXISTS idx_fiscal_periods_dates ON fiscal_periods(start_date
 
 -- ============================================================
 -- 4. ROW LEVEL SECURITY (RLS)
--- Backend uses service_role key, so allow all for service role
+-- ALL tables must have RLS enabled with an open policy
 -- ============================================================
 
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON users;
+CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON categories;
+CREATE POLICY "Allow all" ON categories FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON suppliers;
+CREATE POLICY "Allow all" ON suppliers FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON products;
+CREATE POLICY "Allow all" ON products FOR ALL USING (true) WITH CHECK (true);
+
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON customers;
-CREATE POLICY "Allow all for service role" ON customers FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON customers;
+CREATE POLICY "Allow all" ON customers FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON employees;
-CREATE POLICY "Allow all for service role" ON employees FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON employees;
+CREATE POLICY "Allow all" ON employees FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON orders;
+CREATE POLICY "Allow all" ON orders FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON order_items;
+CREATE POLICY "Allow all" ON order_items FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE payment_splits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON payment_splits;
+CREATE POLICY "Allow all" ON payment_splits FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON stock_movements;
+CREATE POLICY "Allow all" ON stock_movements FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE promotions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON promotions;
+CREATE POLICY "Allow all" ON promotions FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE store_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON store_settings;
+CREATE POLICY "Allow all" ON store_settings FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON expenses;
-CREATE POLICY "Allow all for service role" ON expenses FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON expenses;
+CREATE POLICY "Allow all" ON expenses FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON refunds;
-CREATE POLICY "Allow all for service role" ON refunds FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON refunds;
+CREATE POLICY "Allow all" ON refunds FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON notifications;
-CREATE POLICY "Allow all for service role" ON notifications FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON notifications;
+CREATE POLICY "Allow all" ON notifications FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON activity_log;
-CREATE POLICY "Allow all for service role" ON activity_log FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON activity_log;
+CREATE POLICY "Allow all" ON activity_log FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON accounts;
-CREATE POLICY "Allow all for service role" ON accounts FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON accounts;
+CREATE POLICY "Allow all" ON accounts FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE fiscal_periods ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON fiscal_periods;
-CREATE POLICY "Allow all for service role" ON fiscal_periods FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON fiscal_periods;
+CREATE POLICY "Allow all" ON fiscal_periods FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON journal_entries;
-CREATE POLICY "Allow all for service role" ON journal_entries FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON journal_entries;
+CREATE POLICY "Allow all" ON journal_entries FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE journal_entry_lines ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON journal_entry_lines;
-CREATE POLICY "Allow all for service role" ON journal_entry_lines FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON journal_entry_lines;
+CREATE POLICY "Allow all" ON journal_entry_lines FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON payments;
-CREATE POLICY "Allow all for service role" ON payments FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON payments;
+CREATE POLICY "Allow all" ON payments FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE account_balances ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all for service role" ON account_balances;
-CREATE POLICY "Allow all for service role" ON account_balances FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all" ON account_balances;
+CREATE POLICY "Allow all" ON account_balances FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- 5. ADMIN USER (password: admin123)
--- First delete any existing admin, then insert fresh
+-- Uses pgcrypto crypt() to avoid hash corruption
 -- ============================================================
 
 DELETE FROM users WHERE username = 'admin';
@@ -417,7 +438,7 @@ DELETE FROM users WHERE username = 'admin';
 INSERT INTO users (username, password, full_name, role, permissions, is_active, must_change_password)
 VALUES (
   'admin',
-  '$2a$10$TptKTtM9vrfV7zx9j37ZCutWNA17fuqYtykTY.9GgHHmC1RltPnr6',
+  crypt('admin123', gen_salt('bf', 10)),
   'Admin Manager',
   'MANAGER',
   '["pos_access","inventory_view","inventory_edit","reports_view","suppliers_view","suppliers_edit","promotions_view","promotions_edit","settings_view","settings_edit","user_manage","customers_view","customers_edit","expenses_view","expenses_edit","refunds_view","refunds_edit","employees_view","employees_edit","accounting_view","accounting_edit","accounting_post"]',
