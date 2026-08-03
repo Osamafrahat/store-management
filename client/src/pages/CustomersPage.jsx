@@ -206,17 +206,26 @@ function CustomerForm({ customer, onSave, onClose }) {
   const { t } = useAppStore()
   const parsePhone = (phone) => {
     if (!phone) return { countryCode: '+20', number: '' }
-    const match = phone.match(/^(\+\d{1,4})[\s\-]?(\d+)$/)
-    if (match) return { countryCode: match[1], number: match[2] }
+    // Strip all non-digits first
     const digits = phone.replace(/[^0-9]/g, '')
-    // Strip leading 0 (local format) — e.g. "01012345678" → "1012345678"
-    if (digits.startsWith('0') && digits.length > 1) {
+    if (!digits) return { countryCode: '+20', number: '' }
+
+    // Known country code lengths (digits, without +)
+    const codeLengths = { '20': 2, '966': 3, '971': 3, '965': 3, '973': 3, '974': 3, '968': 3, '962': 3, '961': 3, '216': 3, '212': 3, '213': 3, '1': 1, '44': 2 }
+
+    // If starts with 0 → local format, strip it
+    if (digits.startsWith('0')) {
       return { countryCode: '+20', number: digits.substring(1) }
     }
-    // If digits include country code prefix (e.g. "201012345678" → "1012345678")
-    if (digits.length > 10 && digits.startsWith('20')) {
-      return { countryCode: '+20', number: digits.substring(2) }
+
+    // Try to match country code prefix
+    for (const [code, len] of Object.entries(codeLengths)) {
+      if (digits.startsWith(code) && digits.length > len) {
+        return { countryCode: '+' + code, number: digits.substring(len) }
+      }
     }
+
+    // Default: assume Egypt, return all digits
     return { countryCode: '+20', number: digits }
   }
 
@@ -286,13 +295,17 @@ function CustomerForm({ customer, onSave, onClose }) {
     const { name, value } = e.target
     if (name === 'phone') {
       let digits = value.replace(/\D/g, '')
-      // Strip leading 0 (local format) — user types "010..." → becomes "10..."
+      // Strip leading 0 (local format)
       if (digits.startsWith('0') && digits.length > 1) {
         digits = digits.substring(1)
       }
-      // Strip country code prefix if pasted — "201012345678" → "1012345678"
-      if (digits.length > 10 && digits.startsWith('20')) {
-        digits = digits.substring(2)
+      // Strip country code prefix if pasted
+      const codeLengths = { '20': 2, '966': 3, '971': 3, '965': 3, '973': 3, '974': 3, '968': 3, '962': 3, '961': 3, '216': 3, '212': 3, '213': 3, '1': 1, '44': 2 }
+      for (const [code, len] of Object.entries(codeLengths)) {
+        if (digits.startsWith(code) && digits.length > len) {
+          digits = digits.substring(len)
+          break
+        }
       }
       setFormData(prev => ({ ...prev, phone: digits }))
       if (phoneTouched) {
