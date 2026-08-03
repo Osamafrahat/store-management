@@ -25,6 +25,7 @@ import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
 import JournalEntriesPage from './pages/JournalEntriesPage'
 import AccountingReportsPage from './pages/AccountingReportsPage'
 import PaymentsPage from './pages/PaymentsPage'
+import NotificationsPage from './pages/NotificationsPage'
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -165,6 +166,11 @@ function App() {
             <Route path="/accounting/payments" element={
               <ProtectedRoute>
                 <Layout><PaymentsPage /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Layout><NotificationsPage /></Layout>
               </ProtectedRoute>
             } />
 
