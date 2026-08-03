@@ -59,7 +59,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/stock/receive`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
         body: JSON.stringify({ product_id: receiveStockProduct.id, quantity: parseInt(receiveQty) })
       })
       if (!res.ok) throw new Error('Failed')
