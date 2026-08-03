@@ -10,7 +10,6 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
   const [sortDirection, setSortDirection] = useState('asc')
   const [receiveStockProduct, setReceiveStockProduct] = useState(null)
   const [receiveQty, setReceiveQty] = useState('')
-  const [receiveCost, setReceiveCost] = useState('')
   const [receiveLoading, setReceiveLoading] = useState(false)
 
   const filteredProducts = products
@@ -58,18 +57,15 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
     if (!receiveQty || parseInt(receiveQty) <= 0) return
     setReceiveLoading(true)
     try {
-      const body = { product_id: receiveStockProduct.id, quantity: parseInt(receiveQty) }
-      if (receiveCost) body.cost_price = parseFloat(receiveCost)
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/stock/receive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ product_id: receiveStockProduct.id, quantity: parseInt(receiveQty) })
       })
       if (!res.ok) throw new Error('Failed')
       toastSuccess(`${t('inventory.received') || 'Received'} ${receiveQty} ${receiveStockProduct.name}`)
       setReceiveStockProduct(null)
       setReceiveQty('')
-      setReceiveCost('')
       onRefresh?.()
     } catch (err) {
       toastError(err.message || 'Failed')
@@ -243,16 +239,6 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
               className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-lg font-bold"
               autoFocus
             />
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={receiveCost}
-              onChange={e => setReceiveCost(e.target.value)}
-              placeholder={`${t('inventory.costPrice') || 'Cost Price'} (EGP)`}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            <p className="text-xs text-gray-400">{t('inventory.costPriceHint') || 'Cost price is required for accounting'}</p>
             <div className="flex gap-3">
               <button
                 onClick={handleReceiveStock}
@@ -262,7 +248,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                 {receiveLoading ? '...' : (t('common.save') || 'Save')}
               </button>
               <button
-                onClick={() => { setReceiveStockProduct(null); setReceiveQty(''); setReceiveCost('') }}
+                onClick={() => { setReceiveStockProduct(null); setReceiveQty('') }}
                 className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium"
               >
                 {t('common.cancel') || 'Cancel'}
