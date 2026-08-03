@@ -225,7 +225,7 @@ function CustomerForm({ customer, onSave, onClose }) {
   const [phoneTouched, setPhoneTouched] = useState(false)
 
   const countryCodes = [
-    { code: '+20', name: t('country.egypt'), flag: '🇪🇬', pattern: /^(10|11|12|15)\d{8}$/, len: 10, example: '10XXXXXXXX' },
+    { code: '+20', name: t('country.egypt'), flag: '🇪🇬', pattern: /^(10|11|12|15)\d{8}$/, len: 10, example: '1XXXXXXXXX' },
     { code: '+966', name: t('country.saudiArabia'), flag: '🇸🇦', pattern: /^5\d{8}$/, len: 9, example: '5XXXXXXXX' },
     { code: '+971', name: t('country.uae'), flag: '🇦🇪', pattern: /^[4579]\d{8}$/, len: 9, example: '5XXXXXXXX' },
     { code: '+965', name: t('country.kuwait'), flag: '🇰🇼', pattern: /^[569]\d{7}$/, len: 8, example: '5XXXXXXX' },
