@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS orders (
   user_id BIGINT REFERENCES users(id),
   customer_id BIGINT REFERENCES customers(id),
   is_refunded BOOLEAN DEFAULT false,
+  journal_entry_id BIGINT REFERENCES journal_entries(id),
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

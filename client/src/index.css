@@ -74,7 +74,8 @@ body {
   body * {
     visibility: hidden;
   }
-  .print-area, .print-area * {
+  .print-area, .print-area *,
+  .report-print-area, .report-print-area * {
     visibility: visible;
   }
   .print-area {
@@ -82,5 +83,28 @@ body {
     left: 0;
     top: 0;
     width: 80mm;
+  }
+  .report-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+    background: white;
+    color: black;
+  }
+  .report-print-area .dark\:bg-gray-800,
+  .report-print-area .dark\:bg-gray-700,
+  .report-print-area .dark\:bg-gray-700\/50 {
+    background: white !important;
+  }
+  .report-print-area .dark\:text-gray-400,
+  .report-print-area .dark\:text-gray-300,
+  .report-print-area .dark\:text-gray-600 {
+    color: #374151 !important;
+  }
+  .report-print-area .dark\:border-gray-700,
+  .report-print-area .dark\:border-gray-600 {
+    border-color: #d1d5db !important;
   }
 }

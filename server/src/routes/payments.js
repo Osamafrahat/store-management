@@ -1,8 +1,19 @@
 import { Router } from 'express'
 import supabase from '../db/supabase.js'
-import { createJournalEntry } from '../services/accountingEngine.js'
+import { createJournalEntry, seedChartOfAccounts } from '../services/accountingEngine.js'
 
 const router = Router()
+
+// Helper: find account by code, auto-seed if missing
+async function findAccount(code) {
+  let { data } = await supabase.from('accounts').select('id').eq('code', code).single()
+  if (!data) {
+    await seedChartOfAccounts()
+    const retry = await supabase.from('accounts').select('id').eq('code', code).single()
+    data = retry.data
+  }
+  return data
+}
 
 // Get all payments
 router.get('/', async (req, res) => {
@@ -34,10 +45,35 @@ router.get('/', async (req, res) => {
 // Create payment
 router.post('/', async (req, res) => {
   try {
-    const { payment_type, method, amount, partner_type, partner_id, reference, notes, payment_date } = req.body
+    const { payment_type, method, amount, partner_type, partner_id, reference, notes, payment_date, order_id } = req.body
 
     if (!payment_type || !method || !amount) {
       return res.status(400).json({ error: 'Payment type, method, and amount are required' })
+    }
+
+    // If this payment is for an order, check if order already has a journal entry
+    let existingJournalId = null
+    if (order_id) {
+      const { data: orderPayment } = await supabase
+        .from('payment_splits')
+        .select('id')
+        .eq('order_id', order_id)
+        .limit(1)
+        .maybeSingle()
+
+      // Check if order's journal entry already posted the cash/bank debit
+      const { data: orderJournal } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('source_type', 'order')
+        .eq('source_id', order_id)
+        .eq('is_reversed', false)
+        .limit(1)
+        .maybeSingle()
+
+      if (orderJournal) {
+        existingJournalId = orderJournal.id
+      }
     }
 
     // Generate payment number
@@ -64,38 +100,50 @@ router.post('/', async (req, res) => {
 
     if (error) throw error
 
-    // Auto-post journal entry
-    const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
-    const { data: bankAccount } = await supabase.from('accounts').select('id').eq('code', '1020').single()
-    const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
-    const { data: apAccount } = await supabase.from('accounts').select('id').eq('code', '2010').single()
+    // Auto-post journal entry only if order doesn't already have one
+    if (!existingJournalId) {
+      const cashAccount = await findAccount('1010')
+      const bankAccount = await findAccount('1020')
+      const arAccount = await findAccount('1030')
+      const apAccount = await findAccount('2010')
 
-    const sourceAccount = method === 'cash' ? cashAccount : bankAccount
-    const lines = []
+      // Card, check, bank_transfer all settle to bank account
+      const sourceAccount = method === 'cash' ? cashAccount : bankAccount
+      const lines = []
 
-    if (payment_type === 'inbound') {
-      // Customer pays us: debit cash/bank, credit AR
-      if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: parseFloat(amount), credit: 0, description: `Payment received - ${paymentNumber}` })
-      if (arAccount) lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(amount), description: `AR reduction - ${paymentNumber}` })
+      if (payment_type === 'inbound') {
+        // Customer pays us: debit cash/bank, credit AR
+        if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: parseFloat(amount), credit: 0, description: `Payment received - ${paymentNumber}` })
+        if (arAccount) lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(amount), description: `AR reduction - ${paymentNumber}` })
+      } else {
+        // We pay supplier: debit AP, credit cash/bank
+        if (apAccount) lines.push({ accountId: apAccount.id, debit: parseFloat(amount), credit: 0, description: `AP reduction - ${paymentNumber}` })
+        if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: 0, credit: parseFloat(amount), description: `Payment made - ${paymentNumber}` })
+      }
+
+      if (lines.length > 0) {
+        try {
+          const entry = await createJournalEntry({
+            date: payment.payment_date,
+            description: `Payment ${payment_type}: ${paymentNumber}`,
+            reference: paymentNumber,
+            sourceType: 'payment',
+            sourceId: payment.id,
+            lines,
+            createdBy: req.user?.id,
+          })
+          await supabase.from('payments').update({ journal_entry_id: entry.id }).eq('id', payment.id)
+          payment.journal_entry_id = entry.id
+        } catch (accErr) {
+          console.error('Payment journal entry failed:', accErr.message)
+        }
+      } else {
+        console.error('Payment journal: no lines created. sourceAccount:', !!sourceAccount, 'arAccount:', !!arAccount, 'apAccount:', !!apAccount)
+      }
     } else {
-      // We pay supplier: debit AP, credit cash/bank
-      if (apAccount) lines.push({ accountId: apAccount.id, debit: parseFloat(amount), credit: 0, description: `AP reduction - ${paymentNumber}` })
-      if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: 0, credit: parseFloat(amount), description: `Payment made - ${paymentNumber}` })
-    }
-
-    if (lines.length > 0) {
-      const entry = await createJournalEntry({
-        date: payment.payment_date,
-        description: `Payment ${payment_type}: ${paymentNumber}`,
-        reference: paymentNumber,
-        sourceType: 'payment',
-        sourceId: payment.id,
-        lines,
-        createdBy: req.user?.id,
-      })
-
-      await supabase.from('payments').update({ journal_entry_id: entry.id }).eq('id', payment.id)
-      payment.journal_entry_id = entry.id
+      // Order already posted journal — link this payment to existing entry
+      await supabase.from('payments').update({ journal_entry_id: existingJournalId }).eq('id', payment.id)
+      payment.journal_entry_id = existingJournalId
     }
 
     res.status(201).json(payment)
@@ -153,12 +201,24 @@ router.delete('/:id', async (req, res) => {
     if (error) throw error
 
     // Auto-post accounting: reverse the journal entry if it existed
+    // But only if this payment created its own entry (not shared with an order)
     if (payment.journal_entry_id) {
-      try {
-        const { reverseJournalEntry } = await import('../services/accountingEngine.js')
-        await reverseJournalEntry(payment.journal_entry_id, `Payment deleted: ${payment.payment_number}`, req.user?.id)
-      } catch (accErr) {
-        console.error('Accounting auto-post failed:', accErr.message)
+      // Check if this journal entry is also linked to an order
+      const { data: orderWithEntry } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('journal_entry_id', payment.journal_entry_id)
+        .limit(1)
+        .maybeSingle()
+
+      // Only reverse if no order owns this journal entry
+      if (!orderWithEntry) {
+        try {
+          const { reverseJournalEntry } = await import('../services/accountingEngine.js')
+          await reverseJournalEntry(payment.journal_entry_id, `Payment deleted: ${payment.payment_number}`, req.user?.id)
+        } catch (accErr) {
+          console.error('Accounting auto-post failed:', accErr.message)
+        }
       }
     }
 

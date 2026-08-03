@@ -266,7 +266,11 @@ router.post('/', async (req, res, next) => {
           .single()
         return { ...item, cost_price: product?.cost_price || 0 }
       }))
-      await postOrderJournal(order, itemsWithCost)
+      const journalEntry = await postOrderJournal(order, itemsWithCost)
+      // Link journal entry to order for payment deduplication
+      if (journalEntry) {
+        await supabase.from('orders').update({ journal_entry_id: journalEntry.id }).eq('id', order.id)
+      }
     } catch (accErr) {
       console.error('Accounting auto-post failed:', accErr.message)
     }

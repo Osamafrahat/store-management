@@ -70,7 +70,7 @@ export default function AccountingReportsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 report-print-area">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t('accounting.financialReports') || 'Financial Reports'}</h1>
