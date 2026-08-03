@@ -168,7 +168,7 @@ export const notificationsApi = {
   getAll: () => api.get('/notifications'),
   markRead: (id) => api.patch(`/notifications/${id}/read`),
   markAllRead: () => api.patch('/notifications/read-all'),
-  sendPromotion: (promotionId, options = {}) => api.post('/notifications/promotion', { promotion_id: promotionId, ...options }, { timeout: 8000 }),
+  sendPromotion: (promotionId, options = {}) => api.post('/notifications/promotion', { promotion_id: promotionId, ...options }, { timeout: 30000 }),
   sendCustom: (data) => api.post('/notifications/custom', data),
   delete: (id) => api.delete(`/notifications/${id}`),
   sendWhatsApp: (data) => api.post('/notifications/whatsapp', data),
