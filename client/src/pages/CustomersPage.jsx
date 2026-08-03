@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { customersApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, User, Phone, Mail, MapPin, Star } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, User, Phone, Mail, MapPin, Star, AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function CustomersPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -204,13 +204,10 @@ export default function CustomersPage() {
 
 function CustomerForm({ customer, onSave, onClose }) {
   const { t } = useAppStore()
-  // Parse existing phone to extract country code and number
   const parsePhone = (phone) => {
     if (!phone) return { countryCode: '+20', number: '' }
-    // Check if phone starts with + and has country code
     const match = phone.match(/^(\+\d{1,4})(\d+)$/)
     if (match) return { countryCode: match[1], number: match[2] }
-    // Default to Egypt +20
     return { countryCode: '+20', number: phone.replace(/[^0-9]/g, '') }
   }
 
@@ -224,35 +221,87 @@ function CustomerForm({ customer, onSave, onClose }) {
     address: customer?.address || '',
     notes: customer?.notes || '',
   })
+  const [phoneError, setPhoneError] = useState('')
+  const [phoneTouched, setPhoneTouched] = useState(false)
 
   const countryCodes = [
-    { code: '+20', name: t('country.egypt'), flag: '🇪🇬' },
-    { code: '+966', name: t('country.saudiArabia'), flag: '🇸🇦' },
-    { code: '+971', name: t('country.uae'), flag: '🇦🇪' },
-    { code: '+965', name: t('country.kuwait'), flag: '🇰🇼' },
-    { code: '+973', name: t('country.bahrain'), flag: '🇧🇭' },
-    { code: '+974', name: t('country.qatar'), flag: '🇶🇦' },
-    { code: '+968', name: t('country.oman'), flag: '🇴🇲' },
-    { code: '+962', name: t('country.jordan'), flag: '🇯🇴' },
-    { code: '+961', name: t('country.lebanon'), flag: '🇱🇧' },
-    { code: '+216', name: t('country.tunisia'), flag: '🇹🇳' },
-    { code: '+212', name: t('country.morocco'), flag: '🇲🇦' },
-    { code: '+213', name: t('country.algeria'), flag: '🇩🇿' },
-    { code: '+1', name: t('country.usaCanada'), flag: '🇺🇸' },
-    { code: '+44', name: t('country.uk'), flag: '🇬🇧' },
+    { code: '+20', name: t('country.egypt'), flag: '🇪🇬', pattern: /^(10|11|12|15)\d{8}$/, len: 10, example: '10XXXXXXXX' },
+    { code: '+966', name: t('country.saudiArabia'), flag: '🇸🇦', pattern: /^5\d{8}$/, len: 9, example: '5XXXXXXXX' },
+    { code: '+971', name: t('country.uae'), flag: '🇦🇪', pattern: /^[4579]\d{8}$/, len: 9, example: '5XXXXXXXX' },
+    { code: '+965', name: t('country.kuwait'), flag: '🇰🇼', pattern: /^[569]\d{7}$/, len: 8, example: '5XXXXXXX' },
+    { code: '+973', name: t('country.bahrain'), flag: '🇧🇭', pattern: /^[36]\d{7}$/, len: 8, example: '3XXXXXXX' },
+    { code: '+974', name: t('country.qatar'), flag: '🇶🇦', pattern: /^[3567]\d{7}$/, len: 8, example: '5XXXXXXX' },
+    { code: '+968', name: t('country.oman'), flag: '🇴🇲', pattern: /^[79]\d{7}$/, len: 8, example: '7XXXXXXX' },
+    { code: '+962', name: t('country.jordan'), flag: '🇯🇴', pattern: /^[79]\d{8}$/, len: 9, example: '7XXXXXXXX' },
+    { code: '+961', name: t('country.lebanon'), flag: '🇱🇧', pattern: /^[13789]\d{7}$/, len: 8, example: '7XXXXXXX' },
+    { code: '+216', name: t('country.tunisia'), flag: '🇹🇳', pattern: /^[24579]\d{7}$/, len: 8, example: '2XXXXXXX' },
+    { code: '+212', name: t('country.morocco'), flag: '🇲🇦', pattern: /^[567]\d{8}$/, len: 9, example: '6XXXXXXXX' },
+    { code: '+213', name: t('country.algeria'), flag: '🇩🇿', pattern: /^[567]\d{8}$/, len: 9, example: '5XXXXXXXX' },
+    { code: '+1', name: t('country.usaCanada'), flag: '🇺🇸', pattern: /^[2-9]\d{9}$/, len: 10, example: '2015551234' },
+    { code: '+44', name: t('country.uk'), flag: '🇬🇧', pattern: /^[1-9]\d{9,10}$/, len: 10, example: '7911123456' },
   ]
+
+  const getCountryConfig = () => countryCodes.find(c => c.code === formData.countryCode) || countryCodes[0]
+
+  const validatePhone = (phone, countryCode) => {
+    if (!phone || !phone.trim()) return ''
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length === 0) return ''
+
+    const config = countryCodes.find(c => c.code === countryCode) || countryCodes[0]
+
+    if (digits.length < config.len) {
+      return t('customers.phoneTooShort') || `Phone must be at least ${config.len} digits (${config.example})`
+    }
+    if (digits.length > config.len) {
+      return t('customers.phoneTooLong') || `Phone must be exactly ${config.len} digits (${config.example})`
+    }
+    if (config.pattern && !config.pattern.test(digits)) {
+      return t('customers.phoneInvalidFormat') || `Invalid phone number format (${config.example})`
+    }
+    return ''
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    if (name === 'phone') {
+      const digits = value.replace(/\D/g, '')
+      setFormData(prev => ({ ...prev, phone: digits }))
+      if (phoneTouched) {
+        setPhoneError(validatePhone(digits, formData.countryCode))
+      }
+    } else if (name === 'countryCode') {
+      setFormData(prev => ({ ...prev, countryCode: value }))
+      if (phoneTouched && formData.phone) {
+        setPhoneError(validatePhone(formData.phone, value))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  const handlePhoneBlur = () => {
+    setPhoneTouched(true)
+    setPhoneError(validatePhone(formData.phone, formData.countryCode))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Combine country code and phone number
+    if (formData.phone && formData.phone.trim()) {
+      const error = validatePhone(formData.phone, formData.countryCode)
+      if (error) {
+        setPhoneError(error)
+        setPhoneTouched(true)
+        return
+      }
+    }
     const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : ''
     onSave({ ...formData, phone: fullPhone })
   }
+
+  const config = getCountryConfig()
+  const hasPhone = formData.phone && formData.phone.trim().length > 0
+  const showPhoneError = phoneTouched && hasPhone && phoneError
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -304,10 +353,29 @@ function CustomerForm({ customer, onSave, onClose }) {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="10XXXXXXXXX"
-                className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                onBlur={handlePhoneBlur}
+                placeholder={config.example}
+                inputMode="numeric"
+                maxLength={15}
+                className={`flex-1 px-4 py-2 rounded-lg border bg-white dark:bg-gray-800 ${
+                  showPhoneError
+                    ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-300'
+                    : 'border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-300'
+                } outline-none transition-all`}
               />
             </div>
+            {showPhoneError && (
+              <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {phoneError}
+              </p>
+            )}
+            {!showPhoneError && hasPhone && phoneTouched && (
+              <p className="mt-1.5 text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" />
+                {t('customers.phoneValid') || 'Valid phone number'}
+              </p>
+            )}
           </div>
 
           <div>
