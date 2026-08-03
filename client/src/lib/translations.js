@@ -810,8 +810,20 @@ export const translations = {
 
     // Promotions extras
     'promotions.sendNotification': 'Send notification to customers',
+    'promotions.sendPromotion': 'Send Promotion',
+    'promotions.sendPromotionDesc': 'Notify your customers about this offer',
+    'promotions.deliveryMethod': 'Delivery Method',
+    'promotions.emailDesc': 'Send email to customers',
+    'promotions.whatsappDesc': 'Send via WhatsApp',
+    'promotions.both': 'Both',
+    'promotions.bothDesc': 'Email + WhatsApp',
+    'promotions.sendInfo': 'All active customers with contact info will receive this promotion. WhatsApp messages will open individually for you to send.',
+    'promotions.sendNow': 'Send Now',
+    'promotions.sending': 'Sending...',
+    'promotions.sentSuccess': 'Sent Successfully!',
+    'promotions.links': 'links ready',
     'promotions.whatsappMessages': 'WhatsApp Messages',
-    'promotions.whatsappHint': 'اضغط على الزر لفتح واتساب وإرسال الرسالة لكل عميل',
+    'promotions.whatsappHint': 'Press the button to open WhatsApp and send the message to each customer',
     'promotions.openWhatsApp': 'Open WhatsApp',
 
     // Barcode Printer
@@ -1701,6 +1713,18 @@ export const translations = {
 
     // Promotions extras
     'promotions.sendNotification': 'إرسال إشعار للعملاء',
+    'promotions.sendPromotion': 'إرسال العرض',
+    'promotions.sendPromotionDesc': 'إبلاغ العملاء بهذا العرض',
+    'promotions.deliveryMethod': 'طريقة الإرسال',
+    'promotions.emailDesc': 'إرسال بريد إلكتروني',
+    'promotions.whatsappDesc': 'إرسال عبر واتساب',
+    'promotions.both': 'الاثنان',
+    'promotions.bothDesc': 'بريد + واتساب',
+    'promotions.sendInfo': 'سيتلقى جميع العملاء النشطون الذين لديهم معلومات تواصل هذا العرض. ستفتح رسائل واتساب بشكل فردي لإرسالها.',
+    'promotions.sendNow': 'إرسال الآن',
+    'promotions.sending': 'جاري الإرسال...',
+    'promotions.sentSuccess': 'تم الإرسال بنجاح!',
+    'promotions.links': 'روابط جاهزة',
     'promotions.whatsappMessages': 'رسائل واتساب',
     'promotions.whatsappHint': 'اضغط على الزر لفتح واتساب وإرسال الرسالة لكل عميل',
     'promotions.openWhatsApp': 'فتح واتساب',

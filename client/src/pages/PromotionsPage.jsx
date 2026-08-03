@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
-import { promotionsApi, notificationsApi } from '../lib/api'
+import { promotionsApi } from '../lib/api'
 import { formatCurrency, formatDate } from '../lib/utils'
 import { X, Plus, Edit2, Trash2, Tag, Percent, DollarSign, CheckCircle, XCircle, Send, Bell } from 'lucide-react'
+import SendPromotionModal from '../components/notifications/SendPromotionModal'
 
 export default function PromotionsPage() {
-  const { t, toastSuccess, toastError, toastInfo } = useAppStore()
+  const { t, toastSuccess, toastError } = useAppStore()
   const [promotions, setPromotions] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingPromo, setEditingPromo] = useState(null)
-  const [sendingNotification, setSendingNotification] = useState(false)
-  const [whatsappLinks, setWhatsappLinks] = useState([])
+  const [sendPromo, setSendPromo] = useState(null)
 
   useEffect(() => {
     fetchPromotions()
@@ -57,34 +57,6 @@ export default function PromotionsPage() {
     }
   }
 
-  const handleSendNotification = async (promoId) => {
-    const method = prompt(t('promotions.sendVia') || 'Send via:\n1 - Email only\n2 - WhatsApp only\n3 - Both\n\nEnter number:', '3')
-
-    if (!method || !['1', '2', '3'].includes(method)) return
-
-    const send_email = method === '1' || method === '3'
-    const send_whatsapp = method === '2' || method === '3'
-
-    try {
-      setSendingNotification(true)
-      const res = await notificationsApi.sendPromotion(promoId, { send_email, send_whatsapp })
-      const msg = res.data.message || t('promotions.sent') || 'Notification sent'
-
-      // Show WhatsApp links if any
-      if (res.data.results?.whatsapp?.length > 0) {
-        const links = res.data.results.whatsapp.filter(r => r.success && r.link)
-        setWhatsappLinks(links)
-      }
-
-      toastSuccess(msg)
-    } catch (err) {
-      console.error('Failed to send notification:', err)
-      toastError(t('promotions.failedToSend') || 'Failed to send notification')
-    } finally {
-      setSendingNotification(false)
-    }
-  }
-
   const handleSave = async (promoData) => {
     try {
       let savedPromo
@@ -101,24 +73,9 @@ export default function PromotionsPage() {
       setEditingPromo(null)
       fetchPromotions()
 
-      // Auto-send notification for new promotions
+      // Auto-open send modal for new promotions
       if (!editingPromo && savedPromo?.id) {
-        const method = prompt(t('promotions.sendAfterCreate') || 'Promotion saved! Send notification to customers?\n\n1 - Email only\n2 - WhatsApp only\n3 - Both\n4 - No', '1')
-
-        if (method && ['1', '2', '3'].includes(method)) {
-          try {
-            setSendingNotification(true)
-            const send_email = method === '1' || method === '3'
-            const send_whatsapp = method === '2' || method === '3'
-            const res = await notificationsApi.sendPromotion(savedPromo.id, { send_email, send_whatsapp })
-            toastSuccess(res.data.message || t('promotions.sent') || 'Notification sent!')
-          } catch (notifErr) {
-            console.error('Failed to send notification:', notifErr)
-            toastError(t('promotions.failedToSend') || 'Failed to send notification')
-          } finally {
-            setSendingNotification(false)
-          }
-        }
+        setTimeout(() => setSendPromo(savedPromo), 300)
       }
     } catch (err) {
       console.error('Failed to save promotion:', err)
@@ -256,7 +213,7 @@ export default function PromotionsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleSendNotification(promo.id)}
+                      onClick={() => setSendPromo(promo)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
                       title={t('promotions.sendNotification')}
                     >
@@ -293,50 +250,13 @@ export default function PromotionsPage() {
         />
       )}
 
-      {/* WhatsApp Links Modal */}
-      {whatsappLinks.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg mx-4 shadow-2xl max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold">{t('promotions.whatsappMessages')}</h2>
-              <button
-                onClick={() => setWhatsappLinks([])}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 overflow-auto max-h-[60vh] space-y-3">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                اضغط على الزر لفتح واتساب وإرسال الرسالة لكل عميل
-              </p>
-              {whatsappLinks.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-500">{item.phone}</p>
-                  </div>
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium"
-                  >
-                    {t('promotions.openWhatsApp')}
-                  </a>
-                </div>
-              ))}
-            </div>
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setWhatsappLinks([])}
-                className="w-full py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-              >
-                {t('common.close')}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Send Promotion Modal */}
+      {sendPromo && (
+        <SendPromotionModal
+          promotion={sendPromo}
+          onClose={() => setSendPromo(null)}
+          onSent={fetchPromotions}
+        />
       )}
     </div>
   )
