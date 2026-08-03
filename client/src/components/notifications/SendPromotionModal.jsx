@@ -91,36 +91,9 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
   }, [])
 
   const loadEmail = useCallback(async () => {
-    try {
-      setEmailResults(null)
-      setEmailError(null)
-
-      let smtpConfigured = false
-      try {
-        const health = await healthApi.check()
-        smtpConfigured = health.data?.smtp === true
-      } catch {
-        smtpConfigured = false
-      }
-
-      if (!smtpConfigured) {
-        console.log('[SendPromotion] SMTP not configured — skipping backend call')
-        setEmailResults({ results: { email: [] }, emailSkipped: true })
-        return
-      }
-
-      const res = await notificationsApi.sendPromotion(promotion.id, {
-        send_email: true,
-        send_whatsapp: false,
-      })
-      setEmailResults(res.data)
-    } catch (err) {
-      console.error('[SendPromotion] Email error:', err)
-      const msg = err.response?.data?.error || err.message || 'Failed to send emails'
-      setEmailError(msg)
-      setEmailResults({ results: { email: [] } })
-    }
-  }, [promotion.id])
+    setEmailResults({ results: { email: [] }, emailSkipped: true })
+    setEmailError(null)
+  }, [])
 
   const handleSend = async () => {
     const doWhatsApp = sendMethod === 'whatsapp' || sendMethod === 'both'
