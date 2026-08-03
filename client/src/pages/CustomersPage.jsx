@@ -262,6 +262,17 @@ function CustomerForm({ customer, onSave, onClose }) {
     return ''
   }
 
+  // Run initial validation on mount when editing
+  useEffect(() => {
+    if (customer?.phone && parsed.number) {
+      const error = validatePhone(parsed.number, parsed.countryCode)
+      if (error) {
+        setPhoneError(error)
+        setPhoneTouched(true)
+      }
+    }
+  }, [])
+
   const handleChange = (e) => {
     const { name, value } = e.target
     if (name === 'phone') {
