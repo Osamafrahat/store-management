@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { customersApi, notificationsApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
@@ -13,8 +13,8 @@ import {
   Percent,
   DollarSign,
   ExternalLink,
-  Sparkles,
   User,
+  AlertCircle,
 } from 'lucide-react'
 
 function generateWhatsAppLink(phone, message) {
@@ -25,70 +25,100 @@ function generateWhatsAppLink(phone, message) {
 
 export default function SendPromotionModal({ promotion, onClose, onSent }) {
   const { t, toastSuccess, toastError } = useAppStore()
+  const [sendMethod, setSendMethod] = useState('whatsapp')
   const [step, setStep] = useState('form')
-  const [customers, setCustomers] = useState([])
-  const [loadingCustomers, setLoadingCustomers] = useState(false)
   const [sending, setSending] = useState(false)
+
   const [whatsappLinks, setWhatsappLinks] = useState([])
+  const [emailResults, setEmailResults] = useState(null)
 
   const discount = promotion.type === 'percentage'
     ? `${promotion.value}%`
     : formatCurrency(promotion.value)
 
+  const buildMessage = (storeName) => {
+    const discountText = promotion.type === 'percentage'
+      ? `${promotion.value}%`
+      : `${promotion.value} ج.م`
+
+    return `🎉 *عرض خاص من ${storeName}*\n\n` +
+      `خصم *${discountText}*\n\n` +
+      `📦 استخدم كود الخصم:\n*${promotion.code}*\n\n` +
+      (promotion.min_order_amount ? `📌 الحد الأدنى للطلب: ${promotion.min_order_amount} ج.م\n` : '') +
+      `📅 صالح حتى: ${new Date(promotion.end_date).toLocaleDateString('ar-EG')}\n\n` +
+      `سارع بالاستفادة! 🛒`
+  }
+
+  const getStoreName = () => {
+    try {
+      const settings = JSON.parse(localStorage.getItem('settings') || '{}')
+      return settings.storeName || 'المتجر'
+    } catch { return 'المتجر' }
+  }
+
   const handleSend = async () => {
+    const doWhatsApp = sendMethod === 'whatsapp' || sendMethod === 'both'
+    const doEmail = sendMethod === 'email' || sendMethod === 'both'
+
     try {
       setSending(true)
-      setLoadingCustomers(true)
-
-      const res = await customersApi.getAll()
-      const allCustomers = res.data || []
-      const withPhone = allCustomers.filter(c => c.phone && c.phone.trim())
-
-      if (withPhone.length === 0) {
-        toastError(t('promotions.noCustomersWithPhone') || 'No customers with phone numbers found')
-        setSending(false)
-        setLoadingCustomers(false)
-        return
-      }
-
-      const storeName = (() => {
-        try {
-          const settings = JSON.parse(localStorage.getItem('settings') || '{}')
-          return settings.storeName || 'المتجر'
-        } catch { return 'المتجر' }
-      })()
-
-      const discountText = promotion.type === 'percentage'
-        ? `${promotion.value}%`
-        : `${promotion.value} ج.م`
-
-      const message = `🎉 *عرض خاص من ${storeName}*\n\n` +
-        `خصم *${discountText}*\n\n` +
-        `📦 استخدم كود الخصم:\n*${promotion.code}*\n\n` +
-        (promotion.min_order_amount ? `📌 الحد الأدنى للطلب: ${promotion.min_order_amount} ج.م\n` : '') +
-        `📅 صالح حتى: ${new Date(promotion.end_date).toLocaleDateString('ar-EG')}\n\n` +
-        `سارع بالاستفادة! 🛒`
-
-      const links = withPhone.map(c => ({
-        id: c.id,
-        name: c.name,
-        phone: c.phone,
-        link: generateWhatsAppLink(c.phone, message),
-      }))
-
-      setWhatsappLinks(links)
       setStep('result')
 
-      notificationsApi.sendPromotion(promotion.id, { send_email: false, send_whatsapp: true })
-        .catch(() => {})
+      const promises = []
+
+      if (doWhatsApp) {
+        promises.push(
+          customersApi.getAll()
+            .then(res => {
+              const allCustomers = res.data || []
+              const withPhone = allCustomers.filter(c => c.phone && c.phone.trim())
+              const message = buildMessage(getStoreName())
+              const links = withPhone.map(c => ({
+                id: c.id,
+                name: c.name,
+                phone: c.phone,
+                link: generateWhatsAppLink(c.phone, message),
+              }))
+              setWhatsappLinks(links)
+            })
+            .catch(err => {
+              console.error('[SendPromotion] WhatsApp customer fetch error:', err)
+              setWhatsappLinks([])
+            })
+        )
+      }
+
+      if (doEmail) {
+        promises.push(
+          notificationsApi.sendPromotion(promotion.id, { send_email: true, send_whatsapp: false })
+            .then(res => {
+              setEmailResults(res.data)
+            })
+            .catch(err => {
+              console.error('[SendPromotion] Email send error:', err)
+              const msg = err.response?.data?.error || err.message || 'Email send failed'
+              setEmailResults({ success: false, error: msg, results: { email: [] } })
+            })
+        )
+      }
+
+      await Promise.all(promises)
+
+      if (doWhatsApp && !doEmail) {
+        notificationsApi.sendPromotion(promotion.id, { send_email: false, send_whatsapp: true })
+          .catch(() => {})
+      }
+
+      if (onSent) onSent()
     } catch (err) {
       console.error('[SendPromotion] Error:', err)
-      toastError(err.response?.data?.error || err.message || 'Failed to load customers')
+      toastError(err.message || 'Failed')
     } finally {
       setSending(false)
-      setLoadingCustomers(false)
     }
   }
+
+  const hasResults = whatsappLinks.length > 0 || emailResults
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -155,11 +185,59 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
               </div>
             </div>
 
+            {/* Delivery Method */}
+            <div className="px-6 mb-5 flex-shrink-0">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                {t('promotions.deliveryMethod') || 'Delivery Method'}
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { key: 'email', icon: Mail, label: 'Email', color: 'blue', desc: t('promotions.emailDesc') || 'Send email to customers' },
+                  { key: 'whatsapp', icon: MessageCircle, label: 'WhatsApp', color: 'green', desc: t('promotions.whatsappDesc') || 'Send via WhatsApp' },
+                  { key: 'both', icon: Users, label: t('promotions.both') || 'Both', color: 'purple', desc: t('promotions.bothDesc') || 'Email + WhatsApp' },
+                ].map(({ key, icon: Icon, label, color, desc }) => {
+                  const isActive = sendMethod === key
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSendMethod(key)}
+                      className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 ${
+                        isActive
+                          ? `border-${color}-400 dark:border-${color}-500 bg-${color}-50 dark:bg-${color}-900/20 shadow-lg shadow-${color}-500/10 scale-[1.02]`
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+                      }`}
+                    >
+                      {isActive && (
+                        <div className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-${color}-500 flex items-center justify-center shadow-md`}>
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                        isActive
+                          ? `bg-${color}-500 text-white shadow-md shadow-${color}-500/30`
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                      }`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="text-center">
+                        <p className={`text-sm font-bold ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-gray-700 dark:text-gray-300'}`}>{label}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{desc}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Info Banner */}
-            <div className="mx-6 mb-5 flex items-start gap-3 px-4 py-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800/30 flex-shrink-0">
-              <MessageCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-green-600 dark:text-green-400 leading-relaxed">
-                {t('promotions.sendInfo') || 'All active customers with a phone number will be listed below. Click each one to open WhatsApp and send the promotion.'}
+            <div className="mx-6 mb-5 flex items-start gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30 flex-shrink-0">
+              <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+                {sendMethod === 'email'
+                  ? (t('promotions.emailInfo') || 'Emails will be sent to all customers with an email address. Requires SMTP configuration on the server.')
+                  : sendMethod === 'whatsapp'
+                  ? (t('promotions.whatsappInfo') || 'A list of customers with phone numbers will appear. Click each one to open WhatsApp and send the promotion.')
+                  : (t('promotions.bothInfo') || 'Emails will be sent via SMTP and WhatsApp links will be generated for each customer.')}
               </p>
             </div>
 
@@ -179,60 +257,123 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
                 {sending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('promotions.loading') || 'Loading customers...'}
+                    {t('promotions.sending') || 'Sending...'}
                   </>
                 ) : (
                   <>
-                    <MessageCircle className="w-4 h-4" />
-                    {t('promotions.showWhatsAppLinks') || 'Show WhatsApp Links'}
+                    <Send className="w-4 h-4" />
+                    {t('promotions.sendNow') || 'Send Now'}
                   </>
                 )}
               </button>
             </div>
           </>
         ) : (
-          /* Result: Customer List with WhatsApp Buttons */
+          /* Results View */
           <div className="flex flex-col min-h-0 flex-1">
-            {/* Summary */}
-            <div className="mx-6 mb-4 flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800/30 flex-shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-md shadow-green-500/20 flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  {whatsappLinks.length} {t('promotions.customersReady') || 'customers ready'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {t('promotions.clickToOpenWhatsApp') || 'Click each customer to open WhatsApp and send'}
-                </p>
+            <div className="mx-6 mb-4 flex-shrink-0">
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800/30">
+                <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-md shadow-green-500/20 flex-shrink-0">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    {sendMethod === 'email'
+                      ? `${t('promotions.emailSent') || 'Emails sent'}: ${emailResults?.results?.email?.filter(r => r.success).length || 0}`
+                      : sendMethod === 'whatsapp'
+                      ? `${whatsappLinks.length} ${t('promotions.customersReady') || 'customers ready'}`
+                      : `${emailResults?.results?.email?.filter(r => r.success).length || 0} ${t('promotions.emailsSent') || 'emails'} · ${whatsappLinks.length} ${t('promotions.whatsappLinks') || 'WhatsApp links'}`}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {sendMethod !== 'whatsapp' && emailResults?.error && (
+                      <span className="text-amber-600 dark:text-amber-400">{emailResults.error}</span>
+                    )}
+                    {sendMethod !== 'email' && (
+                      <span>{t('promotions.clickToOpenWhatsApp') || 'Click each customer to open WhatsApp'}</span>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Customer List */}
-            <div className="mx-6 flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 max-h-[50vh]">
-              {whatsappLinks.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-600 transition-all group"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-green-600 dark:text-green-400" />
+            {/* Scrollable Results */}
+            <div className="mx-6 flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 max-h-[55vh]">
+              {/* Email Results */}
+              {emailResults?.results?.email?.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <Mail className="w-4 h-4 text-blue-500" />
+                    <p className="text-xs font-semibold text-gray-500 uppercase">{t('promotions.emailResults') || 'Email Results'}</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
-                    <p className="text-xs text-gray-400">{item.phone}</p>
+                  {emailResults.results.email.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-center gap-3 p-3 rounded-xl border ${
+                        item.success
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30'
+                          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        item.success ? 'bg-blue-500' : 'bg-red-500'
+                      }`}>
+                        {item.success ? (
+                          <CheckCircle className="w-4 h-4 text-white" />
+                        ) : (
+                          <X className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.email}</p>
+                        {item.error && <p className="text-xs text-red-500 truncate">{item.error}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Email no SMTP warning */}
+              {sendMethod !== 'whatsapp' && emailResults && !emailResults.results?.email?.length && !emailResults.error && (
+                <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/30">
+                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    {t('promotions.smtpNotConfigured') || 'SMTP is not configured on the server. Email delivery is disabled.'}
+                  </p>
+                </div>
+              )}
+
+              {/* WhatsApp Links */}
+              {whatsappLinks.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <MessageCircle className="w-4 h-4 text-green-500" />
+                    <p className="text-xs font-semibold text-gray-500 uppercase">{t('promotions.whatsappLinks') || 'WhatsApp Links'}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className="text-[10px] text-green-600 dark:text-green-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                      {t('promotions.openWhatsApp') || 'Open'}
-                    </span>
-                    <ExternalLink className="w-4 h-4 text-green-500 group-hover:text-green-600 transition-colors" />
-                  </div>
-                </a>
-              ))}
+                  {whatsappLinks.map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-600 transition-all group"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
+                        <p className="text-xs text-gray-400">{item.phone}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-[10px] text-green-600 dark:text-green-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          {t('promotions.openWhatsApp') || 'Open'}
+                        </span>
+                        <ExternalLink className="w-4 h-4 text-green-500 group-hover:text-green-600 transition-colors" />
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Close Button */}
