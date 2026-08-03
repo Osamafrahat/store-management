@@ -7,6 +7,8 @@
 -- STEP 1: DELETE ALL DATA (preserve users + employees)
 -- Nullify all foreign keys referencing users first
 -- ============================================================
+UPDATE payments SET journal_entry_id = NULL WHERE journal_entry_id IS NOT NULL;
+UPDATE journal_entries SET reversed_by = NULL WHERE reversed_by IS NOT NULL;
 UPDATE journal_entries SET created_by = NULL WHERE created_by IS NOT NULL;
 UPDATE payments SET recorded_by = NULL WHERE recorded_by IS NOT NULL;
 UPDATE expenses SET recorded_by = NULL WHERE recorded_by IS NOT NULL;
