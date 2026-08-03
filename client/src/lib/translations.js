@@ -825,6 +825,16 @@ export const translations = {
     'promotions.whatsappMessages': 'WhatsApp Messages',
     'promotions.whatsappHint': 'Press the button to open WhatsApp and send the message to each customer',
     'promotions.openWhatsApp': 'Open WhatsApp',
+    'promotions.loading': 'Loading...',
+    'promotions.pleaseWait': 'Please wait...',
+    'promotions.requestTimedOut': 'Request timed out',
+    'promotions.serverNotResponding': 'Server is not responding. Please try again.',
+    'promotions.loadFailed': 'Failed to load. Please try again.',
+    'promotions.whatsappLinks': 'WhatsApp',
+    'promotions.emailResults': 'Email',
+    'promotions.sent': 'sent',
+    'promotions.noCustomersWithPhone': 'No customers with phone numbers found.',
+    'promotions.smtpNotConfigured': 'SMTP is not configured. Emails were not sent.',
 
     // Barcode Printer
     'barcode.printBarcode': 'Print Barcode',
@@ -1728,6 +1738,16 @@ export const translations = {
     'promotions.whatsappMessages': 'رسائل واتساب',
     'promotions.whatsappHint': 'اضغط على الزر لفتح واتساب وإرسال الرسالة لكل عميل',
     'promotions.openWhatsApp': 'فتح واتساب',
+    'promotions.loading': 'جاري التحميل...',
+    'promotions.pleaseWait': 'يرجى الانتظار...',
+    'promotions.requestTimedOut': 'انتهت مهلة الطلب',
+    'promotions.serverNotResponding': 'الخادم لا يستجيب. يرجى المحاولة مرة أخرى.',
+    'promotions.loadFailed': 'فشل التحميل. يرجى المحاولة مرة أخرى.',
+    'promotions.whatsappLinks': 'واتساب',
+    'promotions.emailResults': 'البريد الإلكتروني',
+    'promotions.sent': 'تم الإرسال',
+    'promotions.noCustomersWithPhone': 'لم يتم العثور على عملاء بأرقام هواتف.',
+    'promotions.smtpNotConfigured': 'لم يتم تكوين SMTP. لم يتم إرسال رسائل البريد الإلكتروني.',
 
     // Barcode Printer
     'barcode.printBarcode': 'طباعة الباركود',

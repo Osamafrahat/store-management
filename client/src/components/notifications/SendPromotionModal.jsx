@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { customersApi, notificationsApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
@@ -22,16 +22,27 @@ function generateWhatsAppLink(phone, message) {
   return `https://wa.me/${num}?text=${encodeURIComponent(message)}`
 }
 
+const SAFETY_TIMEOUT_MS = 20000
+
 export default function SendPromotionModal({ promotion, onClose, onSent }) {
   const { t, toastSuccess, toastError } = useAppStore()
   const [sendMethod, setSendMethod] = useState('whatsapp')
   const [step, setStep] = useState('form')
   const [sending, setSending] = useState(false)
+  const [timedOut, setTimedOut] = useState(false)
 
   const [whatsappLinks, setWhatsappLinks] = useState(null)
   const [whatsappError, setWhatsappError] = useState(null)
   const [emailResults, setEmailResults] = useState(null)
   const [emailError, setEmailError] = useState(null)
+
+  const safetyTimerRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current)
+    }
+  }, [])
 
   const discount = promotion.type === 'percentage'
     ? `${promotion.value}%`
@@ -102,18 +113,35 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
 
     setSending(true)
     setStep('result')
+    setTimedOut(false)
 
     const tasks = []
     if (doWhatsApp) tasks.push(loadWhatsApp())
     if (doEmail) tasks.push(loadEmail())
 
+    safetyTimerRef.current = setTimeout(() => {
+      console.warn('[SendPromotion] Safety timeout triggered — forcing results display')
+      setTimedOut(true)
+      setWhatsappLinks(prev => prev === null ? [] : prev)
+      setEmailResults(prev => prev === null ? { results: { email: [] } } : prev)
+      setSending(false)
+    }, SAFETY_TIMEOUT_MS)
+
     await Promise.allSettled(tasks)
+
+    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current)
     setSending(false)
 
     if (onSent) onSent()
   }
 
-  const loading = sending && step === 'result' && (whatsappLinks === null && emailResults === null)
+  const doWhatsApp = sendMethod === 'whatsapp' || sendMethod === 'both'
+  const doEmail = sendMethod === 'email' || sendMethod === 'both'
+
+  const loading = sending && !timedOut && (
+    (doWhatsApp && whatsappLinks === null) ||
+    (doEmail && emailResults === null)
+  )
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -234,6 +262,24 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
               <div className="flex flex-col items-center justify-center py-10 flex-shrink-0">
                 <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-3" />
                 <p className="text-sm text-gray-500">{t('promotions.loading') || 'Loading...'}</p>
+                <p className="text-xs text-gray-400 mt-1">{t('promotions.pleaseWait') || 'Please wait...'}</p>
+              </div>
+            )}
+
+            {/* Timeout Error */}
+            {timedOut && !whatsappLinks && !emailResults && (
+              <div className="mx-6 mb-3 flex-shrink-0">
+                <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/30">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+                      {t('promotions.requestTimedOut') || 'Request timed out'}
+                    </p>
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
+                      {t('promotions.serverNotResponding') || 'Server is not responding. Please try again.'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -258,7 +304,9 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
                   <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/30">
                     <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
                     <p className="text-sm text-amber-700 dark:text-amber-400">
-                      {t('promotions.noCustomersWithPhone') || 'No customers with phone numbers found.'}
+                      {timedOut
+                        ? (t('promotions.loadFailed') || 'Failed to load customers. Please try again.')
+                        : (t('promotions.noCustomersWithPhone') || 'No customers with phone numbers found.')}
                     </p>
                   </div>
                 ) : null}
@@ -282,7 +330,11 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
                 {emailError ? (
                   <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/30">
                     <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                    <p className="text-sm text-amber-700 dark:text-amber-400">{emailError}</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      {timedOut
+                        ? (t('promotions.loadFailed') || 'Failed to send emails. Please try again.')
+                        : emailError}
+                    </p>
                   </div>
                 ) : emailResults?.results?.email?.length > 0 ? (
                   <div className="space-y-1.5">
