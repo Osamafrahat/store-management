@@ -296,6 +296,7 @@ export const translations = {
     // Common
     'common.save': 'Save',
     'common.cancel': 'Cancel',
+    'common.retry': 'Retry',
     'common.delete': 'Delete',
     'common.edit': 'Edit',
     'common.add': 'Add',
@@ -1209,6 +1210,7 @@ export const translations = {
     // Common
     'common.save': 'حفظ',
     'common.cancel': 'إلغاء',
+    'common.retry': 'إعادة المحاولة',
     'common.delete': 'حذف',
     'common.edit': 'تعديل',
     'common.add': 'إضافة',

@@ -236,7 +236,7 @@ export default function Layout({ children }) {
                   `}
                 >
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-r-full" />
+                    <div className="absolute start-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-e-full" />
                   )}
                   <Icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary-400' : ''}`} />
                   {sidebarOpen && (
@@ -289,7 +289,7 @@ export default function Layout({ children }) {
                       `}
                     >
                       {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-r-full" />
+                        <div className="absolute start-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-e-full" />
                       )}
                       <Icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary-400' : ''}`} />
                       {sidebarOpen && (
@@ -441,7 +441,7 @@ export default function Layout({ children }) {
                       `}
                     >
                       {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-r-full" />
+                            <div className="absolute start-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-e-full" />
                       )}
                       <Icon className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary-400' : ''}`} />
                       <span className={`font-medium text-sm ${isActive ? 'text-primary-300' : ''}`}>{item.name}</span>
@@ -471,7 +471,7 @@ export default function Layout({ children }) {
                           `}
                         >
                           {isActive && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-r-full" />
+                        <div className="absolute start-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-e-full" />
                           )}
                           <Icon className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary-400' : ''}`} />
                           <span className={`font-medium text-sm ${isActive ? 'text-primary-300' : ''}`}>{item.name}</span>
