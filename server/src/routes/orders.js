@@ -108,6 +108,7 @@ router.post('/', async (req, res, next) => {
 
     // Always use authenticated user's ID
     const userId = req.user.id
+    console.log('Order creation - User ID:', userId, 'Type:', typeof userId)
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -231,7 +232,7 @@ router.post('/', async (req, res, next) => {
         })
     }
 
-    // Create payment splits
+    // Create payment splits and journal entries for each payment method
     if (payments && payments.length > 0) {
       const paymentInserts = payments.map(p => ({
         order_id: order.id,
@@ -240,9 +241,103 @@ router.post('/', async (req, res, next) => {
         reference: p.reference || null
       }))
 
-      await supabase
+      console.log('Creating payment_splits:', paymentInserts)
+      const { error: splitsError } = await supabase
         .from('payment_splits')
         .insert(paymentInserts)
+      
+      if (splitsError) {
+        console.error('Payment splits insert failed:', splitsError)
+      } else {
+        console.log('Payment splits created successfully')
+      }
+
+      // Create journal entries for each split payment (cash/bank)
+      try {
+        const { createJournalEntry, seedChartOfAccounts } = await import('../services/accountingEngine.js')
+
+        // Ensure accounts exist
+        await seedChartOfAccounts()
+
+        // Helper to find account with retry
+        async function findAcc(code) {
+          let { data } = await supabase.from('accounts').select('id, code').eq('code', code).single()
+          if (!data) {
+            await seedChartOfAccounts()
+            const retry = await supabase.from('accounts').select('id, code').eq('code', code).single()
+            data = retry.data
+          }
+          return data
+        }
+
+        const cashAccount = await findAcc('1010')
+        const bankAccount = await findAcc('1020')
+        const arAccount = await findAcc('1030')
+
+        console.log('Payment journal - Accounts found:', {
+          cash: cashAccount?.id,
+          bank: bankAccount?.id,
+          ar: arAccount?.id,
+          paymentsCount: payments.length
+        })
+
+        for (const p of payments) {
+          const sourceAccount = p.method === 'cash' ? cashAccount : bankAccount
+          const date = new Date().toISOString().split('T')[0]
+          const rand = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
+          const paymentNumber = `PAY-${date.replace(/-/g, '')}-${rand}`
+
+          const lines = []
+          if (sourceAccount) {
+            lines.push({ accountId: sourceAccount.id, debit: parseFloat(p.amount), credit: 0, description: `Payment received - ${paymentNumber}` })
+          }
+          if (arAccount) {
+            lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(p.amount), description: `AR reduction - ${paymentNumber}` })
+          }
+
+          console.log('Creating payment journal:', { paymentNumber, method: p.method, amount: p.amount, linesCount: lines.length })
+
+          if (lines.length > 0) {
+            const entry = await createJournalEntry({
+              date,
+              description: `Payment inbound: ${paymentNumber}`,
+              reference: paymentNumber,
+              sourceType: 'payment',
+              sourceId: null,
+              lines,
+              createdBy: userId,
+            })
+
+            console.log('Payment journal created:', { entryId: entry.id, entryNumber: entry.entry_number })
+
+            // Save payment record with journal link
+            const paymentRecord = {
+              payment_number: paymentNumber,
+              payment_type: 'inbound',
+              method: p.method,
+              amount: parseFloat(p.amount),
+              reference: p.reference || null,
+              payment_date: date,
+              recorded_by: userId,
+              journal_entry_id: entry.id,
+            }
+            console.log('Inserting payment record:', paymentRecord)
+            const { error: paymentInsertError } = await supabase.from('payments').insert(paymentRecord)
+
+            if (paymentInsertError) {
+              console.error('Payment record insert failed:', paymentInsertError)
+              console.error('Payment record that failed:', JSON.stringify(paymentRecord))
+            } else {
+              console.log('Payment record created successfully:', paymentNumber)
+            }
+          } else {
+            console.warn('No lines for payment journal - missing accounts')
+          }
+        }
+      } catch (payErr) {
+        console.error('Payment journal entry failed:', payErr.message)
+        console.error('Full error:', payErr)
+      }
     }
 
     // Log activity
@@ -266,13 +361,23 @@ router.post('/', async (req, res, next) => {
           .single()
         return { ...item, cost_price: product?.cost_price || 0 }
       }))
+      console.log('Order journal - Order data:', {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        total: order.total,
+        subtotal: order.subtotal,
+        taxAmount: order.tax_amount,
+        itemsCount: itemsWithCost.length
+      })
       const journalEntry = await postOrderJournal(order, itemsWithCost)
       // Link journal entry to order for payment deduplication
       if (journalEntry) {
         await supabase.from('orders').update({ journal_entry_id: journalEntry.id }).eq('id', order.id)
+        console.log('Order journal created:', { entryId: journalEntry.id, entryNumber: journalEntry.entry_number })
       }
     } catch (accErr) {
       console.error('Accounting auto-post failed:', accErr.message)
+      console.error('Full error:', accErr)
     }
 
     res.status(201).json(order)

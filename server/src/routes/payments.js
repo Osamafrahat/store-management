@@ -51,31 +51,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Payment type, method, and amount are required' })
     }
 
-    // If this payment is for an order, check if order already has a journal entry
-    let existingJournalId = null
-    if (order_id) {
-      const { data: orderPayment } = await supabase
-        .from('payment_splits')
-        .select('id')
-        .eq('order_id', order_id)
-        .limit(1)
-        .maybeSingle()
-
-      // Check if order's journal entry already posted the cash/bank debit
-      const { data: orderJournal } = await supabase
-        .from('journal_entries')
-        .select('id')
-        .eq('source_type', 'order')
-        .eq('source_id', order_id)
-        .eq('is_reversed', false)
-        .limit(1)
-        .maybeSingle()
-
-      if (orderJournal) {
-        existingJournalId = orderJournal.id
-      }
-    }
-
     // Generate payment number
     const date = new Date().toISOString().split('T')[0].replace(/-/g, '')
     const rand = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
@@ -100,50 +75,42 @@ router.post('/', async (req, res) => {
 
     if (error) throw error
 
-    // Auto-post journal entry only if order doesn't already have one
-    if (!existingJournalId) {
-      const cashAccount = await findAccount('1010')
-      const bankAccount = await findAccount('1020')
-      const arAccount = await findAccount('1030')
-      const apAccount = await findAccount('2010')
+    // Auto-post journal entry
+    const cashAccount = await findAccount('1010')
+    const bankAccount = await findAccount('1020')
+    const arAccount = await findAccount('1030')
+    const apAccount = await findAccount('2010')
 
-      // Card, check, bank_transfer all settle to bank account
-      const sourceAccount = method === 'cash' ? cashAccount : bankAccount
-      const lines = []
+    // Card, check, bank_transfer all settle to bank account
+    const sourceAccount = method === 'cash' ? cashAccount : bankAccount
+    const lines = []
 
-      if (payment_type === 'inbound') {
-        // Customer pays us: debit cash/bank, credit AR
-        if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: parseFloat(amount), credit: 0, description: `Payment received - ${paymentNumber}` })
-        if (arAccount) lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(amount), description: `AR reduction - ${paymentNumber}` })
-      } else {
-        // We pay supplier: debit AP, credit cash/bank
-        if (apAccount) lines.push({ accountId: apAccount.id, debit: parseFloat(amount), credit: 0, description: `AP reduction - ${paymentNumber}` })
-        if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: 0, credit: parseFloat(amount), description: `Payment made - ${paymentNumber}` })
-      }
-
-      if (lines.length > 0) {
-        try {
-          const entry = await createJournalEntry({
-            date: payment.payment_date,
-            description: `Payment ${payment_type}: ${paymentNumber}`,
-            reference: paymentNumber,
-            sourceType: 'payment',
-            sourceId: payment.id,
-            lines,
-            createdBy: req.user?.id,
-          })
-          await supabase.from('payments').update({ journal_entry_id: entry.id }).eq('id', payment.id)
-          payment.journal_entry_id = entry.id
-        } catch (accErr) {
-          console.error('Payment journal entry failed:', accErr.message)
-        }
-      } else {
-        console.error('Payment journal: no lines created. sourceAccount:', !!sourceAccount, 'arAccount:', !!arAccount, 'apAccount:', !!apAccount)
-      }
+    if (payment_type === 'inbound') {
+      // Customer pays us: debit cash/bank, credit AR
+      if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: parseFloat(amount), credit: 0, description: `Payment received - ${paymentNumber}` })
+      if (arAccount) lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(amount), description: `AR reduction - ${paymentNumber}` })
     } else {
-      // Order already posted journal — link this payment to existing entry
-      await supabase.from('payments').update({ journal_entry_id: existingJournalId }).eq('id', payment.id)
-      payment.journal_entry_id = existingJournalId
+      // We pay supplier: debit AP, credit cash/bank
+      if (apAccount) lines.push({ accountId: apAccount.id, debit: parseFloat(amount), credit: 0, description: `AP reduction - ${paymentNumber}` })
+      if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: 0, credit: parseFloat(amount), description: `Payment made - ${paymentNumber}` })
+    }
+
+    if (lines.length > 0) {
+      try {
+        const entry = await createJournalEntry({
+          date: payment.payment_date,
+          description: `Payment ${payment_type}: ${paymentNumber}`,
+          reference: paymentNumber,
+          sourceType: 'payment',
+          sourceId: payment.id,
+          lines,
+          createdBy: req.user?.id,
+        })
+        await supabase.from('payments').update({ journal_entry_id: entry.id }).eq('id', payment.id)
+        payment.journal_entry_id = entry.id
+      } catch (accErr) {
+        console.error('Payment journal entry failed:', accErr.message)
+      }
     }
 
     res.status(201).json(payment)
@@ -200,25 +167,13 @@ router.delete('/:id', async (req, res) => {
     const { error } = await supabase.from('payments').delete().eq('id', req.params.id)
     if (error) throw error
 
-    // Auto-post accounting: reverse the journal entry if it existed
-    // But only if this payment created its own entry (not shared with an order)
+    // Auto-reverse the journal entry
     if (payment.journal_entry_id) {
-      // Check if this journal entry is also linked to an order
-      const { data: orderWithEntry } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('journal_entry_id', payment.journal_entry_id)
-        .limit(1)
-        .maybeSingle()
-
-      // Only reverse if no order owns this journal entry
-      if (!orderWithEntry) {
-        try {
-          const { reverseJournalEntry } = await import('../services/accountingEngine.js')
-          await reverseJournalEntry(payment.journal_entry_id, `Payment deleted: ${payment.payment_number}`, req.user?.id)
-        } catch (accErr) {
-          console.error('Accounting auto-post failed:', accErr.message)
-        }
+      try {
+        const { reverseJournalEntry } = await import('../services/accountingEngine.js')
+        await reverseJournalEntry(payment.journal_entry_id, `Payment deleted: ${payment.payment_number}`, req.user?.id)
+      } catch (accErr) {
+        console.error('Accounting auto-reverse failed:', accErr.message)
       }
     }
 
@@ -226,6 +181,48 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('Delete payment error:', err)
     res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Debug: Check payments and their journal links
+router.get('/debug', async (req, res) => {
+  try {
+    // Get recent payments with journal links
+    const { data: payments, error: paymentsError } = await supabase
+      .from('payments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    if (paymentsError) throw paymentsError
+
+    // Get journal entries for these payments
+    const journalIds = payments?.filter(p => p.journal_entry_id).map(p => p.journal_entry_id) || []
+    let journalEntries = []
+    if (journalIds.length > 0) {
+      const { data: journals } = await supabase
+        .from('journal_entries')
+        .select('*, journal_entry_lines(*)')
+        .in('id', journalIds)
+      journalEntries = journals || []
+    }
+
+    // Get account balances
+    const { data: accounts } = await supabase
+      .from('accounts')
+      .select('id, code, name, account_type, balance')
+      .order('code')
+
+    res.json({
+      paymentsCount: payments?.length || 0,
+      payments: payments || [],
+      journalEntriesCount: journalEntries.length,
+      journalEntries: journalEntries,
+      accounts: accounts || []
+    })
+  } catch (err) {
+    console.error('Debug error:', err)
+    res.status(500).json({ error: err.message })
   }
 })
 

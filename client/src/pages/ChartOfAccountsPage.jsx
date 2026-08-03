@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
-import { accountsApi } from '../lib/api'
+import api, { accountsApi } from '../lib/api'
 import { Plus, Search, Edit2, Trash2, Save, X, RefreshCw } from 'lucide-react'
 
 export default function ChartOfAccountsPage() {
@@ -43,6 +43,18 @@ export default function ChartOfAccountsPage() {
       toastSuccess(t('accounting.seedSuccess'))
       fetchAccounts()
     } catch (err) { toastError(t('accounting.seedFailed')) }
+  }
+
+  const handleRecalculate = async () => {
+    try {
+      setLoading(true)
+      await api.post('/accounting/accounts/recalculate-balances')
+      toastSuccess(t('accounting.balancesRecalculated') || 'Balances recalculated')
+      fetchAccounts()
+    } catch (err) {
+      console.error(err)
+      toastError(t('common.error'))
+    }
   }
 
   const handleSubmit = async () => {
@@ -97,6 +109,9 @@ export default function ChartOfAccountsPage() {
         <div className="flex gap-2">
           <button onClick={handleSeed} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2 text-sm">
             <RefreshCw className="w-4 h-4" /> {t('accounting.seedDefaults')}
+          </button>
+          <button onClick={handleRecalculate} className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 text-yellow-700 dark:text-yellow-400 rounded-xl font-medium flex items-center gap-2 text-sm">
+            <RefreshCw className="w-4 h-4" /> {t('accounting.recalculateBalances')}
           </button>
           <button onClick={() => { setShowForm(true); setEditingId(null); setFormData({ code: '', name: '', account_type: 'asset', description: '' }) }} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium flex items-center gap-2">
             <Plus className="w-4 h-4" /> {t('accounting.addAccount')}

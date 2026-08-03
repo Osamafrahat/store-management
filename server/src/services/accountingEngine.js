@@ -112,6 +112,14 @@ export async function createJournalEntry({ date, description, reference, sourceT
     await updateAccountBalance(line.account_id, period.id, line.debit, line.credit)
   }
 
+  console.log('Journal entry created:', {
+    entryNumber,
+    entryId: entry.id,
+    totalDebit,
+    totalCredit,
+    linesCount: linesData.length
+  })
+
   return entry
 }
 
@@ -164,14 +172,25 @@ async function updateAccountBalance(accountId, periodId, debit, credit) {
       .from('accounts')
       .update({ balance: newBalance, updated_at: new Date().toISOString() })
       .eq('id', accountId)
+    
+    console.log('Account balance updated:', {
+      accountId,
+      accountType: account.account_type,
+      oldBalance: account.balance,
+      newBalance,
+      debit,
+      credit
+    })
   }
 }
 
 // Auto-post order to journal
 export async function postOrderJournal(order, orderItems) {
+  // Ensure accounts exist
+  await seedChartOfAccounts()
+
   // Find accounts
-  const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
-  const { data: bankAccount } = await supabase.from('accounts').select('id').eq('code', '1020').single()
+  const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
   const { data: salesAccount } = await supabase.from('accounts').select('id').eq('code', '4010').single()
   const { data: vatAccount } = await supabase.from('accounts').select('id').eq('code', '2030').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
@@ -179,14 +198,13 @@ export async function postOrderJournal(order, orderItems) {
 
   const lines = []
 
-  // Debit cash/bank (payment received)
-  const paymentAccount = order.payment_method === 'cash' ? cashAccount : bankAccount
-  if (paymentAccount) {
+  // Debit AR (accounts receivable) — payment will clear this
+  if (arAccount) {
     lines.push({
-      accountId: paymentAccount.id,
+      accountId: arAccount.id,
       debit: parseFloat(order.total),
       credit: 0,
-      description: `Payment for ${order.order_number}`,
+      description: `AR - ${order.order_number}`,
     })
   }
 
@@ -388,12 +406,33 @@ export async function postExpenseJournal(expense) {
   })
 }
 
-// Auto-post stock receive to journal
-export async function postStockReceiveJournal(movement, product) {
+// Auto-post stock receive to journal (with per-supplier AP)
+export async function postStockReceiveJournal(movement, product, supplier) {
   const inventoryAccount = await findAccountByCode('1050')
-  const apAccount = await findAccountByCode('2010')
 
   const costValue = (product.cost_price || 0) * movement.quantity
+
+  // Per-supplier AP account
+  let apAccount = null
+  if (supplier && supplier.account_code) {
+    apAccount = await findAccountByCode(supplier.account_code)
+    if (!apAccount) {
+      // Auto-create supplier AP account
+      const { data: newAcc } = await supabase
+        .from('accounts')
+        .insert({
+          code: supplier.account_code,
+          name: `AP - ${supplier.name}`,
+          account_type: 'liability',
+        })
+        .select('id')
+        .single()
+      apAccount = newAcc
+    }
+  } else {
+    // Fallback to generic AP
+    apAccount = await findAccountByCode('2010')
+  }
 
   const lines = []
   if (inventoryAccount) {

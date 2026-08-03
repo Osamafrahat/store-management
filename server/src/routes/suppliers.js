@@ -55,6 +55,7 @@ router.post('/', [
   try {
     const { name, contact_person, email, phone, address, notes } = req.body
 
+    // Insert supplier first to get its ID
     const { data, error } = await supabase
       .from('suppliers')
       .insert({
@@ -69,6 +70,16 @@ router.post('/', [
       .single()
 
     if (error) throw error
+
+    // Auto-assign account_code for per-supplier AP tracking
+    const accountCode = `2010-S${data.id}`
+    await supabase
+      .from('suppliers')
+      .update({ account_code: accountCode })
+      .eq('id', data.id)
+
+    data.account_code = accountCode
+
     req.logActivity({ action: 'created', entity_type: 'supplier', entity_name: data.name })
     res.status(201).json(data)
   } catch (err) {

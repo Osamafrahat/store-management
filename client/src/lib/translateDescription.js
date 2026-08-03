@@ -4,6 +4,7 @@ export function translateDescription(t, desc) {
   if (!desc) return ''
 
   const prefixes = [
+    { en: 'AR - ', key: 'accounting.desc.arFor' },
     { en: 'Payment for ', key: 'accounting.desc.paymentFor' },
     { en: 'Sale - ', key: 'accounting.desc.sale' },
     { en: 'VAT for ', key: 'accounting.desc.vatFor' },

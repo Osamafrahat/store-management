@@ -147,7 +147,12 @@ router.post('/', [
       try {
         const { postStockReceiveJournal } = await import('../services/accountingEngine.js')
         const movement = { id: data.id, quantity: data.stock_quantity }
-        await postStockReceiveJournal(movement, { name: data.name, cost_price: data.cost_price })
+        let supplierInfo = null
+        if (data.supplier_id) {
+          const { data: supp } = await supabase.from('suppliers').select('id, name, account_code').eq('id', data.supplier_id).single()
+          supplierInfo = supp
+        }
+        await postStockReceiveJournal(movement, { name: data.name, cost_price: data.cost_price }, supplierInfo)
       } catch (accErr) {
         console.error('Accounting auto-post (product create) failed:', accErr.message)
       }
@@ -237,8 +242,13 @@ router.put('/:id', [
       try {
         const { postStockReceiveJournal, postStockAdjustJournal } = await import('../services/accountingEngine.js')
         const movement = { id: data.id, quantity: Math.abs(stockDiff) }
+        let supplierInfo = null
+        if (data.supplier_id) {
+          const { data: supp } = await supabase.from('suppliers').select('id, name, account_code').eq('id', data.supplier_id).single()
+          supplierInfo = supp
+        }
         if (stockDiff > 0) {
-          await postStockReceiveJournal(movement, { name: data.name, cost_price: data.cost_price })
+          await postStockReceiveJournal(movement, { name: data.name, cost_price: data.cost_price }, supplierInfo)
         } else {
           await postStockAdjustJournal({ ...movement, quantity: -Math.abs(stockDiff) }, { name: data.name, cost_price: data.cost_price })
         }

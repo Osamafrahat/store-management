@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE TABLE IF NOT EXISTS suppliers (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
+  account_code TEXT UNIQUE,
   contact_person TEXT,
   email TEXT,
   phone TEXT,

@@ -645,6 +645,8 @@ export const translations = {
     'accounting.expenseType': 'Expense',
     'accounting.seedSuccess': 'Chart of accounts seeded!',
     'accounting.seedFailed': 'Failed to seed accounts',
+    'accounting.recalculateBalances': 'Recalculate Balances',
+    'accounting.balancesRecalculated': 'All account balances recalculated from journal entries',
     'accounting.accountUpdated': 'Account updated',
     'accounting.accountCreated': 'Account created',
     'accounting.accountDeleted': 'Account deleted',
@@ -721,6 +723,7 @@ export const translations = {
 
     // Journal entry description keys
     'accounting.desc.paymentFor': 'Payment for',
+    'accounting.desc.arFor': 'AR -',
     'accounting.desc.sale': 'Sale -',
     'accounting.desc.vatFor': 'VAT for',
     'accounting.desc.cogsFor': 'COGS for',
@@ -774,6 +777,10 @@ export const translations = {
     'inventory.costPrice': 'Cost Price',
     'inventory.costPriceHint': 'Cost price is required for accounting',
     'inventory.received': 'Received',
+    'inventory.noSupplier': 'No Supplier',
+    'inventory.supplierChanged': 'Supplier changed — a new product will be created for this supplier',
+    'inventory.totalCost': 'Total Cost',
+    'inventory.productDuplicated': 'Created new product for supplier',
 
     // Promotions extras
     'promotions.sendNotification': 'Send notification to customers',
@@ -1505,6 +1512,8 @@ export const translations = {
     'accounting.expenseType': 'مصروفات',
     'accounting.seedSuccess': 'تم إضافة الحسابات الافتراضية!',
     'accounting.seedFailed': 'فشل إضافة الحسابات',
+    'accounting.recalculateBalances': 'إعادة حساب الأرصدة',
+    'accounting.balancesRecalculated': 'تم إعادة حساب جميع أرصدة الحسابات من القيود المحاسبية',
     'accounting.accountUpdated': 'تم تحديث الحساب',
     'accounting.accountCreated': 'تم إنشاء الحساب',
     'accounting.accountDeleted': 'تم حذف الحساب',
@@ -1581,6 +1590,7 @@ export const translations = {
 
     // Journal entry description keys (Arabic)
     'accounting.desc.paymentFor': 'دفعة للطلب',
+    'accounting.desc.arFor': 'مدينة -',
     'accounting.desc.sale': 'بيع -',
     'accounting.desc.vatFor': 'ضريبة للطلب',
     'accounting.desc.cogsFor': 'تكلفة البضاعة للطلب',
@@ -1632,6 +1642,10 @@ export const translations = {
     'inventory.costPrice': 'سعر التكلفة',
     'inventory.costPriceHint': 'سعر التكلفة مطلوب للحسابات',
     'inventory.received': 'تم الاستلام',
+    'inventory.noSupplier': 'بدون مورد',
+    'inventory.supplierChanged': 'تم تغيير المورد — سيتم إنشاء منتج جديد لهذا المورد',
+    'inventory.totalCost': 'التكلفة الإجمالية',
+    'inventory.productDuplicated': 'تم إنشاء منتج جديد للمورد',
 
     // Promotions extras
     'promotions.sendNotification': 'إرسال إشعار للعملاء',

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
+import { suppliersApi, stockApi } from '../../lib/api'
 import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle, QrCode, ArrowDown } from 'lucide-react'
 
 export default function ProductList({ products, onEdit, onDelete, onPrintBarcode, onRefresh }) {
@@ -11,6 +12,15 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
   const [receiveStockProduct, setReceiveStockProduct] = useState(null)
   const [receiveQty, setReceiveQty] = useState('')
   const [receiveLoading, setReceiveLoading] = useState(false)
+  const [suppliers, setSuppliers] = useState([])
+  const [receiveSupplierId, setReceiveSupplierId] = useState('')
+  const [receiveCostPrice, setReceiveCostPrice] = useState('')
+
+  useEffect(() => {
+    suppliersApi.getAll()
+      .then(({ data }) => setSuppliers(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
 
   const filteredProducts = products
     .filter(p => {
@@ -57,18 +67,26 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
     if (!receiveQty || parseInt(receiveQty) <= 0) return
     setReceiveLoading(true)
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/stock/receive`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
-        body: JSON.stringify({ product_id: receiveStockProduct.id, quantity: parseInt(receiveQty) })
-      })
-      if (!res.ok) throw new Error('Failed')
-      toastSuccess(`${t('inventory.received') || 'Received'} ${receiveQty} ${receiveStockProduct.name}`)
+      const body = {
+        product_id: receiveStockProduct.id,
+        quantity: parseInt(receiveQty),
+      }
+      if (receiveSupplierId) body.supplier_id = parseInt(receiveSupplierId)
+      if (receiveCostPrice !== '') body.cost_price = parseFloat(receiveCostPrice)
+
+      const { data: result } = await stockApi.receive(body)
+      if (result.duplicated) {
+        toastSuccess(`${t('inventory.productDuplicated') || 'Created new product for supplier'} (${receiveQty} ${receiveStockProduct.name})`)
+      } else {
+        toastSuccess(`${t('inventory.received') || 'Received'} ${receiveQty} ${receiveStockProduct.name}`)
+      }
       setReceiveStockProduct(null)
       setReceiveQty('')
+      setReceiveSupplierId('')
+      setReceiveCostPrice('')
       onRefresh?.()
     } catch (err) {
-      toastError(err.message || 'Failed')
+      toastError(err.response?.data?.error || err.message || 'Failed')
     } finally {
       setReceiveLoading(false)
     }
@@ -193,7 +211,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                       <QrCode className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => { setReceiveStockProduct(product); setReceiveQty('') }}
+                      onClick={() => { setReceiveStockProduct(product); setReceiveQty(''); setReceiveSupplierId(product.supplier_id?.toString() || ''); setReceiveCostPrice(product.cost_price?.toString() || '') }}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
                       title={t('inventory.receiveStock') || 'Receive Stock'}
                     >
@@ -227,18 +245,69 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
       {/* Receive Stock Modal */}
       {receiveStockProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <h3 className="text-lg font-bold">{t('inventory.receiveStock') || 'Receive Stock'}</h3>
             <p className="text-sm text-gray-500">{receiveStockProduct.name}</p>
-            <input
-              type="number"
-              min="1"
-              value={receiveQty}
-              onChange={e => setReceiveQty(e.target.value)}
-              placeholder={t('inventory.quantity') || 'Quantity'}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-lg font-bold"
-              autoFocus
-            />
+
+            {/* Supplier Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('inventory.supplier') || 'Supplier'}</label>
+              <select
+                value={receiveSupplierId}
+                onChange={e => setReceiveSupplierId(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">{t('inventory.noSupplier') || 'No Supplier'}</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+              {receiveSupplierId && receiveStockProduct.supplier_id && parseInt(receiveSupplierId) !== receiveStockProduct.supplier_id && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {t('inventory.supplierChanged') || 'Supplier changed — a new product will be created for this supplier'}
+                </p>
+              )}
+            </div>
+
+            {/* Cost Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('inventory.costPrice') || 'Cost Price'} (EGP)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={receiveCostPrice}
+                onChange={e => setReceiveCostPrice(e.target.value)}
+                placeholder={receiveStockProduct.cost_price?.toString() || '0'}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('inventory.quantity') || 'Quantity'}</label>
+              <input
+                type="number"
+                min="1"
+                value={receiveQty}
+                onChange={e => setReceiveQty(e.target.value)}
+                placeholder={t('inventory.quantity') || 'Quantity'}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-lg font-bold"
+                autoFocus
+              />
+            </div>
+
+            {/* Total Cost */}
+            {receiveQty && parseInt(receiveQty) > 0 && (
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('inventory.totalCost') || 'Total Cost'}</span>
+                <span className="text-lg font-bold text-primary-600">
+                  {((parseFloat(receiveCostPrice) || receiveStockProduct.cost_price || 0) * parseInt(receiveQty)).toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP
+                </span>
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={handleReceiveStock}
@@ -248,7 +317,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                 {receiveLoading ? '...' : (t('common.save') || 'Save')}
               </button>
               <button
-                onClick={() => { setReceiveStockProduct(null); setReceiveQty('') }}
+                onClick={() => { setReceiveStockProduct(null); setReceiveQty(''); setReceiveSupplierId(''); setReceiveCostPrice('') }}
                 className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium"
               >
                 {t('common.cancel') || 'Cancel'}
