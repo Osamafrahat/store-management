@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
-import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle, QrCode } from 'lucide-react'
+import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle, QrCode, ArrowDown } from 'lucide-react'
 
 export default function ProductList({ products, onEdit, onDelete, onPrintBarcode, onRefresh }) {
-  const { t } = useAppStore()
+  const { t, toastSuccess, toastError } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState('name')
   const [sortDirection, setSortDirection] = useState('asc')
+  const [receiveStockProduct, setReceiveStockProduct] = useState(null)
+  const [receiveQty, setReceiveQty] = useState('')
+  const [receiveLoading, setReceiveLoading] = useState(false)
 
   const filteredProducts = products
     .filter(p => {
@@ -48,6 +51,27 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
         className={`w-4 h-4 transition-transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`}
       />
     )
+  }
+
+  const handleReceiveStock = async () => {
+    if (!receiveQty || parseInt(receiveQty) <= 0) return
+    setReceiveLoading(true)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/stock/receive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ product_id: receiveStockProduct.id, quantity: parseInt(receiveQty) })
+      })
+      if (!res.ok) throw new Error('Failed')
+      toastSuccess(`${t('inventory.received') || 'Received'} ${receiveQty} ${receiveStockProduct.name}`)
+      setReceiveStockProduct(null)
+      setReceiveQty('')
+      onRefresh?.()
+    } catch (err) {
+      toastError(err.message || 'Failed')
+    } finally {
+      setReceiveLoading(false)
+    }
   }
 
   if (products.length === 0) {
@@ -169,6 +193,13 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                       <QrCode className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => { setReceiveStockProduct(product); setReceiveQty('') }}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg"
+                      title={t('inventory.receiveStock') || 'Receive Stock'}
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => onEdit(product)}
                       className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
                     >
@@ -192,6 +223,40 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
         {t('inventory.showing')} {filteredProducts.length} {t('inventory.of')} {products.length} {t('common.products')}
       </div>
+
+      {/* Receive Stock Modal */}
+      {receiveStockProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-lg font-bold">{t('inventory.receiveStock') || 'Receive Stock'}</h3>
+            <p className="text-sm text-gray-500">{receiveStockProduct.name}</p>
+            <input
+              type="number"
+              min="1"
+              value={receiveQty}
+              onChange={e => setReceiveQty(e.target.value)}
+              placeholder={t('inventory.quantity') || 'Quantity'}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-lg font-bold"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleReceiveStock}
+                disabled={receiveLoading || !receiveQty || parseInt(receiveQty) <= 0}
+                className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-medium"
+              >
+                {receiveLoading ? '...' : (t('common.save') || 'Save')}
+              </button>
+              <button
+                onClick={() => { setReceiveStockProduct(null); setReceiveQty('') }}
+                className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium"
+              >
+                {t('common.cancel') || 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

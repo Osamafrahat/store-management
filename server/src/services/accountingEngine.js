@@ -16,6 +16,17 @@ function generatePaymentNumber() {
   return `PAY-${date}-${rand}`
 }
 
+// Find account by code, auto-seed if missing
+async function findAccountByCode(code) {
+  let { data } = await supabase.from('accounts').select('id').eq('code', code).single()
+  if (!data) {
+    await seedChartOfAccounts()
+    const retry = await supabase.from('accounts').select('id').eq('code', code).single()
+    data = retry.data
+  }
+  return data
+}
+
 // Get or create current open fiscal period
 export async function getCurrentPeriod() {
   const today = new Date().toISOString().split('T')[0]
@@ -379,11 +390,10 @@ export async function postExpenseJournal(expense) {
 
 // Auto-post stock receive to journal
 export async function postStockReceiveJournal(movement, product) {
-  const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
-  const { data: apAccount } = await supabase.from('accounts').select('id').eq('code', '2010').single()
+  const inventoryAccount = await findAccountByCode('1050')
+  const apAccount = await findAccountByCode('2010')
 
   const costValue = (product.cost_price || 0) * movement.quantity
-  if (costValue <= 0) return null
 
   const lines = []
   if (inventoryAccount) {
@@ -417,11 +427,10 @@ export async function postStockReceiveJournal(movement, product) {
 
 // Auto-post stock adjustment to journal
 export async function postStockAdjustJournal(movement, product) {
-  const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
-  const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
+  const inventoryAccount = await findAccountByCode('1050')
+  const cogsAccount = await findAccountByCode('5010')
 
   const costValue = (product.cost_price || 0) * Math.abs(movement.quantity)
-  if (costValue <= 0) return null
 
   const lines = []
 
