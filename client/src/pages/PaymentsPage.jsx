@@ -177,10 +177,10 @@ export default function PaymentsPage() {
                   <td className="px-6 py-3 text-sm">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold ${payment.payment_type === 'inbound' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                       {payment.payment_type === 'inbound' ? <ArrowDownRight className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
-                      {payment.payment_type}
+                      {t('accounting.type' + payment.payment_type.charAt(0).toUpperCase() + payment.payment_type.slice(1))}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm capitalize">{payment.method.replace('_', ' ')}</td>
+                  <td className="px-6 py-3 text-sm">{t('accounting.method' + payment.method.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}</td>
                   <td className="px-6 py-3 text-sm text-end font-mono font-bold">{payment.amount.toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP</td>
                   <td className="px-6 py-3 text-sm text-gray-500">{payment.reference || '-'}</td>
                   <td className="px-6 py-3 text-end">

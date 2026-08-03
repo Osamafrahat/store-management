@@ -174,7 +174,7 @@ export default function JournalEntriesPage() {
               <div><span className="text-gray-500">{t('common.date')}:</span> {showDetail.date}</div>
               <div><span className="text-gray-500">{t('accounting.reference')}:</span> {showDetail.reference || '-'}</div>
                 <div className="col-span-2"><span className="text-gray-500">{t('accounting.description')}:</span> {showDetail.description}</div>
-                <div><span className="text-gray-500">{t('accounting.source')}:</span> {showDetail.source_type || 'manual'}</div>
+                <div><span className="text-gray-500">{t('accounting.source')}:</span> {t('accounting.source' + (showDetail.source_type || 'manual').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}</div>
                 <div><span className="text-gray-500">{t('accounting.status')}:</span> {showDetail.is_posted ? t('accounting.posted') : t('accounting.draft')} {showDetail.is_reversed ? `(${t('accounting.reversed')})` : ''}</div>
             </div>
             <table className="w-full text-sm">
@@ -233,7 +233,7 @@ export default function JournalEntriesPage() {
                     <td className="px-6 py-3 text-sm">{entry.date}</td>
                     <td className="px-6 py-3 text-sm">{entry.description}</td>
                     <td className="px-6 py-3 text-sm">
-                      <span className="px-2 py-0.5 rounded-md text-xs bg-gray-100 dark:bg-gray-700">{entry.source_type}</span>
+                      <span className="px-2 py-0.5 rounded-md text-xs bg-gray-100 dark:bg-gray-700">{t('accounting.source' + entry.source_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}</span>
                     </td>
                     <td className="px-6 py-3 text-sm text-end font-mono">{totalDr.toFixed(2)}</td>
                     <td className="px-6 py-3 text-sm text-end font-mono">{totalCr.toFixed(2)}</td>
