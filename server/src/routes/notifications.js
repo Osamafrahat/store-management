@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
-import supabase from '../db/supabase.js'
+import supabase, { withTimeout } from '../db/supabase.js'
 import { sendPromotionEmail, sendCustomEmail } from '../services/emailService.js'
 import { sendPromotionWhatsApp, sendCustomWhatsApp } from '../services/whatsappService.js'
 
@@ -100,18 +100,30 @@ router.patch('/read-all', async (req, res, next) => {
 })
 
 // Background processing — called after response is sent
-async function processPromotionSend(promo, { send_email, send_whatsapp }) {
-  console.log(`[NOTIFICATION] Background processing started for promo: ${promo.code}`)
+async function processPromotionSend(promoId, { send_email, send_whatsapp }) {
+  console.log(`[NOTIFICATION] Background processing started for promo_id: ${promoId}`)
+
+  const { data: promo, error: promoError } = await withTimeout(
+    supabase.from('promotions').select('*').eq('id', promoId).single(),
+    8000,
+    'Promotion lookup'
+  )
+
+  if (promoError || !promo) {
+    console.error('[NOTIFICATION] Background: promotion not found:', promoError?.message)
+    return
+  }
+
   const storeName = await getStoreName()
   const results = { email: [], whatsapp: [] }
 
   if (send_email) {
     try {
-      const { data: emailCustomers, error: emailErr } = await supabase
-        .from('customers')
-        .select('id, name, email, phone')
-        .eq('is_active', true)
-        .not('email', 'is', null)
+      const { data: emailCustomers, error: emailErr } = await withTimeout(
+        supabase.from('customers').select('id, name, email, phone').eq('is_active', true).not('email', 'is', null),
+        8000,
+        'Customer email query'
+      )
 
       if (!emailErr && emailCustomers?.length > 0) {
         console.log(`[NOTIFICATION] Sending emails to ${emailCustomers.length} customers`)
@@ -128,11 +140,11 @@ async function processPromotionSend(promo, { send_email, send_whatsapp }) {
 
   if (send_whatsapp) {
     try {
-      const { data: whatsappCustomers, error: waErr } = await supabase
-        .from('customers')
-        .select('id, name, email, phone')
-        .eq('is_active', true)
-        .not('phone', 'is', null)
+      const { data: whatsappCustomers, error: waErr } = await withTimeout(
+        supabase.from('customers').select('id, name, email, phone').eq('is_active', true).not('phone', 'is', null),
+        8000,
+        'Customer phone query'
+      )
 
       if (!waErr && whatsappCustomers?.length > 0) {
         results.whatsapp = await sendPromotionWhatsApp({
@@ -172,36 +184,27 @@ router.post('/promotion', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid promotion ID' })
     }
 
-    const { data: promo, error: promoError } = await supabase
-      .from('promotions')
-      .select('*')
-      .eq('id', numericId)
-      .single()
-
-    if (promoError || !promo) {
-      return res.status(404).json({ error: 'Promotion not found' })
-    }
-
     const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS)
 
     if (send_email && !smtpConfigured) {
-      res.json({
+      return res.json({
         success: true,
         message: 'SMTP not configured — email skipped',
         results: { email: [], emailSkipped: true, whatsapp: [] }
       })
-    } else if (!send_email && !send_whatsapp) {
-      res.json({ success: true, message: 'No channels selected', results: { email: [], whatsapp: [] } })
-    } else {
-      res.json({
-        success: true,
-        message: 'Sending in background',
-        results: { email: [], whatsapp: [], processing: true }
-      })
     }
 
-    // Process in background — do NOT await
-    processPromotionSend(promo, { send_email: send_email && smtpConfigured, send_whatsapp }).catch(err => {
+    if (!send_email && !send_whatsapp) {
+      return res.json({ success: true, message: 'No channels selected', results: { email: [], whatsapp: [] } })
+    }
+
+    res.json({
+      success: true,
+      message: 'Sending in background',
+      results: { email: [], whatsapp: [], processing: true }
+    })
+
+    processPromotionSend(numericId, { send_email: send_email && smtpConfigured, send_whatsapp }).catch(err => {
       console.error('[NOTIFICATION] Background send error:', err.message)
     })
   } catch (err) {
