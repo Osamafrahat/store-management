@@ -69,6 +69,12 @@ export default function AccountingReportsPage() {
     return num.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
+  const getAccountName = (acc) => {
+    const key = `accounting.account.${acc.code}`
+    const translated = t(key)
+    return translated !== key ? translated : acc.name
+  }
+
   return (
     <div className="space-y-6 report-print-area">
       <div className="flex items-center justify-between">
@@ -112,7 +118,7 @@ export default function AccountingReportsPage() {
                         {trialBalance.accounts[type].map(acc => (
                           <tr key={acc.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                             <td className="px-6 py-2.5 text-sm font-mono">{acc.code}</td>
-                            <td className="px-6 py-2.5 text-sm">{acc.name}</td>
+                            <td className="px-6 py-2.5 text-sm">{getAccountName(acc)}</td>
                             <td className="px-6 py-2.5 text-sm text-end font-mono font-medium">
                               {acc.balance >= 0 ? formatAmount(acc.balance) : ''}
                             </td>

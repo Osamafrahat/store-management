@@ -13,6 +13,12 @@ export default function ChartOfAccountsPage() {
   const [editingId, setEditingId] = useState(null)
   const [formData, setFormData] = useState({ code: '', name: '', account_type: 'asset', description: '' })
 
+  const getAccountName = (account) => {
+    const key = `accounting.account.${account.code}`
+    const translated = t(key)
+    return translated !== key ? translated : account.name
+  }
+
   const ACCOUNT_TYPES = {
     asset: { label: t('accounting.asset') || 'Asset', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     liability: { label: t('accounting.liability') || 'Liability', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
@@ -162,7 +168,7 @@ export default function ChartOfAccountsPage() {
                     {items.map(account => (
                       <tr key={account.id} className="border-t border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                         <td className="px-6 py-3 text-sm font-mono font-bold">{account.code}</td>
-                        <td className="px-6 py-3 text-sm font-medium">{account.name}</td>
+                        <td className="px-6 py-3 text-sm font-medium">{getAccountName(account)}</td>
                         <td className="px-6 py-3 text-sm font-medium text-end">{account.balance.toFixed(2)} EGP</td>
                         <td className="px-6 py-3 text-end">
                           <div className="flex items-center justify-end gap-1">

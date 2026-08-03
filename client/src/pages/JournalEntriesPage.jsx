@@ -13,6 +13,13 @@ export default function JournalEntriesPage() {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showDetail, setShowDetail] = useState(null)
+
+  const getAccountName = (account) => {
+    if (!account) return ''
+    const key = `accounting.account.${account.code}`
+    const translated = t(key)
+    return translated !== key ? translated : account.name
+  }
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -129,7 +136,7 @@ export default function JournalEntriesPage() {
                 <div key={i} className="grid grid-cols-12 gap-2">
                   <select value={line.accountId} onChange={e => updateLine(i, 'accountId', e.target.value)} className="col-span-4 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm outline-none">
                     <option value="">{t('accounting.selectAccount') || 'Select...'}</option>
-                    {accounts.map(a => <option key={a.id} value={a.id}>{a.code} - {a.name}</option>)}
+                    {accounts.map(a => <option key={a.id} value={a.id}>{a.code} - {getAccountName(a)}</option>)}
                   </select>
                   <input type="number" value={line.debit} onChange={e => updateLine(i, 'debit', e.target.value)} placeholder="0" className="col-span-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-end outline-none" />
                   <input type="number" value={line.credit} onChange={e => updateLine(i, 'credit', e.target.value)} placeholder="0" className="col-span-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-end outline-none" />
@@ -188,7 +195,7 @@ export default function JournalEntriesPage() {
               <tbody>
                 {showDetail.journal_entry_lines?.map(line => (
                   <tr key={line.id} className="border-b border-gray-100 dark:border-gray-700/50">
-                    <td className="py-2">{line.accounts?.code} - {line.accounts?.name}</td>
+                    <td className="py-2">{line.accounts?.code} - {getAccountName(line.accounts)}</td>
                     <td className="py-2 text-end font-mono">{line.debit > 0 ? line.debit.toFixed(2) : ''}</td>
                     <td className="py-2 text-end font-mono">{line.credit > 0 ? line.credit.toFixed(2) : ''}</td>
                   </tr>
