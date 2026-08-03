@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores/appStore'
-import { notificationsApi } from '../../lib/api'
+import { customersApi, notificationsApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import {
   X,
@@ -9,51 +9,93 @@ import {
   MessageCircle,
   Users,
   CheckCircle,
-  AlertCircle,
   Loader2,
   Percent,
   DollarSign,
   ExternalLink,
   Sparkles,
+  User,
 } from 'lucide-react'
+
+function generateWhatsAppLink(phone, message) {
+  const formattedPhone = phone.replace(/[^0-9]/g, '')
+  const encodedMessage = encodeURIComponent(message)
+  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`
+}
 
 export default function SendPromotionModal({ promotion, onClose, onSent }) {
   const { t, toastSuccess, toastError } = useAppStore()
-  const [sendMethod, setSendMethod] = useState('whatsapp')
+  const [step, setStep] = useState('form')
+  const [customers, setCustomers] = useState([])
+  const [loadingCustomers, setLoadingCustomers] = useState(false)
   const [sending, setSending] = useState(false)
-  const [result, setResult] = useState(null)
-
-  const handleSend = async () => {
-    const send_email = sendMethod === 'email' || sendMethod === 'both'
-    const send_whatsapp = sendMethod === 'whatsapp' || sendMethod === 'both'
-
-    try {
-      setSending(true)
-      const res = await notificationsApi.sendPromotion(promotion.id, { send_email, send_whatsapp })
-      setResult(res.data)
-      toastSuccess(res.data.message || t('promotions.sent') || 'Notification sent!')
-      if (onSent) onSent()
-    } catch (err) {
-      console.error('[SendPromotion] Full error:', err)
-      console.error('[SendPromotion] Response:', err.response?.data)
-      const serverMsg = err.response?.data?.error || err.response?.data?.message || err.message || ''
-      console.error('[SendPromotion] Server message:', serverMsg)
-      toastError(serverMsg ? `${t('promotions.failedToSend') || 'Failed'}: ${serverMsg}` : (t('promotions.failedToSend') || 'Failed to send notification'))
-    } finally {
-      setSending(false)
-    }
-  }
+  const [whatsappLinks, setWhatsappLinks] = useState([])
 
   const discount = promotion.type === 'percentage'
     ? `${promotion.value}%`
     : formatCurrency(promotion.value)
 
+  const handleSend = async () => {
+    try {
+      setSending(true)
+      setLoadingCustomers(true)
+
+      const res = await customersApi.getAll()
+      const allCustomers = res.data || []
+      const withPhone = allCustomers.filter(c => c.phone && c.phone.trim())
+
+      if (withPhone.length === 0) {
+        toastError(t('promotions.noCustomersWithPhone') || 'No customers with phone numbers found')
+        setSending(false)
+        setLoadingCustomers(false)
+        return
+      }
+
+      const storeName = (() => {
+        try {
+          const settings = JSON.parse(localStorage.getItem('settings') || '{}')
+          return settings.storeName || 'المتجر'
+        } catch { return 'المتجر' }
+      })()
+
+      const discountText = promotion.type === 'percentage'
+        ? `${promotion.value}%`
+        : `${promotion.value} ج.م`
+
+      const message = `🎉 *عرض خاص من ${storeName}*\n\n` +
+        `خصم *${discountText}*\n\n` +
+        `📦 استخدم كود الخصم:\n*${promotion.code}*\n\n` +
+        (promotion.min_order_amount ? `📌 الحد الأدنى للطلب: ${promotion.min_order_amount} ج.م\n` : '') +
+        `📅 صالح حتى: ${new Date(promotion.end_date).toLocaleDateString('ar-EG')}\n\n` +
+        `سارع بالاستفادة! 🛒`
+
+      const links = withPhone.map(c => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        link: generateWhatsAppLink(c.phone, message),
+      }))
+
+      setWhatsappLinks(links)
+      setStep('result')
+
+      notificationsApi.sendPromotion(promotion.id, { send_email: false, send_whatsapp: true })
+        .catch(() => {})
+    } catch (err) {
+      console.error('[SendPromotion] Error:', err)
+      toastError(err.response?.data?.error || err.message || 'Failed to load customers')
+    } finally {
+      setSending(false)
+      setLoadingCustomers(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg mx-4 shadow-2xl overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-lg mx-4 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-4">
+        <div className="relative px-6 pt-6 pb-4 flex-shrink-0">
           <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-primary-500 via-primary-600 to-purple-600 rounded-b-[3rem] opacity-10" />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -74,14 +116,12 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
           </div>
         </div>
 
-        {!result ? (
+        {step === 'form' ? (
           <>
             {/* Promotion Preview Card */}
-            <div className="mx-6 mb-5">
+            <div className="mx-6 mb-5 flex-shrink-0">
               <div className="relative overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800 p-5">
-                {/* Decorative corner */}
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-primary-500/10 to-transparent rounded-bl-[3rem]" />
-
                 <div className="flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
                     promotion.type === 'percentage'
@@ -95,11 +135,9 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-mono text-xl font-black text-gray-900 dark:text-white tracking-wider">
-                        {promotion.code}
-                      </h3>
-                    </div>
+                    <h3 className="font-mono text-xl font-black text-gray-900 dark:text-white tracking-wider">
+                      {promotion.code}
+                    </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                       {discount} {t('promotions.off')}
                       {promotion.min_order_amount && (
@@ -117,60 +155,16 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
               </div>
             </div>
 
-            {/* Delivery Method */}
-            <div className="px-6 mb-5">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                {t('promotions.deliveryMethod') || 'Delivery Method'}
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { key: 'email', icon: Mail, label: 'Email', color: 'blue', desc: t('promotions.emailDesc') || 'Send email to customers' },
-                  { key: 'whatsapp', icon: MessageCircle, label: 'WhatsApp', color: 'green', desc: t('promotions.whatsappDesc') || 'Send via WhatsApp' },
-                  { key: 'both', icon: Users, label: t('promotions.both') || 'Both', color: 'purple', desc: t('promotions.bothDesc') || 'Email + WhatsApp' },
-                ].map(({ key, icon: Icon, label, color, desc }) => {
-                  const isActive = sendMethod === key
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setSendMethod(key)}
-                      className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 ${
-                        isActive
-                          ? `border-${color}-400 dark:border-${color}-500 bg-${color}-50 dark:bg-${color}-900/20 shadow-lg shadow-${color}-500/10 scale-[1.02]`
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      {isActive && (
-                        <div className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-${color}-500 flex items-center justify-center shadow-md`}>
-                          <CheckCircle className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                        isActive
-                          ? `bg-${color}-500 text-white shadow-md shadow-${color}-500/30`
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
-                      }`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="text-center">
-                        <p className={`text-sm font-bold ${isActive ? `text-${color}-600 dark:text-${color}-400` : 'text-gray-700 dark:text-gray-300'}`}>{label}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{desc}</p>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
             {/* Info Banner */}
-            <div className="mx-6 mb-5 flex items-start gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
-              <Sparkles className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
-                {t('promotions.sendInfo') || 'All active customers with contact info will receive this promotion. WhatsApp messages will open individually for you to send.'}
+            <div className="mx-6 mb-5 flex items-start gap-3 px-4 py-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800/30 flex-shrink-0">
+              <MessageCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-green-600 dark:text-green-400 leading-relaxed">
+                {t('promotions.sendInfo') || 'All active customers with a phone number will be listed below. Click each one to open WhatsApp and send the promotion.'}
               </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="px-6 pb-6 flex gap-3">
+            <div className="px-6 pb-6 flex gap-3 flex-shrink-0">
               <button
                 onClick={onClose}
                 className="flex-1 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
@@ -185,92 +179,71 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
                 {sending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('promotions.sending') || 'Sending...'}
+                    {t('promotions.loading') || 'Loading customers...'}
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
-                    {t('promotions.sendNow') || 'Send Now'}
+                    <MessageCircle className="w-4 h-4" />
+                    {t('promotions.showWhatsAppLinks') || 'Show WhatsApp Links'}
                   </>
                 )}
               </button>
             </div>
           </>
         ) : (
-          /* Success Result */
-          <div className="px-6 pb-6 space-y-5">
-            {/* Success Header */}
-            <div className="flex flex-col items-center text-center py-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30 mb-4">
-                <CheckCircle className="w-8 h-8 text-white" />
+          /* Result: Customer List with WhatsApp Buttons */
+          <div className="flex flex-col min-h-0 flex-1">
+            {/* Summary */}
+            <div className="mx-6 mb-4 flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800/30 flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-md shadow-green-500/20 flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('promotions.sentSuccess') || 'Sent Successfully!'}</h3>
-              <p className="text-sm text-gray-500 mt-1">{result.message}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  {whatsappLinks.length} {t('promotions.customersReady') || 'customers ready'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {t('promotions.clickToOpenWhatsApp') || 'Click each customer to open WhatsApp and send'}
+                </p>
+              </div>
             </div>
 
-            {/* Results Breakdown */}
-            <div className="space-y-3">
-              {result.results?.email?.length > 0 && (
-                <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/20">
-                    <Mail className="w-5 h-5 text-white" />
+            {/* Customer List */}
+            <div className="mx-6 flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 max-h-[50vh]">
+              {whatsappLinks.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-600 transition-all group"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">Email</p>
-                    <p className="text-xs text-gray-500">
-                      {result.results.email.filter(r => r.success).length} {t('promotions.sent') || 'sent'}
-                      {result.results.email.filter(r => !r.success).length > 0 && (
-                        <span className="text-red-500"> · {result.results.email.filter(r => !r.success).length} failed</span>
-                      )}
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
+                    <p className="text-xs text-gray-400">{item.phone}</p>
                   </div>
-                </div>
-              )}
-
-              {result.results?.whatsapp?.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shadow-md shadow-green-500/20">
-                      <MessageCircle className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">WhatsApp</p>
-                      <p className="text-xs text-gray-500">
-                        {result.results.whatsapp.filter(r => r.success).length} {t('promotions.links') || 'links ready'}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <span className="text-[10px] text-green-600 dark:text-green-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      {t('promotions.openWhatsApp') || 'Open'}
+                    </span>
+                    <ExternalLink className="w-4 h-4 text-green-500 group-hover:text-green-600 transition-colors" />
                   </div>
-
-                  {/* WhatsApp Links */}
-                  {result.results.whatsapp.filter(r => r.success && r.link).map((item, idx) => (
-                    <a
-                      key={idx}
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-600 transition-all group"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                        <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
-                        <p className="text-xs text-gray-400">{item.phone}</p>
-                      </div>
-                      <ExternalLink className="w-4 h-4 text-green-500 group-hover:text-green-600 transition-colors" />
-                    </a>
-                  ))}
-                </div>
-              )}
+                </a>
+              ))}
             </div>
 
             {/* Close Button */}
-            <button
-              onClick={() => { setResult(null); onClose() }}
-              className="w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
-            >
-              {t('common.close')}
-            </button>
+            <div className="px-6 pb-6 flex-shrink-0">
+              <button
+                onClick={onClose}
+                className="w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+              >
+                {t('common.close')}
+              </button>
+            </div>
           </div>
         )}
       </div>
