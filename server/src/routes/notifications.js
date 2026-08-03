@@ -101,76 +101,95 @@ router.patch('/read-all', async (req, res, next) => {
 
 // Background processing — called after response is sent
 async function processPromotionSend(promoId, { send_email, send_whatsapp }) {
-  console.log(`[NOTIFICATION] Background processing started for promo_id: ${promoId}`)
+  console.log(`[BG] === Starting background send for promo_id: ${promoId} ===`)
 
-  const { data: promo, error: promoError } = await withTimeout(
-    supabase.from('promotions').select('*').eq('id', promoId).single(),
-    8000,
-    'Promotion lookup'
-  )
+  try {
+    console.log(`[BG] Step 1: Looking up promotion ${promoId}...`)
+    const { data: promo, error: promoError } = await supabase
+      .from('promotions')
+      .select('*')
+      .eq('id', promoId)
+      .single()
 
-  if (promoError || !promo) {
-    console.error('[NOTIFICATION] Background: promotion not found:', promoError?.message)
-    return
-  }
-
-  const storeName = await getStoreName()
-  const results = { email: [], whatsapp: [] }
-
-  if (send_email) {
-    try {
-      const { data: emailCustomers, error: emailErr } = await withTimeout(
-        supabase.from('customers').select('id, name, email, phone').eq('is_active', true).not('email', 'is', null),
-        8000,
-        'Customer email query'
-      )
-
-      if (!emailErr && emailCustomers?.length > 0) {
-        console.log(`[NOTIFICATION] Sending emails to ${emailCustomers.length} customers`)
-        results.email = await sendPromotionEmail({
-          recipients: emailCustomers,
-          promotion: promo,
-          storeName
-        })
-      }
-    } catch (err) {
-      console.error('[NOTIFICATION] Background email error:', err.message)
+    if (promoError) {
+      console.error(`[BG] Step 1 FAILED:`, promoError.message, promoError)
+      return
     }
-  }
-
-  if (send_whatsapp) {
-    try {
-      const { data: whatsappCustomers, error: waErr } = await withTimeout(
-        supabase.from('customers').select('id, name, email, phone').eq('is_active', true).not('phone', 'is', null),
-        8000,
-        'Customer phone query'
-      )
-
-      if (!waErr && whatsappCustomers?.length > 0) {
-        results.whatsapp = await sendPromotionWhatsApp({
-          recipients: whatsappCustomers,
-          promotion: promo,
-          storeName
-        })
-      }
-    } catch (err) {
-      console.error('[NOTIFICATION] Background WhatsApp error:', err.message)
+    if (!promo) {
+      console.error(`[BG] Step 1 FAILED: No promotion found for id ${promoId}`)
+      return
     }
+    console.log(`[BG] Step 1 OK: promo=${promo.code} (${promo.type}: ${promo.value})`)
+
+    const storeName = await getStoreName()
+    console.log(`[BG] Step 2: storeName=${storeName}`)
+    const results = { email: [], whatsapp: [] }
+
+    if (send_email) {
+      console.log(`[BG] Step 3a: Querying customers with email...`)
+      const { data: emailCustomers, error: emailErr } = await supabase
+        .from('customers')
+        .select('id, name, email, phone')
+        .eq('is_active', true)
+        .not('email', 'is', null)
+
+      if (emailErr) {
+        console.error(`[BG] Step 3a FAILED:`, emailErr.message)
+      } else {
+        console.log(`[BG] Step 3a OK: ${emailCustomers?.length || 0} customers with email`)
+        if (emailCustomers && emailCustomers.length > 0) {
+          console.log(`[BG] Step 4a: Sending emails...`)
+          results.email = await sendPromotionEmail({
+            recipients: emailCustomers,
+            promotion: promo,
+            storeName
+          })
+          console.log(`[BG] Step 4a DONE: ${results.email.filter(r => r.success).length}/${results.email.length} sent`)
+        }
+      }
+    }
+
+    if (send_whatsapp) {
+      console.log(`[BG] Step 3b: Querying customers with phone...`)
+      const { data: whatsappCustomers, error: waErr } = await supabase
+        .from('customers')
+        .select('id, name, email, phone')
+        .eq('is_active', true)
+        .not('phone', 'is', null)
+
+      if (waErr) {
+        console.error(`[BG] Step 3b FAILED:`, waErr.message)
+      } else {
+        console.log(`[BG] Step 3b OK: ${whatsappCustomers?.length || 0} customers with phone`)
+        if (whatsappCustomers && whatsappCustomers.length > 0) {
+          console.log(`[BG] Step 4b: Generating WhatsApp links...`)
+          results.whatsapp = await sendPromotionWhatsApp({
+            recipients: whatsappCustomers,
+            promotion: promo,
+            storeName
+          })
+          console.log(`[BG] Step 4b DONE: ${results.whatsapp.length} links generated`)
+        }
+      }
+    }
+
+    const emailSuccess = results.email.filter(r => r.success).length
+    const whatsappSuccess = results.whatsapp.filter(r => r.success).length
+    const total = emailSuccess + whatsappSuccess
+
+    console.log(`[BG] === COMPLETE: email=${emailSuccess}, whatsapp=${whatsappSuccess}, total=${total} ===`)
+
+    await createNotification({
+      type: 'promotion',
+      title: `Promotion Sent: ${promo.code}`,
+      message: `${promo.type === 'percentage' ? promo.value + '%' : promo.value + ' EGP'} discount - ${total} recipients notified`,
+      promotion_id: promo.id,
+      recipient_count: total,
+    })
+    console.log(`[BG] Notification record created`)
+  } catch (err) {
+    console.error(`[BG] FATAL ERROR:`, err.message, err.stack)
   }
-
-  const emailSuccess = results.email.filter(r => r.success).length
-  const whatsappSuccess = results.whatsapp.filter(r => r.success).length
-  const total = emailSuccess + whatsappSuccess
-
-  console.log(`[NOTIFICATION] Background done: email=${emailSuccess}, whatsapp=${whatsappSuccess}`)
-
-  await createNotification({
-    type: 'promotion',
-    title: `Promotion Sent: ${promo.code}`,
-    message: `${promo.type === 'percentage' ? promo.value + '%' : promo.value + ' EGP'} discount - ${total} recipients notified`,
-    promotion_id: promo.id,
-    recipient_count: total,
-  })
 }
 
 // Send promotion notification via email + WhatsApp
