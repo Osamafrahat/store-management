@@ -1,7 +1,9 @@
+import dotenv from 'dotenv'
+dotenv.config()
 import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 
-const supabase = createClient('https://hfnllsnbehuecgznyonq.supabase.co', 'sb_publishable_HHBniOsxfuVqqS2PYXkNuA_mM799H6v')
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
 
 const salt = await bcrypt.genSalt(10)
 const hash = await bcrypt.hash('admin123', salt)
