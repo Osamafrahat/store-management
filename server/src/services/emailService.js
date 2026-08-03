@@ -2,14 +2,20 @@ import nodemailer from 'nodemailer'
 
 // Create transporter - configure in .env
 const createTransporter = () => {
+  const port = parseInt(process.env.SMTP_PORT || '587')
+  console.log(`[EMAIL] Creating transporter: host=${process.env.SMTP_HOST || 'smtp.gmail.com'}, port=${port}, user=${process.env.SMTP_USER || 'MISSING'}`)
+
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false, // true for 465, false for other ports
+    port,
+    secure: port === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   })
 }
 
@@ -32,6 +38,15 @@ export async function sendEmail({ to, subject, html }) {
 // Send promotion email to multiple recipients
 export async function sendPromotionEmail({ recipients, promotion, storeName }) {
   const transporter = createTransporter()
+
+  console.log(`[EMAIL] Verifying connection...`)
+  try {
+    await transporter.verify()
+    console.log(`[EMAIL] SMTP connection verified OK`)
+  } catch (verifyErr) {
+    console.error(`[EMAIL] SMTP connection FAILED:`, verifyErr.message)
+    throw verifyErr
+  }
 
   const discountText = promotion.type === 'percentage'
     ? `${promotion.value}%`
