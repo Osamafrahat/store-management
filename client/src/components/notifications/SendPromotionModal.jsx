@@ -19,7 +19,7 @@ import {
 
 export default function SendPromotionModal({ promotion, onClose, onSent }) {
   const { t, toastSuccess, toastError } = useAppStore()
-  const [sendMethod, setSendMethod] = useState('both')
+  const [sendMethod, setSendMethod] = useState('whatsapp')
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState(null)
 
@@ -34,8 +34,11 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
       toastSuccess(res.data.message || t('promotions.sent') || 'Notification sent!')
       if (onSent) onSent()
     } catch (err) {
-      console.error('Failed to send:', err)
-      toastError(t('promotions.failedToSend') || 'Failed to send notification')
+      console.error('[SendPromotion] Full error:', err)
+      console.error('[SendPromotion] Response:', err.response?.data)
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || err.message || ''
+      console.error('[SendPromotion] Server message:', serverMsg)
+      toastError(serverMsg ? `${t('promotions.failedToSend') || 'Failed'}: ${serverMsg}` : (t('promotions.failedToSend') || 'Failed to send notification'))
     } finally {
       setSending(false)
     }

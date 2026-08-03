@@ -100,72 +100,95 @@ router.patch('/read-all', async (req, res, next) => {
 })
 
 // Send promotion notification via email + WhatsApp
-router.post('/promotion', [
-  body('promotion_id').isNumeric().withMessage('Invalid promotion ID'),
-], validate, async (req, res, next) => {
+router.post('/promotion', async (req, res, next) => {
   try {
     const { promotion_id, send_email, send_whatsapp } = req.body
-    console.log(`[NOTIFICATION] Promotion send requested: promo_id=${promotion_id}, email=${send_email}, whatsapp=${send_whatsapp}`)
+    console.log(`[NOTIFICATION] Promotion send requested: promo_id=${promotion_id} (type: ${typeof promotion_id}), email=${send_email}, whatsapp=${send_whatsapp}`)
+    console.log(`[NOTIFICATION] Request body keys: ${Object.keys(req.body).join(', ')}`)
+
+    const numericId = Number(promotion_id)
+    if (!numericId || numericId <= 0) {
+      console.error('[NOTIFICATION] Invalid promotion_id:', promotion_id)
+      return res.status(400).json({ error: 'Invalid promotion ID' })
+    }
 
     const { data: promo, error: promoError } = await supabase
       .from('promotions')
       .select('*')
-      .eq('id', promotion_id)
+      .eq('id', numericId)
       .single()
 
-    if (promoError || !promo) {
-      console.error('[NOTIFICATION] Promotion not found:', promoError?.message)
+    if (promoError) {
+      console.error('[NOTIFICATION] Promotion query error:', promoError.message, promoError)
+      return res.status(404).json({ error: 'Promotion not found', details: promoError.message })
+    }
+    if (!promo) {
+      console.error('[NOTIFICATION] Promotion not found for id:', numericId)
       return res.status(404).json({ error: 'Promotion not found' })
     }
+
+    console.log(`[NOTIFICATION] Found promotion: ${promo.code} (${promo.type}: ${promo.value})`)
 
     const storeName = await getStoreName()
     const results = { email: [], whatsapp: [] }
 
-    if (send_email !== false) {
+    if (send_email === true) {
       try {
         if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
           console.warn('[NOTIFICATION] SMTP not configured — skipping email')
           results.email = []
         } else {
-          const { data: emailCustomers } = await supabase
+          const { data: emailCustomers, error: emailErr } = await supabase
             .from('customers')
             .select('id, name, email, phone')
             .eq('is_active', true)
             .not('email', 'is', null)
 
-          console.log(`[NOTIFICATION] Found ${emailCustomers?.length || 0} customers with email`)
-          if (emailCustomers && emailCustomers.length > 0) {
-            results.email = await sendPromotionEmail({
-              recipients: emailCustomers,
-              promotion: promo,
-              storeName
-            })
+          if (emailErr) {
+            console.error('[NOTIFICATION] Customer email query error:', emailErr.message)
+          } else {
+            console.log(`[NOTIFICATION] Found ${emailCustomers?.length || 0} customers with email`)
+            if (emailCustomers && emailCustomers.length > 0) {
+              results.email = await sendPromotionEmail({
+                recipients: emailCustomers,
+                promotion: promo,
+                storeName
+              })
+            }
           }
         }
       } catch (emailErr) {
         console.error('[NOTIFICATION] Email error:', emailErr.message)
       }
+    } else {
+      console.log('[NOTIFICATION] Email sending disabled by user')
     }
 
-    if (send_whatsapp) {
+    if (send_whatsapp === true) {
       try {
-        const { data: whatsappCustomers } = await supabase
+        const { data: whatsappCustomers, error: waQueryErr } = await supabase
           .from('customers')
           .select('id, name, email, phone')
           .eq('is_active', true)
           .not('phone', 'is', null)
 
-        console.log(`[NOTIFICATION] Found ${whatsappCustomers?.length || 0} customers with phone`)
-        if (whatsappCustomers && whatsappCustomers.length > 0) {
-          results.whatsapp = await sendPromotionWhatsApp({
-            recipients: whatsappCustomers,
-            promotion: promo,
-            storeName
-          })
+        if (waQueryErr) {
+          console.error('[NOTIFICATION] Customer phone query error:', waQueryErr.message)
+        } else {
+          console.log(`[NOTIFICATION] Found ${whatsappCustomers?.length || 0} customers with phone`)
+          if (whatsappCustomers && whatsappCustomers.length > 0) {
+            results.whatsapp = await sendPromotionWhatsApp({
+              recipients: whatsappCustomers,
+              promotion: promo,
+              storeName
+            })
+          }
         }
       } catch (waErr) {
         console.error('[NOTIFICATION] WhatsApp error:', waErr.message)
       }
+    } else {
+      console.log('[NOTIFICATION] WhatsApp sending disabled by user')
     }
 
     const emailSuccess = results.email.filter(r => r.success).length
@@ -188,7 +211,7 @@ router.post('/promotion', [
       results
     })
   } catch (err) {
-    console.error('[NOTIFICATION] Promotion send FAILED:', err.message)
+    console.error('[NOTIFICATION] Promotion send FAILED:', err.message, err.stack)
     next(err)
   }
 })
