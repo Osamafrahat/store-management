@@ -136,6 +136,10 @@ router.post('/promotion', async (req, res, next) => {
       try {
         if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
           console.warn('[NOTIFICATION] SMTP not configured — skipping email')
+          console.warn(`[NOTIFICATION] SMTP_USER=${process.env.SMTP_USER ? '(set, length=' + process.env.SMTP_USER.length + ')' : 'MISSING'}`)
+          console.warn(`[NOTIFICATION] SMTP_PASS=${process.env.SMTP_PASS ? '(set, length=' + process.env.SMTP_PASS.length + ')' : 'MISSING'}`)
+          console.warn(`[NOTIFICATION] SMTP_HOST=${process.env.SMTP_HOST || 'NOT SET'}`)
+          console.warn(`[NOTIFICATION] SMTP_PORT=${process.env.SMTP_PORT || 'NOT SET'}`)
           results.email = []
           results.emailSkipped = true
         } else {
