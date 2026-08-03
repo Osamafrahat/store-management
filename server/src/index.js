@@ -122,8 +122,21 @@ app.use('/api', (req, res) => {
 
 app.use(errorHandler)
 
+// Auto-initialize accounting data on startup
+async function initAccounting() {
+  try {
+    const { seedChartOfAccounts, getCurrentPeriod } = await import('./services/accountingEngine.js')
+    await seedChartOfAccounts()
+    await getCurrentPeriod()
+    console.log('Accounting initialized: chart of accounts seeded, fiscal period ready')
+  } catch (err) {
+    console.error('Accounting init failed (non-fatal):', err.message)
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
+  initAccounting()
 })
 
 export default app

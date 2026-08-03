@@ -100,10 +100,10 @@ router.get('/profit-loss', async (req, res) => {
 
     let entryQuery = supabase
       .from('journal_entry_lines')
-      .select('debit, credit, accounts(code, name, account_type)')
+      .select('debit, credit, accounts(code, name, account_type), journal_entries!inner(date)')
 
-    if (date_from) entryQuery = entryQuery.gte('created_at', date_from)
-    if (date_to) entryQuery = entryQuery.lte('created_at', date_to)
+    if (date_from) entryQuery = entryQuery.gte('journal_entries.date', date_from)
+    if (date_to) entryQuery = entryQuery.lte('journal_entries.date', date_to)
 
     const { data: lines, error } = await entryQuery
     if (error) throw error
@@ -152,12 +152,12 @@ router.get('/account-ledger/:accountId', async (req, res) => {
 
     let query = supabase
       .from('journal_entry_lines')
-      .select('*, journal_entries(entry_number, date, description, source_type)')
+      .select('*, journal_entries!inner(entry_number, date, description, source_type)')
       .eq('account_id', req.params.accountId)
-      .order('created_at', { ascending: false })
+      .order('journal_entries.date', { ascending: false })
 
-    if (date_from) query = query.gte('created_at', date_from)
-    if (date_to) query = query.lte('created_at', date_to)
+    if (date_from) query = query.gte('journal_entries.date', date_from)
+    if (date_to) query = query.lte('journal_entries.date', date_to)
 
     const { data, error } = await query
     if (error) throw error
