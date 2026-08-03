@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { journalsApi, accountsApi } from '../lib/api'
+import { translateDescription } from '../lib/translateDescription'
 import { BookOpen, Plus, Search, Eye, RotateCcw, Trash2, Save, X } from 'lucide-react'
 
 export default function JournalEntriesPage() {
@@ -21,46 +22,7 @@ export default function JournalEntriesPage() {
     return translated !== key ? translated : account.name
   }
 
-  const translateDesc = (desc) => {
-    if (!desc) return ''
-    const patterns = [
-      { en: /^Payment for (.+)$/, key: 'accounting.desc.paymentFor' },
-      { en: /^Sale - (.+)$/, key: 'accounting.desc.sale' },
-      { en: /^VAT for (.+)$/, key: 'accounting.desc.vatFor' },
-      { en: /^COGS for (.+)$/, key: 'accounting.desc.cogsFor' },
-      { en: /^Inventory out - (.+)$/, key: 'accounting.desc.inventoryOut' },
-      { en: /^Refund - Order refund$/, key: 'accounting.desc.refundOrder' },
-      { en: /^Refund payment$/, key: 'accounting.desc.refundPayment' },
-      { en: /^Inventory restored - refund$/, key: 'accounting.desc.inventoryRestored' },
-      { en: /^COGS reversed - refund$/, key: 'accounting.desc.cogsReversed' },
-      { en: /^Refund for order$/, key: 'accounting.desc.refundForOrder' },
-      { en: /^Expense: (.+)$/, key: 'accounting.desc.expense' },
-      { en: /^Payment for expense$/, key: 'accounting.desc.paymentForExpense' },
-      { en: /^Stock in: (.+)$/, key: 'accounting.desc.stockIn' },
-      { en: /^AP - (.+)$/, key: 'accounting.desc.apFor' },
-      { en: /^Stock receive - (.+)$/, key: 'accounting.desc.stockReceive' },
-      { en: /^Stock adj up: (.+)$/, key: 'accounting.desc.stockAdjUp' },
-      { en: /^Stock adj down: (.+)$/, key: 'accounting.desc.stockAdjDown' },
-      { en: /^Stock adjust - (.+)$/, key: 'accounting.desc.stockAdjust' },
-      { en: /^Reversal of (.+)$/, key: 'accounting.desc.reversalOf' },
-      { en: /^Reversal: (.+)$/, key: 'accounting.desc.reversal' },
-      { en: /^Payment received - (.+)$/, key: 'accounting.desc.paymentReceived' },
-      { en: /^AR reduction - (.+)$/, key: 'accounting.desc.arReduction' },
-      { en: /^AP reduction - (.+)$/, key: 'accounting.desc.apReduction' },
-      { en: /^Payment made - (.+)$/, key: 'accounting.desc.paymentMade' },
-      { en: /^Year-end closing for (.+)$/, key: 'accounting.desc.yearEndClosing' },
-    ]
-    for (const p of patterns) {
-      const m = desc.match(p.en)
-      if (m) {
-        const translated = t(p.key)
-        if (translated !== p.key) {
-          return m.length > 1 ? `${translated} ${m[1]}` : translated
-        }
-      }
-    }
-    return desc
-  }
+  const translateDesc = (desc) => translateDescription(t, desc)
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
