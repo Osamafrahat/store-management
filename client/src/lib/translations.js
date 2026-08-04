@@ -506,7 +506,7 @@ export const translations = {
 
     // Print Sheet
     'print.gard': 'GARD',
-    'print.gardAr': 'جرد',
+    'print.gardAr': 'جرد المخزون',
     'print.totalProducts': 'Total Products',
     'print.totalItems': 'Total Items',
     'print.lowStock': 'Low Stock',
@@ -1426,7 +1426,7 @@ export const translations = {
 
     // Print Sheet
     'print.gard': 'GARD',
-    'print.gardAr': 'جرد',
+    'print.gardAr': 'جرد المخزون',
     'print.totalProducts': 'إجمالي المنتجات',
     'print.totalItems': 'إجمالي الكميات',
     'print.lowStock': 'تحت الحد الأدنى',
