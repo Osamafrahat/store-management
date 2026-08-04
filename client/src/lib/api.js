@@ -110,6 +110,8 @@ export const promotionsApi = {
 export const reportsApi = {
   getSales: (params) => api.get('/reports/sales', { params }),
   getStock: () => api.get('/reports/stock'),
+  getExpenses: (params) => api.get('/reports/expenses', { params }),
+  getProfitLoss: (params) => api.get('/reports/profit-loss', { params }),
 }
 
 // Settings API
