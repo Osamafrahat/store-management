@@ -344,6 +344,21 @@ export const translations = {
     'common.noData': 'No data',
     'common.description': 'Description',
 
+    // Offline / Sync
+    'offline.online': 'Online',
+    'offline.offline': 'Offline',
+    'offline.pending': 'pending',
+    'offline.syncStatus': 'Sync Status',
+    'offline.lastSync': 'Last sync',
+    'offline.ordersWaiting': 'orders waiting to sync',
+    'offline.syncing': 'Syncing...',
+    'offline.syncNow': 'Sync Now',
+    'offline.waitingConnection': 'Waiting for connection...',
+    'offline.errors': 'errors',
+    'offline.orderQueued': 'Order saved offline — will sync when connected',
+    'offline.syncComplete': 'All offline orders synced successfully',
+    'offline.syncPartial': 'Some orders failed to sync',
+
     // Receipt
     'receipt.title': 'RECEIPT',
     'receipt.orderNumber': 'Order Number',
@@ -1307,6 +1322,21 @@ export const translations = {
     'common.endDate': 'تاريخ النهاية',
     'common.noData': 'لا توجد بيانات',
     'common.description': 'الوصف',
+
+    // Offline / Sync
+    'offline.online': 'متصل',
+    'offline.offline': 'غير متصل',
+    'offline.pending': 'في الانتظار',
+    'offline.syncStatus': 'حالة المزامنة',
+    'offline.lastSync': 'آخر مزامنة',
+    'offline.ordersWaiting': 'طلبات في انتظار المزامنة',
+    'offline.syncing': 'جاري المزامنة...',
+    'offline.syncNow': 'مزامنة الآن',
+    'offline.waitingConnection': 'في انتظار الاتصال...',
+    'offline.errors': 'أخطاء',
+    'offline.orderQueued': 'تم حفظ الطلب — سيتم المزامنة عند الاتصال',
+    'offline.syncComplete': 'تمت مزامنة جميع الطلبات بنجاح',
+    'offline.syncPartial': 'بعض الطلبات فشلت في المزامنة',
 
     // Receipt
     'receipt.title': 'إيصال',

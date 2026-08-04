@@ -218,4 +218,11 @@ export const paymentsApi = {
   delete: (id) => api.delete(`/accounting/payments/${id}`),
 }
 
+// Sync API (offline order upload)
+export const syncOrdersApi = {
+  sync: (orderData) => api.post('/sync/order', orderData, { timeout: 30000 }),
+  syncBulk: (orders) => api.post('/sync/bulk', { orders }, { timeout: 60000 }),
+  getStatus: () => api.get('/sync/status'),
+}
+
 export default api

@@ -30,6 +30,7 @@ import { accountsRouter } from './routes/accounts.js'
 import { journalsRouter } from './routes/journals.js'
 import { accountingReportsRouter } from './routes/accountingReports.js'
 import { paymentsRouter } from './routes/payments.js'
+import syncRouter from './routes/sync.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -105,6 +106,7 @@ app.use('/api/accounting/accounts', authenticateToken, activityLogger, accountsR
 app.use('/api/accounting/journals', authenticateToken, activityLogger, journalsRouter)
 app.use('/api/accounting/reports', authenticateToken, accountingReportsRouter)
 app.use('/api/accounting/payments', authenticateToken, activityLogger, paymentsRouter)
+app.use('/api/sync', authenticateToken, syncRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)

@@ -3,6 +3,7 @@ import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useAppStore } from '../stores/appStore'
 import { useUserStore } from '../stores/userStore'
+import { useOfflineStore } from '../stores/offlineStore'
 import { productsApi, categoriesApi, promotionsApi, ordersApi, customersApi } from '../lib/api'
 import { formatCurrency, generateOrderNumber } from '../lib/utils'
 import ProductGrid from '../components/pos/ProductGrid'
@@ -10,7 +11,7 @@ import Cart from '../components/pos/Cart'
 import PaymentModal from '../components/pos/PaymentModal'
 import BarcodeScanner from '../components/pos/BarcodeScanner'
 import ReceiptModal from '../components/pos/ReceiptModal'
-import { Search, ShoppingCart, Zap, User } from 'lucide-react'
+import { Search, ShoppingCart, Zap, User, WifiOff } from 'lucide-react'
 
 export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -26,8 +27,9 @@ export default function POSPage() {
 
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
   const { addItem, items, getTotal } = useCartStore()
-  const { settings, t } = useAppStore()
+  const { settings, t, toastSuccess } = useAppStore()
   const { currentUser } = useUserStore()
+  const { isOnline, cacheData, loadCachedData, queueOrder } = useOfflineStore()
 
   // Fetch products, categories, and customers on mount
   useEffect(() => {
@@ -42,17 +44,45 @@ export default function POSPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [productsRes, categoriesRes, customersRes] = await Promise.all([
-        productsApi.getAll(),
-        categoriesApi.getAll(),
-        customersApi.getAll()
-      ])
-      setProducts(productsRes.data)
-      setCategories(categoriesRes.data)
-      setCustomers(customersRes.data)
+      if (navigator.onLine) {
+        // Online: fetch from API
+        const [productsRes, categoriesRes, customersRes] = await Promise.all([
+          productsApi.getAll(),
+          categoriesApi.getAll(),
+          customersApi.getAll()
+        ])
+        setProducts(productsRes.data)
+        setCategories(categoriesRes.data)
+        setCustomers(customersRes.data)
+
+        // Cache for offline use
+        await cacheData({
+          products: productsRes.data,
+          categories: categoriesRes.data,
+          customers: customersRes.data,
+        })
+      } else {
+        // Offline: load from IndexedDB cache
+        const cached = await loadCachedData()
+        setProducts(cached.products)
+        setCategories(cached.categories)
+        setCustomers(cached.customers)
+      }
     } catch (err) {
-      setError(err.message)
-      console.error('Failed to fetch data:', err)
+      // API failed - try loading from cache
+      console.error('API fetch failed, trying cache:', err)
+      try {
+        const cached = await loadCachedData()
+        setProducts(cached.products)
+        setCategories(cached.categories)
+        setCustomers(cached.customers)
+        if (cached.products.length === 0) {
+          setError('No offline data available. Please connect to the internet first.')
+        }
+      } catch (cacheErr) {
+        setError(err.message)
+        console.error('Failed to fetch data:', err)
+      }
     } finally {
       setLoading(false)
     }
@@ -63,15 +93,25 @@ export default function POSPage() {
   }
 
   const handleBarcodeScan = async (barcode) => {
-    try {
-      const response = await productsApi.getByBarcode(barcode)
-      if (response.data) {
-        addItem(response.data)
-        return response.data.name
+    // Try online first
+    if (navigator.onLine) {
+      try {
+        const response = await productsApi.getByBarcode(barcode)
+        if (response.data) {
+          addItem(response.data)
+          return response.data.name
+        }
+      } catch (err) {
+        console.error('Product not found online:', barcode, err)
       }
-    } catch (err) {
-      console.error('Product not found:', barcode, err)
     }
+    // Fallback to local products
+    const localProduct = products.find(p => p.barcode === barcode)
+    if (localProduct) {
+      addItem(localProduct)
+      return localProduct.name
+    }
+    console.error('Product not found:', barcode)
     return null
   }
 
@@ -240,32 +280,51 @@ export default function POSPage() {
                 customer_id: selectedCustomer?.id || null,
                 created_at: new Date().toISOString(),
               }
-              const response = await ordersApi.create(orderData)
-              // Fetch the full order with user data for receipt
-              let completedOrder
-              if (response.data?.id) {
-                const fullOrderRes = await ordersApi.getById(response.data.id)
-                completedOrder = {
-                  ...fullOrderRes.data,
-                  items: items.map(item => ({
-                    product_name: item.product.name,
-                    quantity: item.quantity,
-                    unit_price: item.product.price,
-                  })),
+
+              if (navigator.onLine) {
+                // Online: send to server immediately
+                const response = await ordersApi.create(orderData)
+                let completedOrder
+                if (response.data?.id) {
+                  const fullOrderRes = await ordersApi.getById(response.data.id)
+                  completedOrder = {
+                    ...fullOrderRes.data,
+                    items: items.map(item => ({
+                      product_name: item.product.name,
+                      quantity: item.quantity,
+                      unit_price: item.product.price,
+                    })),
+                  }
+                } else {
+                  completedOrder = {
+                    ...orderData,
+                    users: currentUser ? { full_name: currentUser.fullName } : null,
+                    customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                  }
                 }
+                setLastOrder(completedOrder)
               } else {
-                completedOrder = {
+                // Offline: queue for later sync
+                const clientOrderId = await queueOrder(orderData)
+                toastSuccess(t('offline.orderQueued'))
+                setLastOrder({
                   ...orderData,
+                  client_order_id: clientOrderId,
+                  offline: true,
                   users: currentUser ? { full_name: currentUser.fullName } : null,
                   customers: selectedCustomer ? { name: selectedCustomer.name } : null,
-                }
+                })
               }
-              setLastOrder(completedOrder)
+
               setSelectedCustomer(null)
               useCartStore.getState().clearCart()
               setShowPayment(false)
               setShowReceipt(true)
-              fetchData()
+
+              // Refresh products to get updated stock (online only)
+              if (navigator.onLine) {
+                fetchData()
+              }
             } catch (err) {
               console.error('Failed to create order:', err)
               alert(t('common.error'))
