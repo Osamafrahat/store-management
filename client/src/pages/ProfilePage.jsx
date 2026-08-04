@@ -200,7 +200,7 @@ export default function ProfilePage() {
           {!editingContact && (
             <button
               onClick={startEditContact}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 min-h-[44px] text-sm font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />
               {t('common.edit') || 'Edit'}
@@ -266,7 +266,7 @@ export default function ProfilePage() {
           {!editingPassword && (
             <button
               onClick={startEditPassword}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 min-h-[44px] text-sm font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />
               {t('common.edit') || 'Edit'}

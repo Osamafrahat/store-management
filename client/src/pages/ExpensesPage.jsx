@@ -215,7 +215,8 @@ export default function ExpensesPage() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.date')}</th>
@@ -240,13 +241,13 @@ export default function ExpensesPage() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(expense)}
-                        className="p-1 text-gray-400 hover:text-primary-600 rounded"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(expense.id)}
-                        className="p-1 text-gray-400 hover:text-red-600 rounded"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -256,6 +257,7 @@ export default function ExpensesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -312,7 +314,7 @@ function ExpenseForm({ expense, onSave, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('expenses.category')} *

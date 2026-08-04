@@ -46,12 +46,12 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-2xl mb-4">
             <Store className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{settings.storeName || 'Store POS'}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{settings.storeName || 'Store POS'}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">{t('users.signInTitle')}</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className={`flex items-center gap-2 p-3 rounded-lg ${

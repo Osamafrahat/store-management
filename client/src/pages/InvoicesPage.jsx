@@ -235,12 +235,12 @@ export default function InvoicesPage() {
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left px-4 py-3 font-semibold">{t('invoices.orderNumber') || 'Order #'}</th>
-                <th className="text-left px-4 py-3 font-semibold">{t('invoices.date') || 'Date'}</th>
-                <th className="text-left px-4 py-3 font-semibold">{t('invoices.customer') || 'Customer'}</th>
-                <th className="text-left px-4 py-3 font-semibold">{t('invoices.cashier') || 'Cashier'}</th>
+                <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">{t('invoices.date') || 'Date'}</th>
+                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">{t('invoices.customer') || 'Customer'}</th>
+                <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">{t('invoices.cashier') || 'Cashier'}</th>
                 <th className="text-center px-4 py-3 font-semibold">{t('invoices.items') || 'Items'}</th>
                 <th className="text-right px-4 py-3 font-semibold">{t('invoices.total') || 'Total'}</th>
-                <th className="text-left px-4 py-3 font-semibold">{t('invoices.payment') || 'Payment'}</th>
+                <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">{t('invoices.payment') || 'Payment'}</th>
                 <th className="text-center px-4 py-3 font-semibold">{t('invoices.status') || 'Status'}</th>
                 <th className="text-center px-4 py-3 font-semibold">{t('invoices.actions') || 'Actions'}</th>
               </tr>
@@ -259,14 +259,14 @@ export default function InvoicesPage() {
                   return (
                     <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                       <td className="px-4 py-3 font-mono font-semibold">{order.order_number}</td>
-                      <td className="px-4 py-3 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3">{order.customers?.name || '-'}</td>
-                      <td className="px-4 py-3">{order.users?.full_name || '-'}</td>
+                      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 hidden md:table-cell">{order.customers?.name || '-'}</td>
+                      <td className="px-4 py-3 hidden lg:table-cell">{order.users?.full_name || '-'}</td>
                       <td className="px-4 py-3 text-center">
                         {order.items_count || order.items?.length || '-'}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">{formatCurrency(order.total)}</td>
-                      <td className="px-4 py-3 capitalize">{order.payment_method}</td>
+                      <td className="px-4 py-3 capitalize hidden sm:table-cell">{order.payment_method}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[order.payment_status] || STATUS_COLORS.pending}`}>
                           <StatusIcon className="w-3 h-3" />
@@ -277,14 +277,14 @@ export default function InvoicesPage() {
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => handleViewReceipt(order)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
                             title={t('common.view') || 'View'}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handlePrintReceipt(order)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
+                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
                             title={t('common.print') || 'Print'}
                           >
                             <Printer className="w-4 h-4" />

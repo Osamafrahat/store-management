@@ -122,28 +122,28 @@ export default function ChartOfAccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('accounting.chartOfAccounts')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('accounting.manageAccounts')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={handleSeed} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2 text-sm">
-            <RefreshCw className="w-4 h-4" /> {t('accounting.seedDefaults')}
+            <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">{t('accounting.seedDefaults')}</span>
           </button>
           <button onClick={handleRecalculate} className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 text-yellow-700 dark:text-yellow-400 rounded-xl font-medium flex items-center gap-2 text-sm">
-            <RefreshCw className="w-4 h-4" /> {t('accounting.recalculateBalances')}
+            <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">{t('accounting.recalculateBalances')}</span>
           </button>
           <button onClick={() => setShowCapitalModal(true)} className="px-4 py-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/50 text-green-700 dark:text-green-400 rounded-xl font-medium flex items-center gap-2 text-sm">
-            <Landmark className="w-4 h-4" /> {t('accounting.setCapital')}
+            <Landmark className="w-4 h-4" /> <span className="hidden sm:inline">{t('accounting.setCapital')}</span>
           </button>
           <button onClick={() => { setShowForm(true); setEditingId(null); setFormData({ code: '', name: '', account_type: 'asset', description: '' }) }} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium flex items-center gap-2">
-            <Plus className="w-4 h-4" /> {t('accounting.addAccount')}
+            <Plus className="w-4 h-4" /> <span className="hidden sm:inline">{t('accounting.addAccount')}</span>
           </button>
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('common.search')} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 outline-none" />
@@ -230,7 +230,8 @@ export default function ChartOfAccountsPage() {
                   </h3>
                   <span className="text-sm font-medium text-gray-500">{items.reduce((s, a) => s + a.balance, 0).toFixed(2)} EGP</span>
                 </div>
-                <table className="w-full">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[450px]">
                   <thead>
                     <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/50">
                       <th className="text-start px-6 py-2 font-medium">{t('accounting.code')}</th>
@@ -247,14 +248,15 @@ export default function ChartOfAccountsPage() {
                         <td className="px-6 py-3 text-sm font-medium text-end">{account.balance.toFixed(2)} EGP</td>
                         <td className="px-6 py-3 text-end">
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => handleEdit(account)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete(account.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleEdit(account)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(account.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )
           ))}

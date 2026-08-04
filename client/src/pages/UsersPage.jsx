@@ -430,7 +430,7 @@ function UserForm({ user, employees, onSave, onClose }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('users.permissions')}
             </label>
-            <div className="grid grid-cols-2 gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg max-h-48 overflow-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg max-h-48 overflow-auto">
               {Object.entries(permissionLabels).map(([key, label]) => (
                 <label
                   key={key}

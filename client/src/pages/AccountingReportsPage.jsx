@@ -108,7 +108,7 @@ export default function AccountingReportsPage() {
 
   return (
     <div className="space-y-6 report-print-area">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('accounting.financialReports') || 'Financial Reports'}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('accounting.financialReportsDesc') || 'View financial statements and reports'}</p>
@@ -144,7 +144,8 @@ export default function AccountingReportsPage() {
                     <div className="px-6 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-semibold capitalize text-gray-600 dark:text-gray-300">{t('accounting.' + type + 'Accounts') || `${type} Accounts`}</span>
                     </div>
-                    <table className="w-full">
+                    <div className="overflow-x-auto">
+                    <table className="w-full min-w-[500px]">
                       <tbody>
                         {trialBalance.accounts[type].map(acc => (
                           <tr key={acc.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
@@ -159,7 +160,9 @@ export default function AccountingReportsPage() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+              </table>
+              </div>
+                    </div>
                   </div>
                 )
               ))}
@@ -296,7 +299,8 @@ export default function AccountingReportsPage() {
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-bold">{t('accounting.fiscalPeriods') || 'Fiscal Periods'}</h2>
               </div>
-              <table className="w-full">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
                 <thead>
                   <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                     <th className="text-start px-6 py-3 font-medium">{t('common.name')}</th>
@@ -319,7 +323,7 @@ export default function AccountingReportsPage() {
                       </td>
                       <td className="px-6 py-3 text-end">
                         {!period.is_closed && (
-                          <button onClick={() => handleClosePeriod(period.id)} className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                          <button onClick={() => handleClosePeriod(period.id)} className="px-3 py-2 min-h-[44px] text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
                             {t('accounting.closePeriod')}
                           </button>
                         )}

@@ -90,27 +90,27 @@ export default function InventoryPage() {
           <h1 className="text-2xl font-bold">{t('inventory.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('inventory.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setShowPrintSheet(true)}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
           >
             <Printer className="w-4 h-4" />
-            {t('inventory.printReport') || 'Print Report'}
+            <span className="hidden sm:inline">{t('inventory.printReport') || 'Print Report'}</span>
           </button>
           <button
             onClick={() => setShowCategoryManager(true)}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
           >
             <Tag className="w-4 h-4" />
-            {t('inventory.categories')}
+            <span className="hidden sm:inline">{t('inventory.categories')}</span>
           </button>
           <button
             onClick={handleCreateProduct}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
             <Plus className="w-4 h-4" />
-            {t('inventory.addProduct')}
+            <span className="hidden sm:inline">{t('inventory.addProduct')}</span>
           </button>
         </div>
       </div>

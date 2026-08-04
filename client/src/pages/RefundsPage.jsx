@@ -62,14 +62,15 @@ export default function RefundsPage() {
 
       {/* Refunds List */}
       {refunds.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
           <RotateCcw className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('refunds.noRefunds')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('refunds.addFirst')}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('refunds.date')}</th>
@@ -108,6 +109,7 @@ export default function RefundsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

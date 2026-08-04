@@ -70,7 +70,7 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold">{t('reports.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('reports.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {dateRanges.map((range) => (
             <button
               key={range.key}
@@ -457,6 +457,7 @@ export default function ReportsPage() {
           {/* Summary Table */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">{t('reports.summary') || 'Summary'}</h3>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -483,6 +484,7 @@ export default function ReportsPage() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}

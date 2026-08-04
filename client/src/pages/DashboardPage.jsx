@@ -327,7 +327,7 @@ function ManagerDashboard({ stats, t }) {
       {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
       {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
       {stats.recentOrders.length === 0 && stats.lowStockProducts.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
           <BarChart3 className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
@@ -344,7 +344,7 @@ function SalesDashboard({ stats, t }) {
       {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
       {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
       {stats.recentOrders.length === 0 && stats.lowStockProducts.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
           <TrendingUp className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
@@ -360,7 +360,7 @@ function CashierDashboard({ stats, t }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
       {stats.recentOrders.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
           <ShoppingCart className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.startSelling')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.startSellingDesc')}</p>
@@ -376,7 +376,7 @@ function InventoryDashboard({ stats, t }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
       {stats.lowStockProducts.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
           <Package className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.manageInventory')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.manageInventoryDesc')}</p>
@@ -475,7 +475,7 @@ function AccountantDashboard({ stats, t }) {
       )}
 
       {stats.recentPayments.length === 0 && stats.recentExpenses.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
           <DollarSign className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
@@ -594,8 +594,8 @@ function RecentOrders({ orders, t }) {
       <div className="space-y-3">
         {orders.map((order) => (
           <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <div>
-              <p className="font-medium">{order.order_number}</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium truncate">{order.order_number}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {new Date(order.created_at).toLocaleString()}
               </p>
@@ -628,8 +628,8 @@ function LowStockAlert({ products, t }) {
       <div className="space-y-3">
         {products.map((product) => (
           <div key={product.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-            <div>
-              <p className="font-medium">{product.name}</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium truncate">{product.name}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {t('dashboard.threshold')}: {product.low_stock_threshold}
               </p>
