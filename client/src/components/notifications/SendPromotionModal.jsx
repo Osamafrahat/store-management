@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useAppStore } from '../../stores/appStore'
-import { customersApi, notificationsApi, healthApi } from '../../lib/api'
+import { customersApi, emailApi, healthApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import {
   X,
@@ -101,7 +101,7 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
         return
       }
 
-      const res = await notificationsApi.sendPromotion(promotion.id, {
+      const res = await emailApi.sendPromotion(promotion.id, {
         send_email: true,
         send_whatsapp: false,
       })

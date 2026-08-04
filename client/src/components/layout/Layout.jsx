@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useCartStore } from '../../stores/cartStore'
 import { useUserStore, PERMISSIONS } from '../../stores/userStore'
-import { useNotificationStore } from '../../stores/notificationStore'
 import { languageNames } from '../../lib/translations'
-import NotificationDropdown from '../notifications/NotificationDropdown'
 import {
   ShoppingCart,
   Package,
@@ -36,7 +34,6 @@ import {
   CreditCard,
   Briefcase,
   ChevronDown,
-  Bell,
 } from 'lucide-react'
 
 export default function Layout({ children }) {
@@ -45,17 +42,10 @@ export default function Layout({ children }) {
   const { theme, toggleTheme, sidebarOpen, toggleSidebar, language, setLanguage, t, settings } = useAppStore()
   const { getItemCount } = useCartStore()
   const { currentUser, logout, canAccess, hasPermission } = useUserStore()
-  const { unreadCount, fetchNotifications } = useNotificationStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLanguageMenu, setShowLanguageMenu] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState({})
-
-  useEffect(() => {
-    fetchNotifications()
-    const interval = setInterval(fetchNotifications, 60000)
-    return () => clearInterval(interval)
-  }, [fetchNotifications])
 
   const toggleGroup = (group) => {
     setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }))
@@ -69,14 +59,6 @@ export default function Layout({ children }) {
     key: 'dashboard',
     items: [
       { name: t('nav.dashboard'), href: '/', icon: LayoutDashboard },
-    ]
-  })
-
-  // -- Notifications --
-  groups.push({
-    key: 'notifications',
-    items: [
-      { name: t('nav.notifications') || 'Notifications', href: '/notifications', icon: Bell },
     ]
   })
 
@@ -294,14 +276,6 @@ export default function Layout({ children }) {
                       <Icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-primary-400' : ''}`} />
                       {sidebarOpen && (
                         <span className={`font-medium text-sm ${isActive ? 'text-primary-300' : ''}`}>{item.name}</span>
-                      )}
-                      {item.href === '/notifications' && unreadCount > 0 && (
-                        <span className={`
-                          bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full shadow-lg shadow-red-500/30
-                          ${sidebarOpen ? 'ml-auto px-2 py-0.5' : 'absolute -top-1 -right-1 px-1 py-0.5 min-w-[18px] text-center'}
-                        `}>
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
                       )}
                     </Link>
                   )
@@ -553,9 +527,6 @@ export default function Layout({ children }) {
               })()}
             </h1>
             <div className="flex items-center gap-2">
-              {/* Notification Bell */}
-              <NotificationDropdown />
-
               {/* Mobile Language Switcher */}
               <div className="relative md:hidden">
                 <button

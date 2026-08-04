@@ -24,7 +24,7 @@ import customersRouter from './routes/customers.js'
 import employeesRouter from './routes/employees.js'
 import expensesRouter from './routes/expenses.js'
 import refundsRouter from './routes/refunds.js'
-import notificationsRouter from './routes/notifications.js'
+import emailRouter from './routes/email.js'
 import activitiesRouter from './routes/activities.js'
 import { accountsRouter } from './routes/accounts.js'
 import { journalsRouter } from './routes/journals.js'
@@ -98,7 +98,7 @@ app.use('/api/customers', authenticateToken, activityLogger, customersRouter)
 app.use('/api/employees', authenticateToken, activityLogger, employeesRouter)
 app.use('/api/expenses', authenticateToken, activityLogger, expensesRouter)
 app.use('/api/refunds', authenticateToken, activityLogger, refundsRouter)
-app.use('/api/notifications', authenticateToken, activityLogger, notificationsRouter)
+app.use('/api/notifications', authenticateToken, activityLogger, emailRouter)
 app.use('/api/activities', authenticateToken, requireManager, activitiesRouter)
 
 app.use('/api/accounting/accounts', authenticateToken, activityLogger, accountsRouter)
