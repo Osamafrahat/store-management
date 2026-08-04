@@ -1,0 +1,309 @@
+import { useState, useEffect } from 'react'
+import { useAppStore } from '../stores/appStore'
+import { ordersApi } from '../lib/api'
+import { formatCurrency } from '../lib/utils'
+import { FileText, Search, Printer, Eye, Filter, RefreshCcw, CheckCircle, XCircle, Clock } from 'lucide-react'
+import ReceiptModal from '../components/pos/ReceiptModal'
+
+const STATUS_COLORS = {
+  paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  refunded: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  partial: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  pending: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+}
+
+const STATUS_ICONS = {
+  paid: CheckCircle,
+  refunded: XCircle,
+  partial: Clock,
+  pending: Clock,
+}
+
+export default function InvoicesPage() {
+  const { t } = useAppStore()
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [showReceipt, setShowReceipt] = useState(false)
+
+  useEffect(() => { loadOrders() }, [])
+
+  const loadOrders = async () => {
+    setLoading(true)
+    try {
+      const { data } = await ordersApi.getAll({ limit: 500 })
+      setOrders(data || [])
+    } catch (err) {
+      console.error('Failed to load orders:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = !search ||
+      order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
+      order.customers?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      order.users?.full_name?.toLowerCase().includes(search.toLowerCase())
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'refunded' ? order.is_refunded : order.payment_status === statusFilter)
+    return matchesSearch && matchesStatus
+  })
+
+  const stats = {
+    total: orders.length,
+    paid: orders.filter(o => !o.is_refunded && o.payment_status === 'paid').length,
+    refunded: orders.filter(o => o.is_refunded || o.payment_status === 'refunded').length,
+    totalRevenue: orders.filter(o => !o.is_refunded).reduce((s, o) => s + (parseFloat(o.total) || 0), 0),
+  }
+
+  const handleViewReceipt = async (order) => {
+    try {
+      const { data: fullOrder } = await ordersApi.getById(order.id)
+      setSelectedOrder(fullOrder)
+      setShowReceipt(true)
+    } catch (err) {
+      console.error('Failed to load order:', err)
+    }
+  }
+
+  const handlePrintReceipt = async (order) => {
+    try {
+      const { data: fullOrder } = await ordersApi.getById(order.id)
+      printReceipt(fullOrder)
+    } catch (err) {
+      console.error('Failed to load order:', err)
+    }
+  }
+
+  const printReceipt = (order) => {
+    const { settings } = JSON.parse(localStorage.getItem('settings') || '{}')
+    const storeName = settings?.storeName || 'Store'
+    const storeAddress = settings?.storeAddress || ''
+    const storePhone = settings?.storePhone || ''
+
+    const itemsHtml = (order.items || []).map(item => `
+      <div style="margin: 4px 0;">
+        <div style="display: flex; justify-content: space-between;">
+          <span>${item.products?.name || 'Item'}</span>
+          <span>${formatCurrency(item.unit_price)}</span>
+        </div>
+        <div style="font-size: 10px; color: #666;">x${item.quantity}${item.discount ? ` (-${formatCurrency(item.discount)})` : ''}</div>
+      </div>
+    `).join('')
+
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <!DOCTYPE html><html><head><title>Receipt - ${order.order_number}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; width: 80mm; padding: 5mm; font-size: 12px; line-height: 1.4; }
+        .header { text-align: center; margin-bottom: 10px; }
+        .store-name { font-size: 16px; font-weight: bold; }
+        .store-info { font-size: 10px; color: #666; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .row { display: flex; justify-content: space-between; margin: 3px 0; }
+        .total-row { font-weight: bold; font-size: 14px; margin-top: 10px; }
+        .footer { text-align: center; margin-top: 15px; font-size: 10px; }
+      </style></head><body>
+        <div class="header">
+          <div class="store-name">${storeName}</div>
+          ${storeAddress ? `<div class="store-info">${storeAddress}</div>` : ''}
+          ${storePhone ? `<div class="store-info">${storePhone}</div>` : ''}
+        </div>
+        <div class="divider"></div>
+        <div class="row"><span>Order:</span><span>${order.order_number}</span></div>
+        <div class="row"><span>Date:</span><span>${new Date(order.created_at).toLocaleString()}</span></div>
+        ${order.users?.full_name ? `<div class="row"><span>Cashier:</span><span>${order.users.full_name}</span></div>` : ''}
+        <div class="divider"></div>
+        <div style="font-weight: bold; margin-bottom: 5px;">Items:</div>
+        ${itemsHtml}
+        <div class="divider"></div>
+        <div class="row"><span>Subtotal:</span><span>${formatCurrency(order.subtotal)}</span></div>
+        ${parseFloat(order.discount_amount) > 0 ? `<div class="row"><span>Discount:</span><span>-${formatCurrency(order.discount_amount)}</span></div>` : ''}
+        ${parseFloat(order.tax_amount) > 0 ? `<div class="row"><span>Tax:</span><span>${formatCurrency(order.tax_amount)}</span></div>` : ''}
+        <div class="total-row row"><span>TOTAL:</span><span>${formatCurrency(order.total)}</span></div>
+        <div class="divider"></div>
+        <div class="row"><span>Payment:</span><span>${order.payment_method}</span></div>
+        ${order.is_refunded ? '<div class="row" style="color: red; font-weight: bold;"><span>*** REFUNDED ***</span></div>' : ''}
+        <div class="footer">Thank you for your purchase!</div>
+      </body></html>
+    `)
+    printWindow.document.close()
+    printWindow.onload = () => { printWindow.print() }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{t('invoices.title') || 'Invoices'}</h1>
+          <p className="text-gray-500 dark:text-gray-400">{t('invoices.subtitle') || 'View and reprint all invoices'}</p>
+        </div>
+        <button onClick={loadOrders} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2 text-sm">
+          <RefreshCcw className="w-4 h-4" /> {t('common.refresh') || 'Refresh'}
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg"><FileText className="w-5 h-5 text-primary-600" /></div>
+            <div>
+              <p className="text-sm text-gray-500">{t('invoices.totalOrders') || 'Total Orders'}</p>
+              <p className="text-xl font-bold">{stats.total}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg"><CheckCircle className="w-5 h-5 text-green-600" /></div>
+            <div>
+              <p className="text-sm text-gray-500">{t('invoices.paid') || 'Paid'}</p>
+              <p className="text-xl font-bold text-green-600">{stats.paid}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg"><XCircle className="w-5 h-5 text-red-600" /></div>
+            <div>
+              <p className="text-sm text-gray-500">{t('invoices.refunded') || 'Refunded'}</p>
+              <p className="text-xl font-bold text-red-600">{stats.refunded}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><FileText className="w-5 h-5 text-blue-600" /></div>
+            <div>
+              <p className="text-sm text-gray-500">{t('invoices.totalRevenue') || 'Total Revenue'}</p>
+              <p className="text-xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder={t('invoices.searchPlaceholder') || 'Search by order number, customer, or cashier...'}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex gap-2">
+          {[
+            { key: 'all', label: t('reports.all') || 'All' },
+            { key: 'paid', label: t('invoices.paid') || 'Paid' },
+            { key: 'refunded', label: t('invoices.refunded') || 'Refunded' },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setStatusFilter(key)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                statusFilter === key
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Orders Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left px-4 py-3 font-semibold">{t('invoices.orderNumber') || 'Order #'}</th>
+                <th className="text-left px-4 py-3 font-semibold">{t('invoices.date') || 'Date'}</th>
+                <th className="text-left px-4 py-3 font-semibold">{t('invoices.customer') || 'Customer'}</th>
+                <th className="text-left px-4 py-3 font-semibold">{t('invoices.cashier') || 'Cashier'}</th>
+                <th className="text-center px-4 py-3 font-semibold">{t('invoices.items') || 'Items'}</th>
+                <th className="text-right px-4 py-3 font-semibold">{t('invoices.total') || 'Total'}</th>
+                <th className="text-left px-4 py-3 font-semibold">{t('invoices.payment') || 'Payment'}</th>
+                <th className="text-center px-4 py-3 font-semibold">{t('invoices.status') || 'Status'}</th>
+                <th className="text-center px-4 py-3 font-semibold">{t('invoices.actions') || 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="text-center py-12 text-gray-400">
+                    {t('invoices.noOrders') || 'No orders found'}
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => {
+                  const isRefunded = order.is_refunded || order.payment_status === 'refunded'
+                  const StatusIcon = STATUS_ICONS[order.payment_status] || Clock
+                  return (
+                    <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                      <td className="px-4 py-3 font-mono font-semibold">{order.order_number}</td>
+                      <td className="px-4 py-3 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">{order.customers?.name || '-'}</td>
+                      <td className="px-4 py-3">{order.users?.full_name || '-'}</td>
+                      <td className="px-4 py-3 text-center">
+                        {order.items_count || order.items?.length || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold">{formatCurrency(order.total)}</td>
+                      <td className="px-4 py-3 capitalize">{order.payment_method}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[order.payment_status] || STATUS_COLORS.pending}`}>
+                          <StatusIcon className="w-3 h-3" />
+                          {isRefunded ? 'Refunded' : order.payment_status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleViewReceipt(order)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
+                            title={t('common.view') || 'View'}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handlePrintReceipt(order)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
+                            title={t('common.print') || 'Print'}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Receipt Modal */}
+      {showReceipt && selectedOrder && (
+        <ReceiptModal order={selectedOrder} onClose={() => { setShowReceipt(false); setSelectedOrder(null) }} />
+      )}
+    </div>
+  )
+}

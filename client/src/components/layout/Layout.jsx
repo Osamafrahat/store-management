@@ -34,6 +34,7 @@ import {
   CreditCard,
   Briefcase,
   ChevronDown,
+  FileText,
 } from 'lucide-react'
 
 export default function Layout({ children }) {
@@ -83,6 +84,7 @@ export default function Layout({ children }) {
   if (canAccess('/refunds')) {
     salesItems.push({ name: t('nav.refunds') || 'Refunds', href: '/refunds', icon: RotateCcw })
   }
+  salesItems.push({ name: t('nav.invoices') || 'Invoices', href: '/invoices', icon: FileText })
   if (salesItems.length > 0) {
     groups.push({ key: 'sales', label: t('nav.groupSales') || 'Sales', items: salesItems })
   }

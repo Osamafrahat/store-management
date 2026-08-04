@@ -66,6 +66,7 @@ export const translations = {
     'nav.employees': 'Employees',
     'nav.expenses': 'Expenses',
     'nav.refunds': 'Refunds',
+    'nav.invoices': 'Invoices',
     'nav.activities': 'Activity Log',
     'nav.chartOfAccounts': 'Chart of Accounts',
     'nav.journalEntries': 'Journal Entries',
@@ -903,6 +904,23 @@ export const translations = {
 
     // Receipt
     'receipt.cashier': 'Cashier:',
+    'invoices.title': 'Invoices',
+    'invoices.subtitle': 'View and reprint all invoices',
+    'invoices.totalOrders': 'Total Orders',
+    'invoices.paid': 'Paid',
+    'invoices.refunded': 'Refunded',
+    'invoices.totalRevenue': 'Total Revenue',
+    'invoices.searchPlaceholder': 'Search by order number, customer, or cashier...',
+    'invoices.orderNumber': 'Order #',
+    'invoices.date': 'Date',
+    'invoices.customer': 'Customer',
+    'invoices.cashier': 'Cashier',
+    'invoices.items': 'Items',
+    'invoices.total': 'Total',
+    'invoices.payment': 'Payment',
+    'invoices.status': 'Status',
+    'invoices.actions': 'Actions',
+    'invoices.noOrders': 'No orders found',
 
     // Layout
     'layout.defaultStoreName': 'Store POS',
@@ -991,6 +1009,7 @@ export const translations = {
     'nav.employees': 'الموظفين',
     'nav.expenses': 'المصروفات',
     'nav.refunds': 'المسترجعات',
+    'nav.invoices': 'الفواتير',
     'nav.activities': 'سجل الأنشطة',
     'nav.chartOfAccounts': 'دليل الحسابات',
     'nav.journalEntries': 'القيود اليومية',
@@ -1840,6 +1859,23 @@ export const translations = {
 
     // Receipt
     'receipt.cashier': 'أمين الصندوق:',
+    'invoices.title': 'الفواتير',
+    'invoices.subtitle': 'عرض وإعادة طباعة جميع الفواتير',
+    'invoices.totalOrders': 'إجمالي الطلبات',
+    'invoices.paid': 'مدفوع',
+    'invoices.refunded': 'مسترجع',
+    'invoices.totalRevenue': 'إجمالي الإيرادات',
+    'invoices.searchPlaceholder': 'بحث برقم الطلب أو اسم العميل أو أمين الصندوق...',
+    'invoices.orderNumber': 'رقم الطلب',
+    'invoices.date': 'التاريخ',
+    'invoices.customer': 'العميل',
+    'invoices.cashier': 'أمين الصندوق',
+    'invoices.items': 'المنتجات',
+    'invoices.total': 'الإجمالي',
+    'invoices.payment': 'الدفع',
+    'invoices.status': 'الحالة',
+    'invoices.actions': 'الإجراءات',
+    'invoices.noOrders': 'لا توجد طلبات',
 
     // Layout
     'layout.defaultStoreName': 'نقطة بيع المتجر',
