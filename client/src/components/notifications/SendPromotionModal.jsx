@@ -298,10 +298,10 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
 
                 {/* Sending in background */}
                 {emailState === 'done' && emailResults?.results?.processing && (
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/30">
-                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" />
-                    <p className="text-sm text-blue-700 dark:text-blue-400">
-                      {t('promotions.emailsSendingInBackground') || 'Emails are being sent in the background. You can close this dialog.'}
+                  <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800/30">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <p className="text-sm text-green-700 dark:text-green-400">
+                      {t('promotions.emailsSent') || 'Emails sent successfully! You can close this dialog.'}
                     </p>
                   </div>
                 )}
