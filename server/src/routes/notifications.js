@@ -203,9 +203,9 @@ router.post('/promotion', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid promotion ID' })
     }
 
-    const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS)
+    const emailConfigured = !!(process.env.RESEND_API_KEY || (process.env.SMTP_USER && process.env.SMTP_PASS))
 
-    if (send_email && !smtpConfigured) {
+    if (send_email && !emailConfigured) {
       return res.json({
         success: true,
         message: 'SMTP not configured — email skipped',
@@ -223,7 +223,7 @@ router.post('/promotion', async (req, res, next) => {
       results: { email: [], whatsapp: [], processing: true }
     })
 
-    processPromotionSend(numericId, { send_email: send_email && smtpConfigured, send_whatsapp }).catch(err => {
+    processPromotionSend(numericId, { send_email: send_email && emailConfigured, send_whatsapp }).catch(err => {
       console.error('[NOTIFICATION] Background send error:', err.message)
     })
   } catch (err) {

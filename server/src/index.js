@@ -107,11 +107,12 @@ app.use('/api/accounting/reports', authenticateToken, accountingReportsRouter)
 app.use('/api/accounting/payments', authenticateToken, activityLogger, paymentsRouter)
 
 app.get('/api/health', (req, res) => {
+  const emailConfigured = !!(process.env.RESEND_API_KEY)
   const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS)
-  console.log(`[HEALTH] smtp=${smtpConfigured} SMTP_USER=${process.env.SMTP_USER ? 'set' : 'MISSING'} SMTP_PASS=${process.env.SMTP_PASS ? 'set' : 'MISSING'}`)
+  console.log(`[HEALTH] email=${emailConfigured} smtp=${smtpConfigured} RESEND_API_KEY=${process.env.RESEND_API_KEY ? 'set' : 'MISSING'}`)
   res.json({
     status: 'ok',
-    smtp: smtpConfigured,
+    smtp: emailConfigured || smtpConfigured,
     timestamp: new Date().toISOString(),
   })
 })

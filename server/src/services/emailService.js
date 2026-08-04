@@ -1,52 +1,28 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
-// Create transporter - configure in .env
-const createTransporter = () => {
-  const port = parseInt(process.env.SMTP_PORT || '587')
-  console.log(`[EMAIL] Creating transporter: host=${process.env.SMTP_HOST || 'smtp.gmail.com'}, port=${port}, user=${process.env.SMTP_USER || 'MISSING'}`)
+let resendClient = null
 
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port,
-    secure: port === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  })
+function getResendClient() {
+  if (!resendClient && process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendClient
 }
 
-// Send email
 export async function sendEmail({ to, subject, html }) {
-  const transporter = createTransporter()
+  const client = getResendClient()
+  if (!client) throw new Error('RESEND_API_KEY not configured')
 
-  const mailOptions = {
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to,
-    subject,
-    html,
-  }
-
-  const info = await transporter.sendMail(mailOptions)
-  console.log('Email sent:', info.messageId)
-  return info
+  const from = process.env.SMTP_FROM || 'onboarding@resend.dev'
+  const { data, error } = await client.emails.send({ from, to, subject, html })
+  if (error) throw new Error(error.message)
+  console.log('[EMAIL] Sent:', data?.id)
+  return data
 }
 
-// Send promotion email to multiple recipients
 export async function sendPromotionEmail({ recipients, promotion, storeName }) {
-  const transporter = createTransporter()
-
-  console.log(`[EMAIL] Verifying connection...`)
-  try {
-    await transporter.verify()
-    console.log(`[EMAIL] SMTP connection verified OK`)
-  } catch (verifyErr) {
-    console.error(`[EMAIL] SMTP connection FAILED:`, verifyErr.message)
-    throw verifyErr
-  }
+  const client = getResendClient()
+  if (!client) throw new Error('RESEND_API_KEY not configured')
 
   const discountText = promotion.type === 'percentage'
     ? `${promotion.value}%`
@@ -68,7 +44,6 @@ export async function sendPromotionEmail({ recipients, promotion, storeName }) {
         .discount { font-size: 24px; color: #28a745; font-weight: bold; margin: 15px 0; }
         .details { color: #666; font-size: 14px; line-height: 1.8; }
         .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #999; font-size: 12px; }
-        .btn { display: inline-block; background: #667eea; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold; margin-top: 15px; }
       </style>
     </head>
     <body>
@@ -79,19 +54,16 @@ export async function sendPromotionEmail({ recipients, promotion, storeName }) {
         <div class="content">
           <p>عزيزي العميل،</p>
           <p>يسعدنا تقديم لكم عرض خاص حصري!</p>
-
           <div class="promo-box">
             <div class="discount">خصم ${discountText}</div>
             <p>استخدم كود الخصم:</p>
             <div class="promo-code">${promotion.code}</div>
           </div>
-
           <div class="details">
             ${promotion.min_order_amount ? `<p>📌 الحد الأدنى للطلب: ${promotion.min_order_amount} ج.م</p>` : ''}
             <p>📅 صالح حتى: ${new Date(promotion.end_date).toLocaleDateString('ar-EG')}</p>
             ${promotion.max_uses ? `<p>⏳ عدد الاستخدامات المتبقية: ${promotion.max_uses - (promotion.used_count || 0)}</p>` : ''}
           </div>
-
           <p style="margin-top: 20px;">سارع بالاستفادة من العرض قبل انتهائه!</p>
         </div>
         <div class="footer">
@@ -102,30 +74,32 @@ export async function sendPromotionEmail({ recipients, promotion, storeName }) {
     </html>
   `
 
-  // Send to all recipients
+  const from = process.env.SMTP_FROM || 'onboarding@resend.dev'
   const results = []
+
   for (const recipient of recipients) {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      const { data, error } = await client.emails.send({
+        from,
         to: recipient.email,
         subject: `🎉 عرض خاص: خصم ${discountText} - ${storeName}`,
         html: htmlContent,
       })
-      results.push({ email: recipient.email, success: true, messageId: info.messageId })
-      console.log(`Email sent to ${recipient.email}: ${info.messageId}`)
+      if (error) throw new Error(error.message)
+      results.push({ email: recipient.email, success: true, messageId: data?.id })
+      console.log(`[EMAIL] Sent to ${recipient.email}: ${data?.id}`)
     } catch (err) {
       results.push({ email: recipient.email, success: false, error: err.message })
-      console.error(`Failed to send email to ${recipient.email}:`, err.message)
+      console.error(`[EMAIL] Failed to ${recipient.email}:`, err.message)
     }
   }
 
   return results
 }
 
-// Send custom email
 export async function sendCustomEmail({ recipients, subject, message, storeName }) {
-  const transporter = createTransporter()
+  const client = getResendClient()
+  if (!client) throw new Error('RESEND_API_KEY not configured')
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -142,29 +116,26 @@ export async function sendCustomEmail({ recipients, subject, message, storeName 
     </head>
     <body>
       <div class="container">
-        <div class="header">
-          <h1>${subject}</h1>
-        </div>
-        <div class="content">
-          <p>${message}</p>
-        </div>
-        <div class="footer">
-          <p>${storeName} | جميع الحقوق محفوظة © ${new Date().getFullYear()}</p>
-        </div>
+        <div class="header"><h1>${subject}</h1></div>
+        <div class="content"><p>${message}</p></div>
+        <div class="footer"><p>${storeName} | جميع الحقوق محفوظة © ${new Date().getFullYear()}</p></div>
       </div>
     </body>
     </html>
   `
 
+  const from = process.env.SMTP_FROM || 'onboarding@resend.dev'
   const results = []
+
   for (const recipient of recipients) {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      const { data, error } = await client.emails.send({
+        from,
         to: recipient.email,
         subject,
         html: htmlContent,
       })
+      if (error) throw new Error(error.message)
       results.push({ email: recipient.email, success: true })
     } catch (err) {
       results.push({ email: recipient.email, success: false, error: err.message })
