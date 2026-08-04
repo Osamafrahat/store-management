@@ -175,6 +175,7 @@ export const translations = {
     'inventory.failedToCreateCategory': 'Failed to create category',
     'inventory.failedToUpdateCategory': 'Failed to update category',
     'inventory.failedToDeleteCategory': 'Failed to delete category',
+    'inventory.printReport': 'Print Report',
 
     // Reports
     'reports.title': 'Reports & Analytics',
@@ -1082,6 +1083,7 @@ export const translations = {
     'inventory.failedToCreateCategory': 'فشل إنشاء الفئة',
     'inventory.failedToUpdateCategory': 'فشل تحديث الفئة',
     'inventory.failedToDeleteCategory': 'فشل حذف الفئة',
+    'inventory.printReport': 'جرد المخزون',
 
     // Reports
     'reports.title': 'التقارير والتحليلات',
