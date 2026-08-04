@@ -21,38 +21,36 @@ export default function InventoryPrintSheet({ products, categories, settings, us
       <head>
         <title>${t('print.inventoryReport')} - ${settings?.storeName || 'Store'}</title>
         <style>
+          @page { size: A4 portrait; margin: 10mm 12mm; }
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #1f2937;
             line-height: 1.3;
-            font-size: 11px;
-            padding: 10mm;
+            font-size: 10px;
           }
-          @page { size: A4 landscape; margin: 8mm; }
+          .print-header { border-bottom: 3px solid #2563eb; padding-bottom: 8px; margin-bottom: 10px; }
+          .print-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+          .summary-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; text-align: center; }
+          .summary-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+          .summary-value { font-size: 14px; font-weight: 700; margin: 2px 0; }
+          .summary-sublabel { font-size: 7px; color: #94a3b8; }
 
-          .print-header { border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 12px; }
-          .print-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-          .summary-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; text-align: center; }
-          .summary-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-          .summary-value { font-size: 15px; font-weight: 700; margin: 2px 0; }
-          .summary-sublabel { font-size: 8px; color: #94a3b8; }
-
-          .print-section { margin-bottom: 12px; }
-          .section-title { font-size: 11px; font-weight: 700; color: #1e40af; border-bottom: 2px solid #dbeafe; padding-bottom: 4px; margin-bottom: 6px; }
+          .print-section { margin-bottom: 10px; }
+          .section-title { font-size: 10px; font-weight: 700; color: #1e40af; border-bottom: 2px solid #dbeafe; padding-bottom: 3px; margin-bottom: 5px; }
 
           .summary-table, .product-table { width: 100%; border-collapse: collapse; font-size: 9px; }
-          .summary-table th, .product-table th { background: #1e40af; color: white; padding: 4px 5px; text-align: left; font-weight: 600; font-size: 8px; text-transform: uppercase; }
-          .summary-table td, .product-table td { padding: 3px 5px; border-bottom: 1px solid #e5e7eb; }
+          .summary-table th, .product-table th { background: #1e40af; color: white; padding: 3px 4px; text-align: left; font-weight: 600; font-size: 7.5px; text-transform: uppercase; }
+          .summary-table td, .product-table td { padding: 2px 4px; border-bottom: 1px solid #e5e7eb; }
           .product-table tbody tr:nth-child(even) { background: #f9fafb; }
-          .status-badge { display: inline-block; padding: 1px 5px; border-radius: 8px; font-size: 7px; font-weight: 600; }
-          .checkbox-square { display: inline-block; width: 12px; height: 12px; border: 1.5px solid #374151; border-radius: 2px; }
+          .status-badge { display: inline-block; padding: 1px 4px; border-radius: 8px; font-size: 7px; font-weight: 600; }
+          .checkbox-square { display: inline-block; width: 10px; height: 10px; border: 1.5px solid #374151; border-radius: 2px; }
           .bg-green-50 { background: #dcfce7; } .text-green-600 { color: #16a34a; }
           .bg-orange-50 { background: #fff7ed; } .text-orange-600 { color: #ea580c; }
           .bg-red-50 { background: #fef2f2; } .text-red-600 { color: #dc2626; }
           .totals-row { background: #1e40af !important; color: white; }
-          .totals-row td { padding: 5px; border: none; }
-          .print-footer { border-top: 1px solid #e5e7eb; padding-top: 6px; margin-top: 8px; }
+          .totals-row td { padding: 4px; border: none; }
+          .print-footer { border-top: 1px solid #e5e7eb; padding-top: 5px; margin-top: 6px; }
           .text-right { text-align: right; }
           .font-bold { font-weight: 700; }
           .font-medium { font-weight: 500; }
@@ -88,17 +86,17 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         <div className="print-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>{settings?.storeName || 'Store POS'}</h1>
-              <p style={{ fontSize: '11px', color: '#6b7280' }}>{settings?.storeAddress || ''}</p>
-              <p style={{ fontSize: '11px', color: '#6b7280' }}>{settings?.storePhone || ''}</p>
+              <h1 style={{ fontSize: '16px', fontWeight: 'bold' }}>{settings?.storeName || 'Store POS'}</h1>
+              <p style={{ fontSize: '9px', color: '#6b7280' }}>{settings?.storeAddress || ''}</p>
+              <p style={{ fontSize: '9px', color: '#6b7280' }}>{settings?.storePhone || ''}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>{t('print.gard')}</h2>
-              <p style={{ fontSize: '11px', color: '#6b7280' }}>{t('print.gardAr')}</p>
-              <p style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 'bold', color: '#2563eb' }}>{t('print.gard')}</h2>
+              <p style={{ fontSize: '10px', color: '#6b7280' }}>{t('print.gardAr')}</p>
+              <p style={{ fontSize: '8px', color: '#9ca3af', marginTop: '2px' }}>
                 {t('print.date')} {new Date().toLocaleDateString('en-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
-              <p style={{ fontSize: '10px', color: '#9ca3af' }}>
+              <p style={{ fontSize: '8px', color: '#9ca3af' }}>
                 {t('print.time')} {new Date().toLocaleTimeString('en-EG')}
               </p>
             </div>
@@ -197,16 +195,16 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         <div className="print-footer">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: '8px', color: '#9ca3af' }}>{t('print.generatedBy')}</p>
-              <p style={{ fontSize: '8px', color: '#9ca3af' }}>{settings?.storeName || 'Store POS'}</p>
+              <p style={{ fontSize: '7px', color: '#9ca3af' }}>{t('print.generatedBy')}</p>
+              <p style={{ fontSize: '7px', color: '#9ca3af' }}>{settings?.storeName || 'Store POS'}</p>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '9px', color: '#374151', fontWeight: 600 }}>
+              <p style={{ fontSize: '8px', color: '#374151', fontWeight: 600 }}>
                 {t('print.preparedBy')} {user?.full_name || 'Unknown User'}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '8px', color: '#9ca3af' }}>{t('print.printed')} {new Date().toLocaleString()}</p>
+              <p style={{ fontSize: '7px', color: '#9ca3af' }}>{t('print.printed')} {new Date().toLocaleString()}</p>
             </div>
           </div>
         </div>
