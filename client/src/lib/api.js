@@ -191,6 +191,7 @@ export const accountsApi = {
   update: (id, data) => api.put(`/accounting/accounts/${id}`, data),
   delete: (id) => api.delete(`/accounting/accounts/${id}`),
   seed: () => api.post('/accounting/accounts/seed'),
+  setInitialCapital: (data) => api.post('/accounting/accounts/initial-capital', data),
 }
 
 export const journalsApi = {

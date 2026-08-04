@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import api, { accountsApi } from '../lib/api'
-import { Plus, Search, Edit2, Trash2, Save, X, RefreshCw } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Save, X, RefreshCw, Landmark } from 'lucide-react'
 
 export default function ChartOfAccountsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -12,6 +12,10 @@ export default function ChartOfAccountsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [formData, setFormData] = useState({ code: '', name: '', account_type: 'asset', description: '' })
+  const [showCapitalModal, setShowCapitalModal] = useState(false)
+  const [capitalAmount, setCapitalAmount] = useState('')
+  const [capitalDesc, setCapitalDesc] = useState('')
+  const [capitalLoading, setCapitalLoading] = useState(false)
 
   const getAccountName = (account) => {
     const key = `accounting.account.${account.code}`
@@ -54,6 +58,23 @@ export default function ChartOfAccountsPage() {
     } catch (err) {
       console.error(err)
       toastError(t('common.error'))
+    }
+  }
+
+  const handleSetCapital = async () => {
+    if (!capitalAmount || parseFloat(capitalAmount) <= 0) return
+    try {
+      setCapitalLoading(true)
+      await accountsApi.setInitialCapital({ amount: parseFloat(capitalAmount), description: capitalDesc })
+      toastSuccess(t('accounting.capitalRecorded') || 'Initial capital recorded')
+      setShowCapitalModal(false)
+      setCapitalAmount('')
+      setCapitalDesc('')
+      fetchAccounts()
+    } catch (err) {
+      toastError(err.response?.data?.error || t('common.error'))
+    } finally {
+      setCapitalLoading(false)
     }
   }
 
@@ -113,6 +134,9 @@ export default function ChartOfAccountsPage() {
           <button onClick={handleRecalculate} className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 text-yellow-700 dark:text-yellow-400 rounded-xl font-medium flex items-center gap-2 text-sm">
             <RefreshCw className="w-4 h-4" /> {t('accounting.recalculateBalances')}
           </button>
+          <button onClick={() => setShowCapitalModal(true)} className="px-4 py-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/50 text-green-700 dark:text-green-400 rounded-xl font-medium flex items-center gap-2 text-sm">
+            <Landmark className="w-4 h-4" /> {t('accounting.setCapital')}
+          </button>
           <button onClick={() => { setShowForm(true); setEditingId(null); setFormData({ code: '', name: '', account_type: 'asset', description: '' }) }} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium flex items-center gap-2">
             <Plus className="w-4 h-4" /> {t('accounting.addAccount')}
           </button>
@@ -149,6 +173,42 @@ export default function ChartOfAccountsPage() {
                 <Save className="w-4 h-4" /> {t('common.save')}
               </button>
               <button onClick={() => { setShowForm(false); setEditingId(null) }} className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2">
+                <X className="w-4 h-4" /> {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCapitalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-bold">{t('accounting.setCapital')}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('accounting.capitalDescription')}</p>
+            <input
+              type="number"
+              value={capitalAmount}
+              onChange={e => setCapitalAmount(e.target.value)}
+              placeholder={t('accounting.capitalAmount')}
+              min="0"
+              step="0.01"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <input
+              value={capitalDesc}
+              onChange={e => setCapitalDesc(e.target.value)}
+              placeholder={t('accounting.capitalOptionalDesc')}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleSetCapital}
+                disabled={!capitalAmount || parseFloat(capitalAmount) <= 0 || capitalLoading}
+                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium flex items-center justify-center gap-2"
+              >
+                <Landmark className="w-4 h-4" /> {capitalLoading ? t('common.saving') || 'Saving...' : t('common.save')}
+              </button>
+              <button onClick={() => { setShowCapitalModal(false); setCapitalAmount(''); setCapitalDesc('') }} className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2">
                 <X className="w-4 h-4" /> {t('common.cancel')}
               </button>
             </div>

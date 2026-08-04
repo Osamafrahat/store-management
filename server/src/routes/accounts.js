@@ -124,6 +124,41 @@ router.post('/seed', async (req, res) => {
   }
 })
 
+// Set initial capital (Owner Equity → Cash/Bank journal entry)
+router.post('/initial-capital', async (req, res) => {
+  try {
+    const { amount, description } = req.body
+    if (!amount || parseFloat(amount) <= 0) {
+      return res.status(400).json({ error: 'Amount must be greater than zero' })
+    }
+
+    const { createJournalEntry } = await import('../services/accountingEngine.js')
+
+    const equityAccount = await supabase.from('accounts').select('id').eq('code', '3010').single()
+    const cashAccount = await supabase.from('accounts').select('id').eq('code', '1010').single()
+
+    if (!equityAccount.data || !cashAccount.data) {
+      return res.status(400).json({ error: 'Owner Equity (3010) or Cash (1010) account not found. Run Seed Defaults first.' })
+    }
+
+    const entry = await createJournalEntry({
+      date: new Date().toISOString().split('T')[0],
+      description: description || `Initial capital contribution - ${parseFloat(amount).toFixed(2)} EGP`,
+      reference: 'INIT-CAP',
+      sourceType: 'initial_capital',
+      lines: [
+        { accountId: cashAccount.data.id, debit: parseFloat(amount), credit: 0, description: 'Cash received' },
+        { accountId: equityAccount.data.id, debit: 0, credit: parseFloat(amount), description: 'Owner equity contribution' },
+      ],
+    })
+
+    res.json({ message: 'Initial capital recorded', entryId: entry.id })
+  } catch (err) {
+    console.error('Set initial capital error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 // Recalculate all account balances from journal entries
 router.post('/recalculate-balances', async (req, res) => {
   try {

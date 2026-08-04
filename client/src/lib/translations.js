@@ -315,6 +315,7 @@ export const translations = {
 
     // Common
     'common.save': 'Save',
+    'common.saving': 'Saving...',
     'common.cancel': 'Cancel',
     'common.retry': 'Retry',
     'common.refresh': 'Refresh',
@@ -699,6 +700,11 @@ export const translations = {
     'accounting.seedSuccess': 'Chart of accounts seeded!',
     'accounting.seedFailed': 'Failed to seed accounts',
     'accounting.recalculateBalances': 'Recalculate Balances',
+    'accounting.setCapital': 'Set Initial Capital',
+    'accounting.capitalDescription': 'Record your initial capital contribution. This creates a journal entry: Debit Cash, Credit Owner Equity.',
+    'accounting.capitalAmount': 'Capital amount (EGP)',
+    'accounting.capitalOptionalDesc': 'Description (optional)',
+    'accounting.capitalRecorded': 'Initial capital recorded successfully',
     'accounting.balancesRecalculated': 'All account balances recalculated from journal entries',
     'accounting.accountUpdated': 'Account updated',
     'accounting.accountCreated': 'Account created',
@@ -1272,6 +1278,7 @@ export const translations = {
 
     // Common
     'common.save': 'حفظ',
+    'common.saving': 'جاري الحفظ...',
     'common.cancel': 'إلغاء',
     'common.retry': 'إعادة المحاولة',
     'common.refresh': 'تحديث',
@@ -1658,6 +1665,11 @@ export const translations = {
     'accounting.seedSuccess': 'تم إضافة الحسابات الافتراضية!',
     'accounting.seedFailed': 'فشل إضافة الحسابات',
     'accounting.recalculateBalances': 'إعادة حساب الأرصدة',
+    'accounting.setCapital': 'تسجيل رأس المال الأولي',
+    'accounting.capitalDescription': 'تسجيل مساهمة رأس المال الأولي. يتم إنشاء قيد يومية: مدين نقد، دائن حقوق الملكية.',
+    'accounting.capitalAmount': 'مبلغ رأس المال (ج.م)',
+    'accounting.capitalOptionalDesc': 'الوصف (اختياري)',
+    'accounting.capitalRecorded': 'تم تسجيل رأس المال الأولي بنجاح',
     'accounting.balancesRecalculated': 'تم إعادة حساب جميع أرصدة الحسابات من القيود المحاسبية',
     'accounting.accountUpdated': 'تم تحديث الحساب',
     'accounting.accountCreated': 'تم إنشاء الحساب',
