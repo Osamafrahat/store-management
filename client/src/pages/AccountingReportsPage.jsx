@@ -54,7 +54,38 @@ export default function AccountingReportsPage() {
   }
 
   const handlePrint = () => {
-    window.print()
+    const printContent = document.querySelector('.report-print-area .print\\:pt-0')
+    if (!printContent) return
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700')
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${t('accounting.financialReports')} - ${activeTab}</title>
+        <style>
+          @page { size: A4 portrait; margin: 12mm; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #1f2937; font-size: 11px; }
+          h2 { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #1e40af; }
+          h3 { font-size: 13px; font-weight: 600; margin: 10px 0 6px; color: #374151; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+          th { background: #1e40af; color: white; padding: 5px 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
+          td { padding: 4px 8px; border-bottom: 1px solid #e5e7eb; font-size: 10px; }
+          tr:nth-child(even) { background: #f9fafb; }
+          .text-right { text-align: right; }
+          .font-bold { font-weight: 700; }
+          .total-row { background: #f3f4f6 !important; font-weight: 700; }
+          .section-header { background: #f3f4f6; padding: 4px 8px; font-weight: 600; font-size: 11px; }
+        </style>
+      </head>
+      <body>
+        ${printContent.innerHTML}
+      </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.onload = () => { printWindow.print() }
   }
 
   const tabs = [
