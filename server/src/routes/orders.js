@@ -106,9 +106,7 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Order number and items are required' })
     }
 
-    // Always use authenticated user's ID
     const userId = req.user.id
-    console.log('Order creation - User ID:', userId, 'Type:', typeof userId)
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -130,262 +128,141 @@ router.post('/', async (req, res, next) => {
 
     if (orderError) throw orderError
 
-    // Award loyalty points to customer if linked
-    if (customer_id) {
-      // Get loyalty points setting
-      const { data: setting } = await supabase
-        .from('store_settings')
-        .select('value')
-        .eq('key', 'loyaltyPointsPerCurrency')
-        .single()
+    // Respond immediately
+    res.status(201).json(order)
 
+    // Everything below runs in background (fire and forget)
+    processOrderBackground(order, items, payments, customer_id, userId, order_number, total).catch(err => {
+      console.error('[ORDER BG] Error:', err.message)
+    })
+  } catch (err) {
+    console.error('Failed to create order:', err)
+    next(err)
+  }
+})
+
+// Background processing for order (stock, payments, accounting)
+async function processOrderBackground(order, items, payments, customer_id, userId, order_number, total) {
+  console.log(`[ORDER BG] Processing order ${order_number}`)
+
+  // Update customer loyalty points
+  if (customer_id) {
+    try {
+      const { data: setting } = await supabase.from('store_settings').select('value').eq('key', 'loyaltyPointsPerCurrency').single()
       const pointsPerCurrency = parseFloat(setting?.value) || 0
-
-      if (pointsPerCurrency > 0) {
-        const pointsEarned = Math.floor(total * pointsPerCurrency)
-
-        // Update customer loyalty points and total spent
-        const { data: customer } = await supabase
-          .from('customers')
-          .select('loyalty_points, total_spent')
-          .eq('id', customer_id)
-          .single()
-
-        if (customer) {
-          await supabase
-            .from('customers')
-            .update({
-              loyalty_points: (customer.loyalty_points || 0) + pointsEarned,
-              total_spent: (customer.total_spent || 0) + total,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', customer_id)
-        }
-      } else {
-        // Still update total spent even if no points
-        const { data: customer } = await supabase
-          .from('customers')
-          .select('total_spent')
-          .eq('id', customer_id)
-          .single()
-
-        if (customer) {
-          await supabase
-            .from('customers')
-            .update({
-              total_spent: (customer.total_spent || 0) + total,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', customer_id)
-        }
+      const { data: customer } = await supabase.from('customers').select('loyalty_points, total_spent').eq('id', customer_id).single()
+      if (customer) {
+        await supabase.from('customers').update({
+          loyalty_points: (customer.loyalty_points || 0) + Math.floor(total * pointsPerCurrency),
+          total_spent: (customer.total_spent || 0) + total,
+          updated_at: new Date().toISOString()
+        }).eq('id', customer_id)
       }
-    }
+    } catch (e) { console.error('[ORDER BG] Loyalty update failed:', e.message) }
+  }
 
-    // Create order items and update stock
-    for (const item of items) {
+  // Create order items and update stock
+  for (const item of items) {
+    try {
       const itemTotal = item.quantity * item.unit_price - (item.discount || 0)
 
-      // Insert order item
-      await supabase
-        .from('order_items')
-        .insert({
-          order_id: order.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          discount: item.discount || 0,
-          total: itemTotal
-        })
+      await supabase.from('order_items').insert({
+        order_id: order.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        discount: item.discount || 0,
+        total: itemTotal
+      })
 
-      // Update product stock
-      await supabase.rpc('decrement_stock', {
-        p_product_id: item.product_id,
-        p_quantity: item.quantity
-      }).then(async () => {
-        // Fallback: manual update if RPC doesn't exist
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.product_id)
-          .single()
-
-        if (product) {
-          await supabase
-            .from('products')
-            .update({
-              stock_quantity: Math.max(0, product.stock_quantity - item.quantity),
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', item.product_id)
-        }
-      }).catch(() => {})
+      // Update stock directly (skip RPC)
+      const { data: product } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).single()
+      if (product) {
+        await supabase.from('products').update({
+          stock_quantity: Math.max(0, product.stock_quantity - item.quantity),
+          updated_at: new Date().toISOString()
+        }).eq('id', item.product_id)
+      }
 
       // Record stock movement
-      await supabase
-        .from('stock_movements')
-        .insert({
-          product_id: item.product_id,
-          type: 'sale',
-          quantity: -item.quantity,
-          reference_id: order.id,
-          notes: `Order ${order_number}`
-        })
-    }
+      await supabase.from('stock_movements').insert({
+        product_id: item.product_id,
+        type: 'sale',
+        quantity: -item.quantity,
+        reference_id: order.id,
+        notes: `Order ${order_number}`
+      })
+    } catch (e) { console.error(`[ORDER BG] Stock update failed for item ${item.product_id}:`, e.message) }
+  }
 
-    // Create payment splits and journal entries for each payment method
-    if (payments && payments.length > 0) {
+  // Create payment splits and journal entries
+  if (payments && payments.length > 0) {
+    try {
       const paymentInserts = payments.map(p => ({
         order_id: order.id,
         method: p.method,
         amount: p.amount,
         reference: p.reference || null
       }))
+      await supabase.from('payment_splits').insert(paymentInserts)
 
-      console.log('Creating payment_splits:', paymentInserts)
-      const { error: splitsError } = await supabase
-        .from('payment_splits')
-        .insert(paymentInserts)
-      
-      if (splitsError) {
-        console.error('Payment splits insert failed:', splitsError)
-      } else {
-        console.log('Payment splits created successfully')
+      const { createJournalEntry } = await import('../services/accountingEngine.js')
+
+      async function findAcc(code) {
+        const { data } = await supabase.from('accounts').select('id, code').eq('code', code).single()
+        return data
       }
 
-      // Create journal entries for each split payment (cash/bank)
-      try {
-        const { createJournalEntry, seedChartOfAccounts } = await import('../services/accountingEngine.js')
+      const cashAccount = await findAcc('1010')
+      const bankAccount = await findAcc('1020')
+      const arAccount = await findAcc('1030')
 
-        // Ensure accounts exist
-        await seedChartOfAccounts()
-
-        // Helper to find account with retry
-        async function findAcc(code) {
-          let { data } = await supabase.from('accounts').select('id, code').eq('code', code).single()
-          if (!data) {
-            await seedChartOfAccounts()
-            const retry = await supabase.from('accounts').select('id, code').eq('code', code).single()
-            data = retry.data
-          }
-          return data
-        }
-
-        const cashAccount = await findAcc('1010')
-        const bankAccount = await findAcc('1020')
-        const arAccount = await findAcc('1030')
-
-        console.log('Payment journal - Accounts found:', {
-          cash: cashAccount?.id,
-          bank: bankAccount?.id,
-          ar: arAccount?.id,
-          paymentsCount: payments.length
-        })
-
-        for (const p of payments) {
+      for (const p of payments) {
+        try {
           const sourceAccount = p.method === 'cash' ? cashAccount : bankAccount
           const date = new Date().toISOString().split('T')[0]
           const rand = Math.floor(Math.random() * 9999).toString().padStart(4, '0')
           const paymentNumber = `PAY-${date.replace(/-/g, '')}-${rand}`
 
           const lines = []
-          if (sourceAccount) {
-            lines.push({ accountId: sourceAccount.id, debit: parseFloat(p.amount), credit: 0, description: `Payment received - ${paymentNumber}` })
-          }
-          if (arAccount) {
-            lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(p.amount), description: `AR reduction - ${paymentNumber}` })
-          }
-
-          console.log('Creating payment journal:', { paymentNumber, method: p.method, amount: p.amount, linesCount: lines.length })
+          if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: parseFloat(p.amount), credit: 0, description: `Payment - ${paymentNumber}` })
+          if (arAccount) lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(p.amount), description: `AR - ${paymentNumber}` })
 
           if (lines.length > 0) {
-            const entry = await createJournalEntry({
-              date,
-              description: `Payment inbound: ${paymentNumber}`,
-              reference: paymentNumber,
-              sourceType: 'payment',
-              sourceId: null,
-              lines,
-              createdBy: userId,
+            const entry = await createJournalEntry({ date, description: `Payment: ${paymentNumber}`, reference: paymentNumber, sourceType: 'payment', sourceId: null, lines, createdBy: userId })
+            await supabase.from('payments').insert({
+              payment_number: paymentNumber, payment_type: 'inbound', method: p.method,
+              amount: parseFloat(p.amount), reference: p.reference || null,
+              payment_date: date, recorded_by: userId, journal_entry_id: entry.id,
             })
-
-            console.log('Payment journal created:', { entryId: entry.id, entryNumber: entry.entry_number })
-
-            // Save payment record with journal link
-            const paymentRecord = {
-              payment_number: paymentNumber,
-              payment_type: 'inbound',
-              method: p.method,
-              amount: parseFloat(p.amount),
-              reference: p.reference || null,
-              payment_date: date,
-              recorded_by: userId,
-              journal_entry_id: entry.id,
-            }
-            console.log('Inserting payment record:', paymentRecord)
-            const { error: paymentInsertError } = await supabase.from('payments').insert(paymentRecord)
-
-            if (paymentInsertError) {
-              console.error('Payment record insert failed:', paymentInsertError)
-              console.error('Payment record that failed:', JSON.stringify(paymentRecord))
-            } else {
-              console.log('Payment record created successfully:', paymentNumber)
-            }
-          } else {
-            console.warn('No lines for payment journal - missing accounts')
           }
-        }
-      } catch (payErr) {
-        console.error('Payment journal entry failed:', payErr.message)
-        console.error('Full error:', payErr)
+        } catch (e) { console.error(`[ORDER BG] Payment journal failed:`, e.message) }
       }
-    }
-
-    // Log activity
-    req.logActivity({
-      action: 'created',
-      entity_type: 'order',
-      entity_id: order.id,
-      entity_name: order_number,
-      details: { total, payment_method, items_count: items.length, customer_id }
-    })
-
-    // Auto-post to accounting journal (fire and forget)
-    try {
-      const { postOrderJournal } = await import('../services/accountingEngine.js')
-      // Fetch cost_price for each item to enable COGS calculation
-      const itemsWithCost = await Promise.all(items.map(async (item) => {
-        const { data: product } = await supabase
-          .from('products')
-          .select('cost_price')
-          .eq('id', item.product_id)
-          .single()
-        return { ...item, cost_price: product?.cost_price || 0 }
-      }))
-      console.log('Order journal - Order data:', {
-        orderId: order.id,
-        orderNumber: order.order_number,
-        total: order.total,
-        subtotal: order.subtotal,
-        taxAmount: order.tax_amount,
-        itemsCount: itemsWithCost.length
-      })
-      const journalEntry = await postOrderJournal(order, itemsWithCost)
-      // Link journal entry to order for payment deduplication
-      if (journalEntry) {
-        await supabase.from('orders').update({ journal_entry_id: journalEntry.id }).eq('id', order.id)
-        console.log('Order journal created:', { entryId: journalEntry.id, entryNumber: journalEntry.entry_number })
-      }
-    } catch (accErr) {
-      console.error('Accounting auto-post failed:', accErr.message)
-      console.error('Full error:', accErr)
-    }
-
-    res.status(201).json(order)
-  } catch (err) {
-    console.error('Failed to create order:', err)
-    next(err)
+    } catch (e) { console.error('[ORDER BG] Payment processing failed:', e.message) }
   }
-})
+
+  // Post order journal
+  try {
+    const { postOrderJournal } = await import('../services/accountingEngine.js')
+    const itemsWithCost = await Promise.all(items.map(async (item) => {
+      const { data: product } = await supabase.from('products').select('cost_price').eq('id', item.product_id).single()
+      return { ...item, cost_price: product?.cost_price || 0 }
+    }))
+    const journalEntry = await postOrderJournal(order, itemsWithCost)
+    if (journalEntry) {
+      await supabase.from('orders').update({ journal_entry_id: journalEntry.id }).eq('id', order.id)
+    }
+  } catch (e) { console.error('[ORDER BG] Order journal failed:', e.message) }
+
+  // Log activity (skip if no request context)
+  try {
+    if (typeof req.logActivity === 'function') {
+      req.logActivity({ action: 'created', entity_type: 'order', entity_id: order.id, entity_name: order_number, details: { total, items_count: items.length } })
+    }
+  } catch (e) {}
+
+  console.log(`[ORDER BG] Order ${order_number} processing complete`)
+}
 
 // Update order status
 router.patch('/:id/status', async (req, res, next) => {
