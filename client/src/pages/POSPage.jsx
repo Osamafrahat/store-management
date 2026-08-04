@@ -44,45 +44,41 @@ export default function POSPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      if (navigator.onLine) {
-        // Online: fetch from API
-        const [productsRes, categoriesRes, customersRes] = await Promise.all([
-          productsApi.getAll(),
-          categoriesApi.getAll(),
-          customersApi.getAll()
-        ])
-        setProducts(productsRes.data)
-        setCategories(categoriesRes.data)
-        setCustomers(customersRes.data)
-
-        // Cache for offline use
-        await cacheData({
-          products: productsRes.data,
-          categories: categoriesRes.data,
-          customers: customersRes.data,
-        })
-      } else {
-        // Offline: load from IndexedDB cache
-        const cached = await loadCachedData()
+      // ALWAYS load from cache first (instant, no flash)
+      const cached = await loadCachedData()
+      if (cached.products.length > 0) {
         setProducts(cached.products)
         setCategories(cached.categories)
         setCustomers(cached.customers)
+        setLoading(false)
+      }
+
+      // Then fetch from API in background to update cache
+      if (navigator.onLine) {
+        try {
+          const [productsRes, categoriesRes, customersRes] = await Promise.all([
+            productsApi.getAll(),
+            categoriesApi.getAll(),
+            customersApi.getAll()
+          ])
+          setProducts(productsRes.data)
+          setCategories(categoriesRes.data)
+          setCustomers(customersRes.data)
+
+          await cacheData({
+            products: productsRes.data,
+            categories: categoriesRes.data,
+            customers: customersRes.data,
+          })
+        } catch (err) {
+          console.error('Background fetch failed, using cache:', err)
+        }
+      } else if (cached.products.length === 0) {
+        setError('No offline data available. Please connect to the internet first.')
       }
     } catch (err) {
-      // API failed - try loading from cache
-      console.error('API fetch failed, trying cache:', err)
-      try {
-        const cached = await loadCachedData()
-        setProducts(cached.products)
-        setCategories(cached.categories)
-        setCustomers(cached.customers)
-        if (cached.products.length === 0) {
-          setError('No offline data available. Please connect to the internet first.')
-        }
-      } catch (cacheErr) {
-        setError(err.message)
-        console.error('Failed to fetch data:', err)
-      }
+      console.error('Failed to load data:', err)
+      setError(err.message)
     } finally {
       setLoading(false)
     }
