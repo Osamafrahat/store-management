@@ -344,6 +344,7 @@ export default function AccountingReportsPage() {
                 </tbody>
               </table>
               {fiscalPeriods.length === 0 && <p className="text-center py-8 text-gray-400">{t('accounting.noPeriods')}</p>}
+              </div>
             </div>
           )}
         </div>
