@@ -157,7 +157,8 @@ export default function PaymentsPage() {
         <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
                 <th className="text-start px-6 py-3 font-medium">{t('accounting.paymentNumber')}</th>
@@ -186,8 +187,8 @@ export default function PaymentsPage() {
                   <td className="px-6 py-3 text-end">
                     {!payment.journal_entry_id && (
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => handleEdit(payment)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(payment.id)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(payment)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(payment.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     )}
                   </td>
@@ -195,6 +196,7 @@ export default function PaymentsPage() {
               ))}
             </tbody>
           </table>
+          </div>
           {payments.length === 0 && <p className="text-center py-8 text-gray-400">{t('accounting.noPayments')}</p>}
         </div>
       )}

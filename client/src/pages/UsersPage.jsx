@@ -156,7 +156,7 @@ export default function UsersPage() {
       {/* Users Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('users.fullName')}</th>

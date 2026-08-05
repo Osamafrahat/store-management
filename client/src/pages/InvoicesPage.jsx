@@ -231,13 +231,13 @@ export default function InvoicesPage() {
       {/* Orders Table */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[600px] text-sm">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left px-4 py-3 font-semibold">{t('invoices.orderNumber') || 'Order #'}</th>
-                <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">{t('invoices.date') || 'Date'}</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">{t('invoices.customer') || 'Customer'}</th>
-                <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">{t('invoices.cashier') || 'Cashier'}</th>
+                <th className="text-left px-4 py-3 font-semibold">{t('invoices.date') || 'Date'}</th>
+                <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">{t('invoices.customer') || 'Customer'}</th>
+                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">{t('invoices.cashier') || 'Cashier'}</th>
                 <th className="text-center px-4 py-3 font-semibold">{t('invoices.items') || 'Items'}</th>
                 <th className="text-right px-4 py-3 font-semibold">{t('invoices.total') || 'Total'}</th>
                 <th className="text-left px-4 py-3 font-semibold hidden sm:table-cell">{t('invoices.payment') || 'Payment'}</th>
@@ -259,9 +259,9 @@ export default function InvoicesPage() {
                   return (
                     <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                       <td className="px-4 py-3 font-mono font-semibold">{order.order_number}</td>
-                      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{new Date(order.created_at).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 hidden md:table-cell">{order.customers?.name || '-'}</td>
-                      <td className="px-4 py-3 hidden lg:table-cell">{order.users?.full_name || '-'}</td>
+                      <td className="px-4 py-3 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 hidden sm:table-cell">{order.customers?.name || '-'}</td>
+                      <td className="px-4 py-3 hidden md:table-cell">{order.users?.full_name || '-'}</td>
                       <td className="px-4 py-3 text-center">
                         {order.items_count || order.items?.length || '-'}
                       </td>
