@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { accountingReportsApi } from '../lib/api'
 import { BarChart3, FileText, Scale, TrendingUp, TrendingDown, Download } from 'lucide-react'
@@ -135,43 +135,54 @@ export default function AccountingReportsPage() {
           {/* Trial Balance */}
           {activeTab === 'trial-balance' && trialBalance && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-bold">{t('accounting.trialBalance')}</h2>
               </div>
-              {['asset', 'liability', 'equity', 'revenue', 'expense'].map(type => (
-                trialBalance.accounts[type]?.length > 0 && (
-                  <div key={type}>
-                    <div className="px-6 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-semibold capitalize text-gray-600 dark:text-gray-300">{t('accounting.' + type + 'Accounts') || `${type} Accounts`}</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                    <table className="w-full min-w-[500px]">
-                      <tbody>
-                        {trialBalance.accounts[type].map(acc => (
-                          <tr key={acc.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                            <td className="px-6 py-2.5 text-sm font-mono">{acc.code}</td>
-                            <td className="px-6 py-2.5 text-sm">{getAccountName(acc)}</td>
-                            <td className="px-6 py-2.5 text-sm text-end font-mono font-medium">
-                              {acc.balance >= 0 ? formatAmount(acc.balance) : ''}
-                            </td>
-                            <td className="px-6 py-2.5 text-sm text-end font-mono font-medium">
-                              {acc.balance < 0 ? formatAmount(Math.abs(acc.balance)) : ''}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[480px]">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      <th className="text-start px-4 sm:px-6 py-3 font-semibold">{t('accounting.code') || 'Code'}</th>
+                      <th className="text-start px-4 sm:px-6 py-3 font-semibold">{t('accounting.name') || 'Name'}</th>
+                      <th className="text-end px-4 sm:px-6 py-3 font-semibold">{t('accounting.debit') || 'Debit'}</th>
+                      <th className="text-end px-4 sm:px-6 py-3 font-semibold">{t('accounting.credit') || 'Credit'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {['asset', 'liability', 'equity', 'revenue', 'expense'].map(type => (
+                      trialBalance.accounts[type]?.length > 0 && (
+                        <Fragment key={type}>
+                          <tr>
+                            <td colSpan={4} className="px-4 sm:px-6 py-2 bg-gray-100 dark:bg-gray-700/30 border-b border-gray-200 dark:border-gray-700">
+                              <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                {t('accounting.' + type + 'Accounts') || `${type} Accounts`}
+                              </span>
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-              </table>
-              </div>
-                    </div>
-                  </div>
-                )
-              ))}
-              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t-2 border-gray-300 dark:border-gray-600 flex justify-between font-bold">
-                <span>{t('common.total')}</span>
-                <div className="flex gap-8">
-                  <span className="font-mono">{formatAmount(trialBalance.totalDebit)}</span>
-                  <span className="font-mono">{formatAmount(trialBalance.totalCredit)}</span>
-                </div>
+                          {trialBalance.accounts[type].map(acc => (
+                            <tr key={acc.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                              <td className="px-4 sm:px-6 py-2.5 text-sm font-mono font-bold text-gray-900 dark:text-white">{acc.code}</td>
+                              <td className="px-4 sm:px-6 py-2.5 text-sm text-gray-700 dark:text-gray-300">{getAccountName(acc)}</td>
+                              <td className="px-4 sm:px-6 py-2.5 text-sm text-end font-mono font-medium text-gray-900 dark:text-white">
+                                {acc.balance >= 0 ? formatAmount(acc.balance) : ''}
+                              </td>
+                              <td className="px-4 sm:px-6 py-2.5 text-sm text-end font-mono font-medium text-gray-900 dark:text-white">
+                                {acc.balance < 0 ? formatAmount(Math.abs(acc.balance)) : ''}
+                              </td>
+                            </tr>
+                          ))}
+                        </Fragment>
+                      )
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-gray-50 dark:bg-gray-700/50 border-t-2 border-gray-300 dark:border-gray-600 font-bold">
+                      <td colSpan={2} className="px-4 sm:px-6 py-3 text-sm">{t('common.total') || 'Total'}</td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-end font-mono">{formatAmount(trialBalance.totalDebit)}</td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-end font-mono">{formatAmount(trialBalance.totalCredit)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             </div>
           )}
