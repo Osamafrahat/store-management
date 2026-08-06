@@ -5,7 +5,7 @@ import supabase from '../db/supabase.js'
 const router = Router()
 
 const ALLOWED_SETTINGS = [
-  'storeName', 'storeAddress', 'storePhone',
+  'storeName', 'storeAddress', 'storePhone', 'storeLogo',
   'taxRate', 'currency', 'currencySymbol',
   'receiptFooter', 'lowStockThreshold'
 ]

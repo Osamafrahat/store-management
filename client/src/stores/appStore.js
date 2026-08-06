@@ -27,6 +27,7 @@ export const useAppStore = create((set, get) => ({
     storeName: 'My Store',
     storeAddress: '',
     storePhone: '',
+    storeLogo: '',
     taxRate: 14,
     currency: 'EGP',
     currencySymbol: 'ج.م',

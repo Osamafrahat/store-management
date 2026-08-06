@@ -189,8 +189,12 @@ export default function Layout({ children }) {
         <div className={`flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'} p-4 border-b border-white/10`}>
           {sidebarOpen ? (
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30 flex-shrink-0">
-                <Store className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30 flex-shrink-0 overflow-hidden">
+                {settings.storeLogo ? (
+                  <img src={settings.storeLogo} alt={settings.storeName} className="w-full h-full object-cover" />
+                ) : (
+                  <Store className="w-5 h-5 text-white" />
+                )}
               </div>
               <div className="min-w-0">
                 <span className="font-bold text-white text-base block leading-tight truncate">{settings.storeName || t('layout.defaultStoreName')}</span>
@@ -200,10 +204,14 @@ export default function Layout({ children }) {
           ) : (
             <button
               onClick={toggleSidebar}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all duration-200 hover:scale-105"
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all duration-200 hover:scale-105 overflow-hidden"
               title="Expand sidebar"
             >
-              <Store className="w-5 h-5 text-white" />
+              {settings.storeLogo ? (
+                <img src={settings.storeLogo} alt={settings.storeName} className="w-full h-full object-cover" />
+              ) : (
+                <Store className="w-5 h-5 text-white" />
+              )}
             </button>
           )}
           {sidebarOpen && (
@@ -401,8 +409,12 @@ export default function Layout({ children }) {
             {/* Mobile Logo */}
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30">
-                  <Store className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/30 overflow-hidden">
+                  {settings.storeLogo ? (
+                    <img src={settings.storeLogo} alt={settings.storeName} className="w-full h-full object-cover" />
+                  ) : (
+                    <Store className="w-5 h-5 text-white" />
+                  )}
                 </div>
                 <div>
                   <span className="font-bold text-white text-base block leading-tight">{settings.storeName || t('layout.defaultStoreName')}</span>

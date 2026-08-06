@@ -43,8 +43,12 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-2xl mb-4">
-            <Store className="w-10 h-10 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-2xl mb-4 overflow-hidden">
+            {settings.storeLogo ? (
+              <img src={settings.storeLogo} alt={settings.storeName} className="w-full h-full object-cover" />
+            ) : (
+              <Store className="w-10 h-10 text-white" />
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{settings.storeName || 'Store POS'}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">{t('users.signInTitle')}</p>

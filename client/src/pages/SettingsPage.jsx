@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { settingsApi } from '../lib/api'
 import { languageNames } from '../lib/translations'
-import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star } from 'lucide-react'
+import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star, Upload, X } from 'lucide-react'
 
 export default function SettingsPage() {
   const { settings, updateSettings, language, setLanguage, t, toastSuccess, toastError } = useAppStore()
@@ -15,6 +15,24 @@ export default function SettingsPage() {
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
     }))
+  }
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 512 * 1024) {
+      toastError(t('settings.logoTooLarge') || 'Logo must be under 512KB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      setFormData(prev => ({ ...prev, storeLogo: reader.result }))
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveLogo = () => {
+    setFormData(prev => ({ ...prev, storeLogo: '' }))
   }
 
   const handleSubmit = async (e) => {
@@ -77,6 +95,36 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-4">
+            {/* Store Logo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('settings.storeLogo') || 'Store Logo'}
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+                  {formData.storeLogo ? (
+                    <img src={formData.storeLogo} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <Store className="w-8 h-8 text-white" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg cursor-pointer text-sm font-medium transition-colors">
+                    <Upload className="w-4 h-4" />
+                    {t('settings.uploadLogo') || 'Upload Logo'}
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                  </label>
+                  {formData.storeLogo && (
+                    <button type="button" onClick={handleRemoveLogo} className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                      <X className="w-4 h-4" />
+                      {t('settings.removeLogo') || 'Remove Logo'}
+                    </button>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings.logoHint') || 'PNG, JPG, SVG. Max 512KB.'}</p>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('settings.storeName')}
