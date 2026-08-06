@@ -477,6 +477,21 @@ export const translations = {
     'refunds.completed': 'Completed',
     'refunds.noRefunds': 'No Refunds Yet',
     'refunds.addFirst': 'Refunds will appear here when processed',
+    'refunds.type': 'Type',
+    'refunds.full': 'Full',
+    'refunds.partial': 'Partial',
+    'refunds.refundFullOrder': 'Refund Full Order',
+    'refunds.selectItems': 'Select Specific Items',
+    'refunds.orderItems': 'Order Items',
+    'refunds.orderDiscount': 'Order Discount:',
+    'refunds.orderVAT': 'Order VAT:',
+    'refunds.refundBreakdown': 'Refund Breakdown',
+    'refunds.itemsSubtotal': 'Items Subtotal:',
+    'refunds.promoDiscount': 'Promotional Discount:',
+    'refunds.netBeforeTax': 'Net Before Tax:',
+    'refunds.vatPortion': 'VAT:',
+    'refunds.totalRefund': 'Total Refund:',
+    'refunds.noItemsFound': 'No items found for this order',
 
     // Settings - Loyalty
     'settings.loyaltyPoints': 'Loyalty Points',
@@ -643,6 +658,7 @@ export const translations = {
     'refunds.refundAmount': 'Refund Amount *',
     'refunds.enterReason': 'Enter reason for refund...',
     'refunds.enterOrderNumber': 'Enter order number',
+    'refunds.failedToProcess': 'Failed to process refund',
 
     // Users extras
     'users.adminProtected': 'Admin (Protected)',
@@ -1463,6 +1479,21 @@ export const translations = {
     'refunds.addFirst': 'ستظهر المسترجعات هنا عند المعالجة',
     'refunds.created': 'تم معالجة الاسترجاع بنجاح',
     'refunds.failedToProcess': 'فشل معالجة الاسترجاع',
+    'refunds.type': 'النوع',
+    'refunds.full': 'كامل',
+    'refunds.partial': 'جزئي',
+    'refunds.refundFullOrder': 'استرجاع الطلب كاملاً',
+    'refunds.selectItems': 'اختيار عناصر محددة',
+    'refunds.orderItems': 'عناصر الطلب',
+    'refunds.orderDiscount': 'خصم الطلب:',
+    'refunds.orderVAT': 'ضريبة القيمة المضافة:',
+    'refunds.refundBreakdown': 'تفاصيل الاسترجاع',
+    'refunds.itemsSubtotal': 'المجموع الفرعي للعناصر:',
+    'refunds.promoDiscount': 'خصم الترويج:',
+    'refunds.netBeforeTax': 'الصافي قبل الضريبة:',
+    'refunds.vatPortion': 'الضريبة:',
+    'refunds.totalRefund': 'إجمالي الاسترجاع:',
+    'refunds.noItemsFound': 'لم يتم العثور على عناصر لهذا الطلب',
 
     // Settings - Loyalty
     'settings.loyaltyPoints': 'نقاط الولاء',
@@ -1629,6 +1660,7 @@ export const translations = {
     'refunds.refundAmount': 'مبلغ الاسترجاع *',
     'refunds.enterReason': 'أدخل سبب الاسترجاع...',
     'refunds.enterOrderNumber': 'أدخل رقم الطلب',
+    'refunds.failedToProcess': 'فشل في معالجة الاسترجاع',
 
     // Users extras
     'users.adminProtected': 'مدير (محمي)',

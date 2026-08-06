@@ -56,7 +56,7 @@ router.post('/', [
   body('reason').trim().notEmpty().withMessage('Refund reason is required'),
 ], validate, async (req, res, next) => {
   try {
-    const { order_id, amount, reason } = req.body
+    const { order_id, amount, reason, items, is_partial } = req.body
 
     // Check if order exists
     const { data: order, error: orderError } = await supabase
@@ -69,12 +69,26 @@ router.post('/', [
       return res.status(404).json({ error: 'Order not found' })
     }
 
-    if (order.is_refunded) {
-      return res.status(400).json({ error: 'Order already refunded' })
+    // For full refunds, check if already fully refunded
+    if (!is_partial && order.is_refunded) {
+      return res.status(400).json({ error: 'Order already fully refunded' })
     }
 
-    if (amount > order.total) {
-      return res.status(400).json({ error: 'Refund amount cannot exceed order total' })
+    // For partial refunds, check total refunded amount
+    if (is_partial) {
+      const { data: existingRefunds } = await supabase
+        .from('refunds')
+        .select('amount')
+        .eq('order_id', order_id)
+
+      const totalRefunded = (existingRefunds || []).reduce((sum, r) => sum + parseFloat(r.amount), 0)
+      if (totalRefunded + parseFloat(amount) > parseFloat(order.total) + 0.01) {
+        return res.status(400).json({ error: 'Refund amount exceeds order total' })
+      }
+    } else {
+      if (parseFloat(amount) > parseFloat(order.total)) {
+        return res.status(400).json({ error: 'Refund amount cannot exceed order total' })
+      }
     }
 
     // Create refund
@@ -84,6 +98,7 @@ router.post('/', [
         order_id,
         amount,
         reason,
+        is_partial: is_partial || false,
         processed_by: req.user?.id || null
       })
       .select()
@@ -91,49 +106,123 @@ router.post('/', [
 
     if (refundError) throw refundError
 
-    // Mark order as refunded
-    await supabase
-      .from('orders')
-      .update({ is_refunded: true, payment_status: 'refunded' })
-      .eq('id', order_id)
+    // Create refund_items records if item-level refund
+    if (items && items.length > 0) {
+      const refundItemsData = items.map(item => ({
+        refund_id: refund.id,
+        order_item_id: item.order_item_id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        discount: item.discount || 0,
+        total: item.total,
+      }))
 
-    // Get order items to restore stock
-    const { data: items } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', order_id)
+      const { error: riError } = await supabase
+        .from('refund_items')
+        .insert(refundItemsData)
 
-    // Restore stock for each item
-    if (items) {
+      if (riError) {
+        console.error('Failed to create refund_items:', riError.message)
+      }
+    }
+
+    // Restore stock
+    if (items && items.length > 0) {
+      // Item-level refund: restore only selected items
       for (const item of items) {
-        // Update product stock
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', item.product_id)
+        // Get the original order item to find the product
+        const { data: orderItem } = await supabase
+          .from('order_items')
+          .select('product_id')
+          .eq('id', item.order_item_id)
           .single()
 
-        if (product) {
-          await supabase
+        if (orderItem) {
+          const { data: product } = await supabase
             .from('products')
-            .update({
-              stock_quantity: product.stock_quantity + item.quantity,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', item.product_id)
-        }
+            .select('stock_quantity')
+            .eq('id', orderItem.product_id)
+            .single()
 
-        // Record stock movement
-        await supabase
-          .from('stock_movements')
-          .insert({
-            product_id: item.product_id,
-            type: 'refund',
-            quantity: item.quantity,
-            reference_id: order_id,
-            notes: `Refund for order ${order.order_number}`
-          })
+          if (product) {
+            await supabase
+              .from('products')
+              .update({
+                stock_quantity: product.stock_quantity + item.quantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', orderItem.product_id)
+          }
+
+          await supabase
+            .from('stock_movements')
+            .insert({
+              product_id: orderItem.product_id,
+              type: 'refund',
+              quantity: item.quantity,
+              reference_id: order_id,
+              notes: `Partial refund for order ${order.order_number}`
+            })
+        }
       }
+    } else {
+      // Full refund: restore all items
+      const { data: allItems } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', order_id)
+
+      if (allItems) {
+        for (const item of allItems) {
+          const { data: product } = await supabase
+            .from('products')
+            .select('stock_quantity')
+            .eq('id', item.product_id)
+            .single()
+
+          if (product) {
+            await supabase
+              .from('products')
+              .update({
+                stock_quantity: product.stock_quantity + item.quantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', item.product_id)
+          }
+
+          await supabase
+            .from('stock_movements')
+            .insert({
+              product_id: item.product_id,
+              type: 'refund',
+              quantity: item.quantity,
+              reference_id: order_id,
+              notes: `Refund for order ${order.order_number}`
+            })
+        }
+      }
+    }
+
+    // Determine if order is fully refunded
+    if (is_partial) {
+      const { data: allRefunds } = await supabase
+        .from('refunds')
+        .select('amount')
+        .eq('order_id', order_id)
+
+      const totalRefunded = (allRefunds || []).reduce((sum, r) => sum + parseFloat(r.amount), 0)
+      if (totalRefunded >= parseFloat(order.total) - 0.01) {
+        await supabase
+          .from('orders')
+          .update({ is_refunded: true, payment_status: 'refunded' })
+          .eq('id', order_id)
+      }
+    } else {
+      await supabase
+        .from('orders')
+        .update({ is_refunded: true, payment_status: 'refunded' })
+        .eq('id', order_id)
     }
 
     // Log activity
@@ -142,13 +231,13 @@ router.post('/', [
       entity_type: 'order',
       entity_id: order.id,
       entity_name: order.order_number,
-      details: { amount, reason, original_total: order.total }
+      details: { amount, reason, original_total: order.total, is_partial: is_partial || false, items_count: items?.length || 0 }
     })
 
     // Auto-post to accounting journal
     try {
       const { postRefundJournal } = await import('../services/accountingEngine.js')
-      await postRefundJournal(refund)
+      await postRefundJournal(refund, items || null)
     } catch (accErr) {
       console.error('Accounting auto-post failed:', accErr.message)
     }
@@ -175,7 +264,13 @@ router.get('/:id', [
       return res.status(404).json({ error: 'Refund not found' })
     }
 
-    res.json(data)
+    // Fetch refund items if any
+    const { data: refundItems } = await supabase
+      .from('refund_items')
+      .select('*, products(name)')
+      .eq('refund_id', data.id)
+
+    res.json({ ...data, items: refundItems || [] })
   } catch (err) {
     next(err)
   }

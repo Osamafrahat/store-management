@@ -271,7 +271,7 @@ export async function postOrderJournal(order, orderItems) {
 }
 
 // Auto-post refund to journal
-export async function postRefundJournal(refund) {
+export async function postRefundJournal(refund, refundItems = null) {
   const { data: refundAccount } = await supabase.from('accounts').select('id').eq('code', '4020').single()
   const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
@@ -285,7 +285,7 @@ export async function postRefundJournal(refund) {
       accountId: refundAccount.id,
       debit: parseFloat(refund.amount),
       credit: 0,
-      description: `Refund - Order refund`,
+      description: refundItems ? 'Refund - partial' : 'Refund - full order',
     })
   }
 
@@ -295,53 +295,74 @@ export async function postRefundJournal(refund) {
       accountId: cashAccount.id,
       debit: 0,
       credit: parseFloat(refund.amount),
-      description: `Refund payment`,
+      description: 'Refund payment',
     })
   }
 
   // Reverse COGS: restore inventory value
-  // Look up order items to calculate cost
   if (refund.order_id && cogsAccount && inventoryAccount) {
-    const { data: orderItems } = await supabase
-      .from('order_items')
-      .select('quantity, cost_price, unit_price')
-      .eq('order_id', refund.order_id)
+    let refundCost = 0
 
-    if (orderItems && orderItems.length > 0) {
-      // Calculate proportional cost based on refund amount vs order total
-      const { data: order } = await supabase
-        .from('orders')
-        .select('total')
-        .eq('id', refund.order_id)
-        .single()
+    if (refundItems && refundItems.length > 0) {
+      // Item-level refund: look up cost_price from products for each refunded item
+      for (const ri of refundItems) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('cost_price')
+          .eq('id', ri.product_id)
+          .single()
 
-      if (order && parseFloat(order.total) > 0) {
-        const refundRatio = parseFloat(refund.amount) / parseFloat(order.total)
-        let totalCost = 0
-        for (const item of orderItems) {
-          const cost = item.cost_price ? parseFloat(item.cost_price) : parseFloat(item.unit_price) * 0.5
-          totalCost += cost * item.quantity
-        }
-        const refundCost = totalCost * refundRatio
+        const cost = product?.cost_price ? parseFloat(product.cost_price) : parseFloat(ri.unit_price) * 0.5
+        refundCost += cost * ri.quantity
+      }
+    } else {
+      // Full refund: use proportional cost calculation
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('quantity, unit_price, product_id')
+        .eq('order_id', refund.order_id)
 
-        if (refundCost > 0) {
-          // Debit inventory (restore asset)
-          lines.push({
-            accountId: inventoryAccount.id,
-            debit: refundCost,
-            credit: 0,
-            description: `Inventory restored - refund`,
-          })
+      if (orderItems && orderItems.length > 0) {
+        const { data: order } = await supabase
+          .from('orders')
+          .select('total')
+          .eq('id', refund.order_id)
+          .single()
 
-          // Credit COGS (reverse expense)
-          lines.push({
-            accountId: cogsAccount.id,
-            debit: 0,
-            credit: refundCost,
-            description: `COGS reversed - refund`,
-          })
+        if (order && parseFloat(order.total) > 0) {
+          const refundRatio = parseFloat(refund.amount) / parseFloat(order.total)
+          let totalCost = 0
+          for (const item of orderItems) {
+            const { data: product } = await supabase
+              .from('products')
+              .select('cost_price')
+              .eq('id', item.product_id)
+              .single()
+
+            const cost = product?.cost_price ? parseFloat(product.cost_price) : parseFloat(item.unit_price) * 0.5
+            totalCost += cost * item.quantity
+          }
+          refundCost = totalCost * refundRatio
         }
       }
+    }
+
+    if (refundCost > 0) {
+      // Debit inventory (restore asset)
+      lines.push({
+        accountId: inventoryAccount.id,
+        debit: refundCost,
+        credit: 0,
+        description: 'Inventory restored - refund',
+      })
+
+      // Credit COGS (reverse expense)
+      lines.push({
+        accountId: cogsAccount.id,
+        debit: 0,
+        credit: refundCost,
+        description: 'COGS reversed - refund',
+      })
     }
   }
 
@@ -349,7 +370,7 @@ export async function postRefundJournal(refund) {
 
   return createJournalEntry({
     date: new Date().toISOString().split('T')[0],
-    description: `Refund for order`,
+    description: refundItems ? `Partial refund - ${refundItems.length} item(s)` : 'Full order refund',
     reference: `REF-${refund.id}`,
     sourceType: 'refund',
     sourceId: refund.id,
