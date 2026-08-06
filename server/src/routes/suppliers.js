@@ -21,7 +21,22 @@ router.get('/', async (req, res, next) => {
       .order('name')
 
     if (error) throw error
-    res.json(data)
+
+    // Enrich with AP balance from accounts table
+    const enriched = await Promise.all((data || []).map(async (supplier) => {
+      let balance = 0
+      if (supplier.account_code) {
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('balance')
+          .eq('code', supplier.account_code)
+          .single()
+        balance = account?.balance || 0
+      }
+      return { ...supplier, balance }
+    }))
+
+    res.json(enriched)
   } catch (err) {
     next(err)
   }

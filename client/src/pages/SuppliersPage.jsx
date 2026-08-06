@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { suppliersApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, Truck, Phone, Mail, MapPin } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, Truck, Phone, Mail, MapPin, DollarSign } from 'lucide-react'
 
 export default function SuppliersPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -59,6 +59,11 @@ export default function SuppliersPage() {
       console.error('Failed to save supplier:', err)
       toastError(t('suppliers.failedToSave'))
     }
+  }
+
+  const formatAmount = (val) => {
+    const num = parseFloat(val) || 0
+    return num.toLocaleString('en-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   if (loading) {
@@ -155,6 +160,21 @@ export default function SuppliersPage() {
                 <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
                   {supplier.notes}
                 </p>
+              )}
+
+              {/* AP Balance */}
+              {supplier.account_code && (
+                <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                      <DollarSign className="w-4 h-4" />
+                      <span>{t('suppliers.remainingBalance')}</span>
+                    </div>
+                    <span className={`text-sm font-bold ${parseFloat(supplier.balance) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {formatAmount(supplier.balance)}
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
           ))}

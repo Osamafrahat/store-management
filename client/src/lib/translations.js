@@ -241,6 +241,7 @@ export const translations = {
     'suppliers.failedToDelete': 'Failed to delete supplier',
     'suppliers.update': 'Update',
     'suppliers.add': 'Add',
+    'suppliers.remainingBalance': 'Remaining Balance:',
 
     // Promotions
     'promotions.title': 'Promotions & Discounts',
@@ -1230,6 +1231,7 @@ export const translations = {
     'suppliers.failedToDelete': 'فشل حذف المورد',
     'suppliers.update': 'تحديث',
     'suppliers.add': 'إضافة',
+    'suppliers.remainingBalance': 'الرصيد المتبقي:',
     'suppliers.created': 'تم إضافة المورد بنجاح',
     'suppliers.updated': 'تم تحديث المورد بنجاح',
     'suppliers.deleted': 'تم حذف المورد بنجاح',
