@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS products (
   supplier_id BIGINT REFERENCES suppliers(id) ON DELETE SET NULL,
   price NUMERIC NOT NULL DEFAULT 0,
   cost_price NUMERIC DEFAULT 0,
-  stock_quantity INTEGER DEFAULT 0,
+  stock_quantity NUMERIC DEFAULT 0,
   low_stock_threshold INTEGER DEFAULT 10,
   min_stock INTEGER DEFAULT 0,
   max_stock INTEGER DEFAULT 0,

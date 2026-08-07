@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS products (
   category_id BIGINT REFERENCES categories(id) ON DELETE SET NULL,
   price NUMERIC NOT NULL DEFAULT 0,
   cost_price NUMERIC DEFAULT 0,
-  stock_quantity INTEGER DEFAULT 0,
+  stock_quantity NUMERIC DEFAULT 0,
   low_stock_threshold INTEGER DEFAULT 10,
   is_refundable BOOLEAN DEFAULT true,
   unit_of_measure TEXT DEFAULT 'quantity',

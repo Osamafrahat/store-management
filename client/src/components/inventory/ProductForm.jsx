@@ -237,6 +237,7 @@ export default function ProductForm({ product, categories, suppliers, onSave, on
                 value={formData.stock_quantity}
                 onChange={handleChange}
                 min="0"
+                step="0.01"
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               />
             </div>

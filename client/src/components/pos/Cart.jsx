@@ -102,19 +102,40 @@ export default function Cart({ onCheckout }) {
 
                   {/* Quantity Controls */}
                   <div className="flex items-center gap-2 mt-2">
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
+                    {item.product.unit_of_measure && item.product.unit_of_measure !== 'quantity' ? (
+                      <>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value)
+                            if (val > 0) updateQuantity(item.product.id, val)
+                          }}
+                          className="w-20 px-2 py-1 text-sm text-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                        />
+                        <span className="text-xs text-gray-500">
+                          {item.product.unit_of_measure === 'kilo' ? 'kg' : item.product.unit_of_measure === 'liter' ? 'L' : 'm'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

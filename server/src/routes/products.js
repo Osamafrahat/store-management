@@ -89,7 +89,7 @@ router.post('/', [
   body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
   body('sku').optional().trim().isLength({ max: 50 }),
   body('barcode').optional().trim().isLength({ max: 100 }),
-  body('stock_quantity').optional().isInt({ min: 0 }).withMessage('Stock must be non-negative'),
+  body('stock_quantity').optional().isFloat({ min: 0 }).withMessage('Stock must be non-negative'),
   body('low_stock_threshold').optional().isInt({ min: 0 }),
   body('cost_price').optional().isFloat({ min: 0 }),
 ], validate, async (req, res, next) => {
