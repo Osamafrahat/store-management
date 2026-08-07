@@ -142,6 +142,7 @@ function RefundForm({ onSave, onClose }) {
   const [orderNumber, setOrderNumber] = useState('')
   const [order, setOrder] = useState(null)
   const [orderItems, setOrderItems] = useState([])
+  const [refundableItems, setRefundableItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedItems, setSelectedItems] = useState([])
@@ -155,6 +156,7 @@ function RefundForm({ onSave, onClose }) {
     setError('')
     setOrder(null)
     setOrderItems([])
+    setRefundableItems([])
     setSelectedItems([])
     setRefundAll(false)
 
@@ -167,17 +169,40 @@ function RefundForm({ onSave, onClose }) {
         return
       }
 
-      if (foundOrder.is_refunded) {
-        setError(t('refunds.alreadyRefunded'))
-        return
-      }
-
-      // Fetch full order with items
+      // Fetch full order with items, refunds, refund_items
       const detailRes = await ordersApi.getById(foundOrder.id)
       const fullOrder = detailRes.data
 
       setOrder(fullOrder)
       setOrderItems(fullOrder.items || [])
+
+      // Calculate already-refunded quantities per order_item_id
+      const refundedQtyMap = {}
+      const refundItems = fullOrder.refund_items || []
+      for (const ri of refundItems) {
+        refundedQtyMap[ri.order_item_id] = (refundedQtyMap[ri.order_item_id] || 0) + ri.quantity
+      }
+
+      // Build refundable items (only items with remaining quantity > 0)
+      const items = (fullOrder.items || [])
+        .map(item => {
+          const originalQty = item.quantity
+          const refundedQty = refundedQtyMap[item.id] || 0
+          const remainingQty = originalQty - refundedQty
+          return {
+            ...item,
+            refunded_quantity: refundedQty,
+            remaining_quantity: remainingQty,
+            remaining_total: remainingQty * parseFloat(item.unit_price) - (remainingQty < originalQty ? (parseFloat(item.discount) || 0) * (remainingQty / originalQty) : (parseFloat(item.discount) || 0)),
+          }
+        })
+        .filter(item => item.remaining_quantity > 0)
+
+      setRefundableItems(items)
+
+      if (items.length === 0) {
+        setError(t('refunds.allItemsRefunded'))
+      }
     } catch (err) {
       setError(t('refunds.failedToSearch'))
     } finally {
@@ -195,11 +220,13 @@ function RefundForm({ onSave, onClose }) {
         order_item_id: item.id,
         product_id: item.product_id,
         product_name: item.products?.name || item.product_name || 'Product',
-        max_quantity: item.quantity,
-        quantity: item.quantity,
+        max_quantity: item.remaining_quantity,
+        quantity: item.remaining_quantity,
         unit_price: parseFloat(item.unit_price),
         item_discount: parseFloat(item.discount) || 0,
         item_total: parseFloat(item.total),
+        original_quantity: item.quantity,
+        refunded_quantity: item.refunded_quantity,
       }]
     })
   }
@@ -219,15 +246,17 @@ function RefundForm({ onSave, onClose }) {
       setSelectedItems([])
       setRefundAll(false)
     } else {
-      setSelectedItems(orderItems.map(item => ({
+      setSelectedItems(refundableItems.map(item => ({
         order_item_id: item.id,
         product_id: item.product_id,
         product_name: item.products?.name || item.product_name || 'Product',
-        max_quantity: item.quantity,
-        quantity: item.quantity,
+        max_quantity: item.remaining_quantity,
+        quantity: item.remaining_quantity,
         unit_price: parseFloat(item.unit_price),
         item_discount: parseFloat(item.discount) || 0,
         item_total: parseFloat(item.total),
+        original_quantity: item.quantity,
+        refunded_quantity: item.refunded_quantity,
       })))
       setRefundAll(true)
     }
@@ -340,7 +369,7 @@ function RefundForm({ onSave, onClose }) {
             </div>
           )}
 
-          {order && orderItems.length > 0 && (
+          {order && refundableItems.length > 0 && (
             <>
               {/* Order Summary */}
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-2">
@@ -348,6 +377,12 @@ function RefundForm({ onSave, onClose }) {
                   <span className="text-gray-500">{t('refunds.orderTotal')}</span>
                   <span className="font-semibold">{formatAmount(order.total)}</span>
                 </div>
+                {order.total_refunded > 0 && (
+                  <div className="flex justify-between text-sm text-red-600">
+                    <span>{t('refunds.alreadyRefunded')}</span>
+                    <span>-{formatAmount(order.total_refunded)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">{t('refunds.paymentMethod')}</span>
                   <span className="capitalize">{order.payment_method}</span>
@@ -403,11 +438,12 @@ function RefundForm({ onSave, onClose }) {
                   {t('refunds.orderItems')}
                 </h3>
                 <div className="space-y-2">
-                  {orderItems.map((item) => {
+                  {refundableItems.map((item) => {
                     const selected = selectedItems.find(i => i.order_item_id === item.id)
                     const isSelected = !!selected
                     const productName = item.products?.name || item.product_name || 'Product'
-                    const itemUnitTotal = parseFloat(item.unit_price) * item.quantity - (parseFloat(item.discount) || 0)
+                    const itemUnitTotal = parseFloat(item.unit_price) * item.remaining_quantity - (parseFloat(item.discount) || 0)
+                    const isPartiallyRefunded = item.refunded_quantity > 0
 
                     return (
                       <div
@@ -430,7 +466,10 @@ function RefundForm({ onSave, onClose }) {
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">{productName}</div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatAmount(item.unit_price)} x {item.quantity}
+                            {formatAmount(item.unit_price)} x {item.remaining_quantity}
+                            {isPartiallyRefunded && (
+                              <span className="text-amber-500 ml-1">(orig: {item.quantity}, refunded: {item.refunded_quantity})</span>
+                            )}
                             {parseFloat(item.discount) > 0 && (
                               <span className="text-green-600 ml-1">(-{formatAmount(item.discount)})</span>
                             )}
@@ -505,10 +544,10 @@ function RefundForm({ onSave, onClose }) {
             </>
           )}
 
-          {order && orderItems.length === 0 && (
+          {order && refundableItems.length === 0 && !error && (
             <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
               <AlertCircle className="w-5 h-5" />
-              <span className="text-sm">{t('refunds.noItemsFound')}</span>
+              <span className="text-sm">{t('refunds.allItemsRefunded')}</span>
             </div>
           )}
 

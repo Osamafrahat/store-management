@@ -36,7 +36,39 @@ router.get('/', async (req, res, next) => {
         const { data: c } = await supabase.from('customers').select('name').eq('id', order.customer_id).single()
         customer_name = c?.name || null
       }
-      return { ...order, users: user_name ? { full_name: user_name } : null, customers: customer_name ? { name: customer_name } : null }
+
+      // Get refund summary for this order
+      let total_refunded = 0
+      let refund_count = 0
+      let has_partial_refund = false
+      const { data: refunds } = await supabase
+        .from('refunds')
+        .select('id, amount, is_partial')
+        .eq('order_id', order.id)
+
+      if (refunds && refunds.length > 0) {
+        refund_count = refunds.length
+        total_refunded = refunds.reduce((sum, r) => sum + parseFloat(r.amount), 0)
+        has_partial_refund = refunds.some(r => r.is_partial)
+      }
+
+      // Determine refund status
+      let refund_status = 'paid'
+      if (has_partial_refund) {
+        refund_status = 'partial'
+      } else if (order.is_refunded || refund_count > 0) {
+        refund_status = 'refunded'
+      }
+
+      return {
+        ...order,
+        users: user_name ? { full_name: user_name } : null,
+        customers: customer_name ? { name: customer_name } : null,
+        total_refunded,
+        refund_count,
+        has_partial_refund,
+        refund_status,
+      }
     }))
 
     res.json(enriched)
@@ -84,12 +116,35 @@ router.get('/:id', async (req, res, next) => {
       .select('*')
       .eq('order_id', order.id)
 
+    // Get refunds with items
+    const { data: refunds } = await supabase
+      .from('refunds')
+      .select('*')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: false })
+
+    // Get refund items for all refunds on this order
+    let refundItems = []
+    if (refunds && refunds.length > 0) {
+      const refundIds = refunds.map(r => r.id)
+      const { data: ri } = await supabase
+        .from('refund_items')
+        .select('*')
+        .in('refund_id', refundIds)
+      refundItems = ri || []
+    }
+
+    const totalRefunded = (refunds || []).reduce((sum, r) => sum + parseFloat(r.amount), 0)
+
     res.json({
       ...order,
       users: user_name ? { full_name: user_name } : null,
       customers: customer_name ? { name: customer_name } : null,
       items: items || [],
-      payments: payments || []
+      payments: payments || [],
+      refunds: refunds || [],
+      refund_items: refundItems,
+      total_refunded: totalRefunded
     })
   } catch (err) {
     next(err)

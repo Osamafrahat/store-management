@@ -42,21 +42,32 @@ export default function InvoicesPage() {
     }
   }
 
+  const getOrderStatus = (order) => {
+    if (order.refund_status === 'partial') return 'partial'
+    if (order.refund_status === 'refunded' || order.is_refunded || order.payment_status === 'refunded') return 'refunded'
+    return order.payment_status || 'paid'
+  }
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !search ||
       order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
       order.customers?.name?.toLowerCase().includes(search.toLowerCase()) ||
       order.users?.full_name?.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'refunded' ? order.is_refunded : order.payment_status === statusFilter)
+    const orderStatus = getOrderStatus(order)
+    const matchesStatus = statusFilter === 'all' || orderStatus === statusFilter
     return matchesSearch && matchesStatus
   })
 
   const stats = {
     total: orders.length,
-    paid: orders.filter(o => !o.is_refunded && o.payment_status === 'paid').length,
-    refunded: orders.filter(o => o.is_refunded || o.payment_status === 'refunded').length,
-    totalRevenue: orders.filter(o => !o.is_refunded).reduce((s, o) => s + (parseFloat(o.total) || 0), 0),
+    paid: orders.filter(o => getOrderStatus(o) === 'paid').length,
+    refunded: orders.filter(o => getOrderStatus(o) === 'refunded').length,
+    partial: orders.filter(o => getOrderStatus(o) === 'partial').length,
+    totalRevenue: orders.filter(o => getOrderStatus(o) !== 'refunded').reduce((s, o) => {
+      const total = parseFloat(o.total) || 0
+      const refunded = parseFloat(o.total_refunded) || 0
+      return s + (total - refunded)
+    }, 0),
   }
 
   const handleViewReceipt = async (order) => {
@@ -156,7 +167,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg"><FileText className="w-5 h-5 text-primary-600" /></div>
@@ -172,6 +183,15 @@ export default function InvoicesPage() {
             <div>
               <p className="text-sm text-gray-500">{t('invoices.paid') || 'Paid'}</p>
               <p className="text-xl font-bold text-green-600">{stats.paid}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg"><Clock className="w-5 h-5 text-amber-600" /></div>
+            <div>
+              <p className="text-sm text-gray-500">{t('invoices.partialRefund') || 'Partial Refund'}</p>
+              <p className="text-xl font-bold text-amber-600">{stats.partial}</p>
             </div>
           </div>
         </div>
@@ -211,6 +231,7 @@ export default function InvoicesPage() {
           {[
             { key: 'all', label: t('reports.all') || 'All' },
             { key: 'paid', label: t('invoices.paid') || 'Paid' },
+            { key: 'partial', label: t('invoices.partialRefund') || 'Partial Refund' },
             { key: 'refunded', label: t('invoices.refunded') || 'Refunded' },
           ].map(({ key, label }) => (
             <button
@@ -254,8 +275,8 @@ export default function InvoicesPage() {
                 </tr>
               ) : (
                 filteredOrders.map((order) => {
-                  const isRefunded = order.is_refunded || order.payment_status === 'refunded'
-                  const StatusIcon = STATUS_ICONS[order.payment_status] || Clock
+                  const orderStatus = getOrderStatus(order)
+                  const StatusIcon = STATUS_ICONS[orderStatus] || Clock
                   return (
                     <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                       <td className="px-4 py-3 font-mono font-semibold">{order.order_number}</td>
@@ -265,12 +286,17 @@ export default function InvoicesPage() {
                       <td className="px-4 py-3 text-center">
                         {order.items_count || order.items?.length || '-'}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold">{formatCurrency(order.total)}</td>
+                      <td className="px-4 py-3 text-right font-semibold">
+                        {formatCurrency(order.total)}
+                        {order.total_refunded > 0 && (
+                          <div className="text-xs text-red-500">-{formatCurrency(order.total_refunded)} refunded</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 capitalize hidden sm:table-cell">{order.payment_method}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[order.payment_status] || STATUS_COLORS.pending}`}>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[orderStatus] || STATUS_COLORS.pending}`}>
                           <StatusIcon className="w-3 h-3" />
-                          {isRefunded ? 'Refunded' : order.payment_status}
+                          {orderStatus === 'partial' ? 'Partial Refund' : orderStatus === 'refunded' ? 'Refunded' : orderStatus}
                         </span>
                       </td>
                       <td className="px-4 py-3">
