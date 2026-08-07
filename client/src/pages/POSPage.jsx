@@ -274,6 +274,7 @@ export default function POSPage() {
                 payments: paymentData.payments,
                 user_id: currentUser?.id,
                 customer_id: selectedCustomer?.id || null,
+                promotion_id: useCartStore.getState().promoId || null,
                 created_at: new Date().toISOString(),
               }
 

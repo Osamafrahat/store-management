@@ -155,7 +155,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { order_number, items, subtotal, discount_amount, tax_amount, total,
-      payment_method, payment_status, payments, customer_id } = req.body
+      payment_method, payment_status, payments, customer_id, promotion_id } = req.body
 
     if (!order_number || !items || items.length === 0) {
       return res.status(400).json({ error: 'Order number and items are required' })
@@ -176,6 +176,7 @@ router.post('/', async (req, res, next) => {
         payment_status: payment_status || 'paid',
         user_id: userId,
         customer_id: customer_id || null,
+        promotion_id: promotion_id || null,
         completed_at: new Date().toISOString()
       })
       .select()
@@ -187,7 +188,7 @@ router.post('/', async (req, res, next) => {
     res.status(201).json(order)
 
     // Everything below runs in background (fire and forget)
-    processOrderBackground(order, items, payments, customer_id, userId, order_number, total).catch(err => {
+    processOrderBackground(order, items, payments, customer_id, userId, order_number, total, promotion_id).catch(err => {
       console.error('[ORDER BG] Error:', err.message)
     })
   } catch (err) {
@@ -197,8 +198,24 @@ router.post('/', async (req, res, next) => {
 })
 
 // Background processing for order (stock, payments, accounting)
-async function processOrderBackground(order, items, payments, customer_id, userId, order_number, total) {
+async function processOrderBackground(order, items, payments, customer_id, userId, order_number, total, promotion_id) {
   console.log(`[ORDER BG] Processing order ${order_number}`)
+
+  // Increment promotion used_count
+  if (promotion_id) {
+    try {
+      const { data: promo } = await supabase.from('promotions').select('used_count, max_uses').eq('id', promotion_id).single()
+      if (promo) {
+        const newCount = (promo.used_count || 0) + 1
+        const updateData = { used_count: newCount }
+        if (promo.max_uses && newCount >= promo.max_uses) {
+          updateData.is_active = false
+        }
+        await supabase.from('promotions').update(updateData).eq('id', promotion_id)
+        console.log(`[ORDER BG] Promotion ${promotion_id} used_count incremented to ${newCount}`)
+      }
+    } catch (e) { console.error('[ORDER BG] Promotion update failed:', e.message) }
+  }
 
   // Update customer loyalty points
   if (customer_id) {

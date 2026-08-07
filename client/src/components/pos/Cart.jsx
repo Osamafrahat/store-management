@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCartStore } from '../../stores/cartStore'
 import { useAppStore } from '../../stores/appStore'
+import { promotionsApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import { Trash2, Plus, Minus, Tag, ShoppingBag, X } from 'lucide-react'
 
@@ -9,14 +10,31 @@ export default function Cart({ onCheckout }) {
   const { settings, t } = useAppStore()
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return
+    setPromoLoading(true)
+    setPromoError('')
     try {
-      applyPromo(promoInput, 10)
-      setPromoError('')
+      const subtotal = getSubtotal()
+      const response = await promotionsApi.validate(promoInput.trim(), subtotal)
+      const promo = response.data
+
+      let discountValue = 0
+      if (promo.type === 'percentage') {
+        discountValue = promo.value
+      } else {
+        discountValue = subtotal > 0 ? (promo.value / subtotal) * 100 : 0
+      }
+
+      applyPromo(promo.code, discountValue, promo.id)
+      setPromoInput('')
     } catch (err) {
-      setPromoError(t('cart.invalidPromo'))
+      const msg = err.response?.data?.error || t('cart.invalidPromo')
+      setPromoError(msg)
+    } finally {
+      setPromoLoading(false)
     }
   }
 
@@ -138,15 +156,16 @@ export default function Cart({ onCheckout }) {
                 type="text"
                 placeholder={t('cart.promoCode')}
                 value={promoInput}
-                onChange={(e) => setPromoInput(e.target.value)}
+                onChange={(e) => { setPromoInput(e.target.value); setPromoError('') }}
                 onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
                 className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               />
               <button
                 onClick={handleApplyPromo}
-                className="px-3 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                disabled={promoLoading}
+                className="px-3 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
               >
-                {t('cart.apply')}
+                {promoLoading ? '...' : t('cart.apply')}
               </button>
             </div>
           )}

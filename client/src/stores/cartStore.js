@@ -7,6 +7,7 @@ export const useCartStore = create(
       items: [],
       promoCode: null,
       promoDiscount: 0,
+      promoId: null,
 
       addItem: (product, quantity = 1) => set((state) => {
         const existingItem = state.items.find(item => item.product.id === product.id)
@@ -36,10 +37,10 @@ export const useCartStore = create(
             )
       })),
 
-      clearCart: () => set({ items: [], promoCode: null, promoDiscount: 0 }),
+      clearCart: () => set({ items: [], promoCode: null, promoDiscount: 0, promoId: null }),
 
-      applyPromo: (code, discount) => set({ promoCode: code, promoDiscount: discount }),
-      removePromo: () => set({ promoCode: null, promoDiscount: 0 }),
+      applyPromo: (code, discount, id) => set({ promoCode: code, promoDiscount: discount, promoId: id || null }),
+      removePromo: () => set({ promoCode: null, promoDiscount: 0, promoId: null }),
 
       getSubtotal: () => {
         const { items } = get()

@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS orders (
   total NUMERIC NOT NULL DEFAULT 0,
   payment_method TEXT DEFAULT 'cash',
   payment_status TEXT DEFAULT 'paid',
+  promotion_id BIGINT REFERENCES promotions(id),
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
