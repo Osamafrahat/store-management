@@ -224,43 +224,36 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
 
     const revenue = (accounts || []).filter(a => a.account_type === 'revenue')
     const expenses = (accounts || []).filter(a => a.account_type === 'expense')
-    const netIncome = revenue.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0) - expenses.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0)
+    const totalRevenue = revenue.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0)
+    const totalExpenses = expenses.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0)
+    const netIncome = totalRevenue - totalExpenses
 
-    if (Math.abs(netIncome) > 0.01) {
+    if (totalRevenue > 0.01 || totalExpenses > 0.01) {
       const { data: retainedEarnings } = await supabase.from('accounts').select('id').eq('code', '3020').single()
-      const { data: cyeAccount } = await supabase.from('accounts').select('id, balance').eq('code', '3030').single()
-      const { data: revenueAccounts } = await supabase.from('accounts').select('id').eq('account_type', 'revenue')
-      const { data: expenseAccounts } = await supabase.from('accounts').select('id').eq('account_type', 'expense')
 
       if (retainedEarnings) {
         const lines = []
 
         // Close revenue accounts (debit them to zero)
-        for (const acc of revenueAccounts || []) {
-          const acct = accounts.find(a => a.id === acc.id)
-          if (acct && acct.balance > 0) {
-            lines.push({ accountId: acc.id, debit: acct.balance, credit: 0, description: 'Year-end closing' })
+        for (const acc of revenue) {
+          if (acc.balance > 0) {
+            lines.push({ accountId: acc.id, debit: acc.balance, credit: 0, description: 'Year-end closing' })
           }
         }
 
         // Close expense accounts (credit them to zero)
-        for (const acc of expenseAccounts || []) {
-          const acct = accounts.find(a => a.id === acc.id)
-          if (acct && acct.balance > 0) {
-            lines.push({ accountId: acc.id, debit: 0, credit: acct.balance, description: 'Year-end closing' })
+        for (const acc of expenses) {
+          if (acc.balance > 0) {
+            lines.push({ accountId: acc.id, debit: 0, credit: acc.balance, description: 'Year-end closing' })
           }
         }
 
-        // Transfer Current Year Earnings (3030) to Retained Earnings (3020)
-        if (cyeAccount && Math.abs(cyeAccount.balance) > 0.01) {
-          if (cyeAccount.balance > 0) {
-            // Net income: debit 3030, credit 3020
-            lines.push({ accountId: cyeAccount.id, debit: cyeAccount.balance, credit: 0, description: 'Close current year earnings' })
-            lines.push({ accountId: retainedEarnings.id, debit: 0, credit: cyeAccount.balance, description: 'Transfer net income to retained earnings' })
+        // Transfer net income/loss to Retained Earnings (3020)
+        if (Math.abs(netIncome) > 0.01) {
+          if (netIncome > 0) {
+            lines.push({ accountId: retainedEarnings.id, debit: 0, credit: netIncome, description: 'Transfer net income to retained earnings' })
           } else {
-            // Net loss: debit 3020, credit 3030
-            lines.push({ accountId: retainedEarnings.id, debit: Math.abs(cyeAccount.balance), credit: 0, description: 'Transfer net loss to retained earnings' })
-            lines.push({ accountId: cyeAccount.id, debit: 0, credit: Math.abs(cyeAccount.balance), description: 'Close current year earnings' })
+            lines.push({ accountId: retainedEarnings.id, debit: Math.abs(netIncome), credit: 0, description: 'Transfer net loss to retained earnings' })
           }
         }
 
