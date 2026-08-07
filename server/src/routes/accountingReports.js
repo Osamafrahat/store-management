@@ -229,43 +229,55 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
     const netIncome = totalRevenue - totalExpenses
 
     if (totalRevenue > 0.01 || totalExpenses > 0.01) {
-      const { data: retainedEarnings } = await supabase.from('accounts').select('id').eq('code', '3020').single()
+      // Ensure Retained Earnings account exists
+      let { data: retainedEarnings } = await supabase.from('accounts').select('id').eq('code', '3020').single()
 
-      if (retainedEarnings) {
-        const lines = []
+      if (!retainedEarnings) {
+        const { data: newAcct } = await supabase.from('accounts').insert({
+          code: '3020', name: 'Retained Earnings', account_type: 'equity', balance: 0, is_active: true
+        }).select('id').single()
+        retainedEarnings = newAcct
+      }
 
-        // Close revenue accounts (debit them to zero)
-        for (const acc of revenue) {
-          if (acc.balance > 0) {
-            lines.push({ accountId: acc.id, debit: acc.balance, credit: 0, description: 'Year-end closing' })
-          }
+      if (!retainedEarnings) {
+        return res.status(500).json({ error: 'Could not find or create Retained Earnings account (3020)' })
+      }
+
+      const lines = []
+
+      // Close revenue accounts (debit them to zero)
+      for (const acc of revenue) {
+        if (acc.balance > 0) {
+          lines.push({ accountId: acc.id, debit: acc.balance, credit: 0, description: 'Year-end closing' })
         }
+      }
 
-        // Close expense accounts (credit them to zero)
-        for (const acc of expenses) {
-          if (acc.balance > 0) {
-            lines.push({ accountId: acc.id, debit: 0, credit: acc.balance, description: 'Year-end closing' })
-          }
+      // Close expense accounts (credit them to zero)
+      for (const acc of expenses) {
+        if (acc.balance > 0) {
+          lines.push({ accountId: acc.id, debit: 0, credit: acc.balance, description: 'Year-end closing' })
         }
+      }
 
-        // Transfer net income/loss to Retained Earnings (3020)
-        if (Math.abs(netIncome) > 0.01) {
-          if (netIncome > 0) {
-            lines.push({ accountId: retainedEarnings.id, debit: 0, credit: netIncome, description: 'Transfer net income to retained earnings' })
-          } else {
-            lines.push({ accountId: retainedEarnings.id, debit: Math.abs(netIncome), credit: 0, description: 'Transfer net loss to retained earnings' })
-          }
+      // Transfer net income/loss to Retained Earnings (3020)
+      if (Math.abs(netIncome) > 0.01) {
+        if (netIncome > 0) {
+          lines.push({ accountId: retainedEarnings.id, debit: 0, credit: netIncome, description: 'Transfer net income to retained earnings' })
+        } else {
+          lines.push({ accountId: retainedEarnings.id, debit: Math.abs(netIncome), credit: 0, description: 'Transfer net loss to retained earnings' })
         }
+      }
 
-        if (lines.length > 0) {
-          await createJournalEntry({
-            date: period.end_date,
-            description: `Year-end closing for ${period.name}`,
-            sourceType: 'closing',
-            lines,
-            createdBy: req.user?.id,
-          })
-        }
+      console.log('Close period lines:', JSON.stringify(lines, null, 2))
+
+      if (lines.length > 0) {
+        await createJournalEntry({
+          date: period.end_date,
+          description: `Year-end closing for ${period.name}`,
+          sourceType: 'closing',
+          lines,
+          createdBy: req.user?.id,
+        })
       }
     }
 
