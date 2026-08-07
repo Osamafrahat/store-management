@@ -181,6 +181,7 @@ export const useUserStore = create(
 
       // Logout
       logout: () => {
+        authApi.logout().catch(() => {})
         localStorage.removeItem('auth_token')
         set({
           currentUser: null,

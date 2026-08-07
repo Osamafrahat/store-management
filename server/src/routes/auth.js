@@ -2,6 +2,7 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import { body, validationResult } from 'express-validator'
 import { generateToken, generateSessionToken, authenticateToken } from '../middleware/auth.js'
+import { logActivity } from '../middleware/activityLogger.js'
 import supabase from '../db/supabase.js'
 
 const router = Router()
@@ -54,6 +55,15 @@ router.post('/login', [
     const token = generateToken({ ...user, session_token: updateError ? null : newSessionToken })
 
     const { password: _, ...userWithoutPassword } = user
+
+    logActivity({
+      user_id: user.id,
+      user_name: user.full_name || user.username,
+      action: 'logged_in',
+      entity_type: 'auth',
+      entity_name: user.username,
+      ip_address: req.ip || req.connection?.remoteAddress,
+    })
 
     res.json({ token, user: userWithoutPassword })
   } catch (err) {
@@ -158,6 +168,23 @@ router.put('/profile', authenticateToken, [
   } catch (err) {
     console.error('Update profile error:', err)
     res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    logActivity({
+      user_id: req.user?.id,
+      user_name: req.user?.full_name || req.user?.username,
+      action: 'logged_out',
+      entity_type: 'auth',
+      entity_name: req.user?.username,
+      ip_address: req.ip || req.connection?.remoteAddress,
+    })
+    res.json({ message: 'Logged out successfully' })
+  } catch (err) {
+    console.error('Logout error:', err)
+    res.json({ message: 'Logged out successfully' })
   }
 })
 

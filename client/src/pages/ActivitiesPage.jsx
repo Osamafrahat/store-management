@@ -9,6 +9,8 @@ const ACTION_ICONS = {
   deleted: { icon: '🗑️', color: 'text-red-600 bg-red-50 dark:bg-red-900/20' },
   refunded: { icon: '💸', color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' },
   toggled_active: { icon: '🔄', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20' },
+  logged_in: { icon: '🔑', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' },
+  logged_out: { icon: '🚪', color: 'text-gray-600 bg-gray-50 dark:bg-gray-900/20' },
 }
 
 const ENTITY_ICONS = {
@@ -22,6 +24,7 @@ const ENTITY_ICONS = {
   employee: Users,
   category: ClipboardList,
   refund: RotateCcw,
+  auth: Activity,
 }
 
 const ACTION_OPTIONS = [
@@ -31,6 +34,8 @@ const ACTION_OPTIONS = [
   { value: 'deleted', labelEn: 'Deleted', labelAr: 'حذف' },
   { value: 'refunded', labelEn: 'Refunded', labelAr: 'استرجاع' },
   { value: 'toggled_active', labelEn: 'Status Changed', labelAr: 'تغيير الحالة' },
+  { value: 'logged_in', labelEn: 'Login', labelAr: 'تسجيل دخول' },
+  { value: 'logged_out', labelEn: 'Logout', labelAr: 'تسجيل خروج' },
 ]
 
 const ENTITY_OPTIONS = [
@@ -240,7 +245,9 @@ export default function ActivitiesPage() {
                             activity.action === 'updated' ? 'تعديل' :
                             activity.action === 'deleted' ? 'حذف' :
                             activity.action === 'refunded' ? 'استرجاع' :
-                            activity.action === 'toggled_active' ? 'تغيير الحالة' : activity.action
+                            activity.action === 'toggled_active' ? 'تغيير الحالة' :
+                            activity.action === 'logged_in' ? 'تسجيل دخول' :
+                            activity.action === 'logged_out' ? 'تسجيل خروج' : activity.action
                           )}
                         </span>
                       </td>
@@ -257,7 +264,8 @@ export default function ActivitiesPage() {
                             activity.entity_type === 'user' ? 'مستخدم' :
                             activity.entity_type === 'customer' ? 'عميل' :
                             activity.entity_type === 'employee' ? 'موظف' :
-                            activity.entity_type === 'category' ? 'فئة' : activity.entity_type
+                            activity.entity_type === 'category' ? 'فئة' :
+                            activity.entity_type === 'auth' ? 'مصادقة' : activity.entity_type
                           )}</span>
                           {activity.entity_name && (
                             <span className="text-gray-500 dark:text-gray-400">— {activity.entity_name}</span>

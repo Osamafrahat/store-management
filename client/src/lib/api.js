@@ -53,6 +53,7 @@ export const authApi = {
   changePassword: (data) => api.post('/auth/change-password', data, { skipAuthRedirect: true }),
   getProfile: () => api.get('/auth/profile'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  logout: () => api.post('/auth/logout'),
 }
 
 // Products API
