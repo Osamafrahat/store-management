@@ -107,7 +107,7 @@ router.get('/:id', async (req, res, next) => {
     // Get order items
     const { data: items } = await supabase
       .from('order_items')
-      .select('*, products(name)')
+      .select('*, products(name, is_refundable, unit_of_measure)')
       .eq('order_id', order.id)
 
     // Get payments

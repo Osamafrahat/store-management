@@ -146,6 +146,8 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                 </button>
               </th>
               <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.status')}</th>
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.unitOfMeasure') || 'Unit'}</th>
+              <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.refundable') || 'Refundable'}</th>
               <th className="text-start p-4 font-medium text-gray-500 dark:text-gray-400">{t('inventory.supplier') || 'Supplier'}</th>
               <th className="text-end p-4 font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
             </tr>
@@ -196,6 +198,21 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
                   }`}>
                     {product.is_active ? t('inventory.active') : t('inventory.inactive')}
+                  </span>
+                </td>
+                <td className="p-4 text-sm text-gray-600 dark:text-gray-300">
+                  {product.unit_of_measure === 'kilo' ? t('inventory.unitKilo') :
+                   product.unit_of_measure === 'liter' ? t('inventory.unitLiter') :
+                   product.unit_of_measure === 'meter' ? t('inventory.unitMeter') :
+                   t('inventory.unitQuantity')}
+                </td>
+                <td className="p-4">
+                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                    product.is_refundable
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                  }`}>
+                    {product.is_refundable ? (t('common.yes') || 'Yes') : (t('common.no') || 'No')}
                   </span>
                 </td>
                 <td className="p-4 text-gray-600 dark:text-gray-300">

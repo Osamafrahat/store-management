@@ -15,6 +15,8 @@ export default function ProductForm({ product, categories, suppliers, onSave, on
     cost_price: '',
     stock_quantity: '0',
     low_stock_threshold: '10',
+    is_refundable: true,
+    unit_of_measure: 'quantity',
     image_url: '',
     description: '',
     is_active: true,
@@ -32,6 +34,8 @@ export default function ProductForm({ product, categories, suppliers, onSave, on
         cost_price: product.cost_price || '',
         stock_quantity: product.stock_quantity?.toString() || '0',
         low_stock_threshold: product.low_stock_threshold?.toString() || '10',
+        is_refundable: product.is_refundable ?? true,
+        unit_of_measure: product.unit_of_measure || 'quantity',
         image_url: product.image_url || '',
         description: product.description || '',
         is_active: product.is_active ?? true,
@@ -265,6 +269,38 @@ export default function ProductForm({ product, categories, suppliers, onSave, on
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               placeholder={t('inventory.descriptionPlaceholder')}
             />
+          </div>
+
+          {/* Unit of Measure */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('inventory.unitOfMeasure')}
+            </label>
+            <select
+              name="unit_of_measure"
+              value={formData.unit_of_measure}
+              onChange={handleChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+            >
+              <option value="quantity">{t('inventory.unitQuantity')}</option>
+              <option value="kilo">{t('inventory.unitKilo')}</option>
+              <option value="liter">{t('inventory.unitLiter')}</option>
+              <option value="meter">{t('inventory.unitMeter')}</option>
+            </select>
+          </div>
+
+          {/* Refundable */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              name="is_refundable"
+              checked={formData.is_refundable}
+              onChange={handleChange}
+              className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+            />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('inventory.isRefundable')}
+            </label>
           </div>
 
           {/* Active Status */}

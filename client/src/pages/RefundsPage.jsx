@@ -192,7 +192,7 @@ function RefundForm({ onSave, onClose }) {
         refundedQtyMap[ri.order_item_id] = (refundedQtyMap[ri.order_item_id] || 0) + ri.quantity
       }
 
-      // Build refundable items (only items with remaining quantity > 0)
+      // Build refundable items (only items with remaining quantity > 0 and is_refundable)
       const items = (fullOrder.items || [])
         .map(item => {
           const originalQty = item.quantity
@@ -202,10 +202,12 @@ function RefundForm({ onSave, onClose }) {
             ...item,
             refunded_quantity: refundedQty,
             remaining_quantity: remainingQty,
+            is_refundable: item.products?.is_refundable !== false,
+            unit_of_measure: item.products?.unit_of_measure || 'quantity',
             remaining_total: remainingQty * parseFloat(item.unit_price) - (remainingQty < originalQty ? (parseFloat(item.discount) || 0) * (remainingQty / originalQty) : (parseFloat(item.discount) || 0)),
           }
         })
-        .filter(item => item.remaining_quantity > 0)
+        .filter(item => item.remaining_quantity > 0 && item.is_refundable)
 
       setRefundableItems(items)
 

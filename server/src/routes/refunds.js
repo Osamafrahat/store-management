@@ -99,6 +99,42 @@ router.post('/', [
       }
     }
 
+    // Check if products are refundable
+    if (items && items.length > 0) {
+      // Item-level refund: check each product
+      const productIds = items.map(i => i.product_id)
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, is_refundable, name')
+        .in('id', productIds)
+
+      const nonRefundable = (products || []).filter(p => p.is_refundable === false)
+      if (nonRefundable.length > 0) {
+        const names = nonRefundable.map(p => p.name).join(', ')
+        return res.status(400).json({ error: `Cannot refund non-refundable items: ${names}` })
+      }
+    } else {
+      // Full refund: check all order items
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('product_id')
+        .eq('order_id', order_id)
+
+      if (orderItems && orderItems.length > 0) {
+        const productIds = orderItems.map(i => i.product_id)
+        const { data: products } = await supabase
+          .from('products')
+          .select('id, is_refundable, name')
+          .in('id', productIds)
+
+        const nonRefundable = (products || []).filter(p => p.is_refundable === false)
+        if (nonRefundable.length > 0) {
+          const names = nonRefundable.map(p => p.name).join(', ')
+          return res.status(400).json({ error: `Cannot refund non-refundable items: ${names}` })
+        }
+      }
+    }
+
     // Create refund
     const { data: refund, error: refundError } = await supabase
       .from('refunds')

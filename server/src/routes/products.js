@@ -95,7 +95,7 @@ router.post('/', [
 ], validate, async (req, res, next) => {
   try {
     const { name, sku, barcode, category_id, supplier_id, price, cost_price,
-            stock_quantity, low_stock_threshold, image_url, description } = req.body
+            stock_quantity, low_stock_threshold, is_refundable, unit_of_measure, image_url, description } = req.body
 
     // Check for duplicate SKU
     if (sku) {
@@ -133,6 +133,8 @@ router.post('/', [
         cost_price: cost_price || 0,
         stock_quantity: stock_quantity || 0,
         low_stock_threshold: low_stock_threshold || 10,
+        is_refundable: is_refundable !== false,
+        unit_of_measure: unit_of_measure || 'quantity',
         image_url: image_url || null,
         description: description || null
       })
@@ -184,7 +186,7 @@ router.put('/:id', [
     }
 
     const { name, sku, barcode, category_id, supplier_id, price, cost_price,
-            stock_quantity, low_stock_threshold, image_url, description, is_active } = req.body
+            stock_quantity, low_stock_threshold, is_refundable, unit_of_measure, image_url, description, is_active } = req.body
 
     // Check for duplicate SKU (excluding current product)
     if (sku && sku !== existing.sku) {
@@ -224,6 +226,8 @@ router.put('/:id', [
         cost_price: cost_price ?? existing.cost_price,
         stock_quantity: stock_quantity ?? existing.stock_quantity,
         low_stock_threshold: low_stock_threshold ?? existing.low_stock_threshold,
+        is_refundable: is_refundable ?? existing.is_refundable,
+        unit_of_measure: unit_of_measure ?? existing.unit_of_measure,
         image_url: image_url ?? existing.image_url,
         description: description ?? existing.description,
         is_active: is_active ?? existing.is_active,

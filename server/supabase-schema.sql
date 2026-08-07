@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS products (
   low_stock_threshold INTEGER DEFAULT 10,
   min_stock INTEGER DEFAULT 0,
   max_stock INTEGER DEFAULT 0,
+  is_refundable BOOLEAN DEFAULT true,
+  unit_of_measure TEXT DEFAULT 'quantity',
   image_url TEXT,
   description TEXT,
   is_active BOOLEAN DEFAULT true,
