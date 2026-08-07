@@ -43,10 +43,12 @@ export default function POSPage() {
     searchInputRef.current?.focus()
   }, [])
 
-  // Keep barcode input focused
+  // Keep barcode input focused (unless clicking on another input/textarea)
   useEffect(() => {
-    const focusBarcode = () => barcodeInputRef.current?.focus()
-    focusBarcode()
+    const focusBarcode = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
+      barcodeInputRef.current?.focus()
+    }
     document.addEventListener('click', focusBarcode)
     return () => document.removeEventListener('click', focusBarcode)
   }, [])
