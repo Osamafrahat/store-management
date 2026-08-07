@@ -208,17 +208,22 @@ async function recalculateCurrentYearEarnings() {
 
   const netIncome = totalRevenue - totalExpenses
 
-  // Find 3030 account
-  const { data: cyeAccount } = await supabase
+  // Find or create 3030 account
+  let { data: cyeAccount } = await supabase
     .from('accounts')
     .select('id, balance')
     .eq('code', '3030')
     .single()
 
-  if (!cyeAccount) return
-
-  // Only update if balance changed
-  if (Math.abs(cyeAccount.balance - netIncome) > 0.01) {
+  if (!cyeAccount) {
+    const { data: newAcc } = await supabase
+      .from('accounts')
+      .insert({ code: '3030', name: 'Current Year Earnings', account_type: 'equity', balance: netIncome })
+      .select('id, balance')
+      .single()
+    cyeAccount = newAcc
+    console.log('[CYE] Created 3030 account with balance:', netIncome)
+  } else if (Math.abs(cyeAccount.balance - netIncome) > 0.01) {
     await supabase
       .from('accounts')
       .update({ balance: netIncome, updated_at: new Date().toISOString() })
