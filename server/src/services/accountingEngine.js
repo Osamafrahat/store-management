@@ -120,6 +120,11 @@ export async function createJournalEntry({ date, description, reference, sourceT
     linesCount: linesData.length
   })
 
+  // Recalculate current year earnings after every journal entry
+  recalculateCurrentYearEarnings().catch(err =>
+    console.error('[CYE] Recalculate failed:', err.message)
+  )
+
   return entry
 }
 
@@ -181,6 +186,45 @@ async function updateAccountBalance(accountId, periodId, debit, credit) {
       debit,
       credit
     })
+  }
+}
+
+// Recalculate Current Year Earnings (3030) = Total Revenue - Total Expenses
+async function recalculateCurrentYearEarnings() {
+  const { data: accounts } = await supabase
+    .from('accounts')
+    .select('id, account_type, balance')
+    .in('account_type', ['revenue', 'expense'])
+
+  if (!accounts) return
+
+  const totalRevenue = accounts
+    .filter(a => a.account_type === 'revenue')
+    .reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0)
+
+  const totalExpenses = accounts
+    .filter(a => a.account_type === 'expense')
+    .reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0)
+
+  const netIncome = totalRevenue - totalExpenses
+
+  // Find 3030 account
+  const { data: cyeAccount } = await supabase
+    .from('accounts')
+    .select('id, balance')
+    .eq('code', '3030')
+    .single()
+
+  if (!cyeAccount) return
+
+  // Only update if balance changed
+  if (Math.abs(cyeAccount.balance - netIncome) > 0.01) {
+    await supabase
+      .from('accounts')
+      .update({ balance: netIncome, updated_at: new Date().toISOString() })
+      .eq('id', cyeAccount.id)
+
+    console.log('[CYE] Current Year Earnings updated:', netIncome)
   }
 }
 
@@ -607,6 +651,7 @@ export async function seedChartOfAccounts() {
     // Equity
     { code: '3010', name: 'Owner Equity', account_type: 'equity' },
     { code: '3020', name: 'Retained Earnings', account_type: 'equity' },
+    { code: '3030', name: 'Current Year Earnings', account_type: 'equity' },
     // Revenue
     { code: '4010', name: 'Sales Revenue', account_type: 'revenue' },
     { code: '4020', name: 'Sales Returns', account_type: 'revenue' },

@@ -225,6 +225,7 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
 
     if (Math.abs(netIncome) > 0.01) {
       const { data: retainedEarnings } = await supabase.from('accounts').select('id').eq('code', '3020').single()
+      const { data: cyeAccount } = await supabase.from('accounts').select('id, balance').eq('code', '3030').single()
       const { data: revenueAccounts } = await supabase.from('accounts').select('id').eq('account_type', 'revenue')
       const { data: expenseAccounts } = await supabase.from('accounts').select('id').eq('account_type', 'expense')
 
@@ -247,11 +248,17 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
           }
         }
 
-        // Post net income to retained earnings
-        if (netIncome > 0) {
-          lines.push({ accountId: retainedEarnings.id, debit: 0, credit: netIncome, description: 'Net income' })
-        } else {
-          lines.push({ accountId: retainedEarnings.id, debit: Math.abs(netIncome), credit: 0, description: 'Net loss' })
+        // Transfer Current Year Earnings (3030) to Retained Earnings (3020)
+        if (cyeAccount && Math.abs(cyeAccount.balance) > 0.01) {
+          if (cyeAccount.balance > 0) {
+            // Net income: debit 3030, credit 3020
+            lines.push({ accountId: cyeAccount.id, debit: cyeAccount.balance, credit: 0, description: 'Close current year earnings' })
+            lines.push({ accountId: retainedEarnings.id, debit: 0, credit: cyeAccount.balance, description: 'Transfer net income to retained earnings' })
+          } else {
+            // Net loss: debit 3020, credit 3030
+            lines.push({ accountId: retainedEarnings.id, debit: Math.abs(cyeAccount.balance), credit: 0, description: 'Transfer net loss to retained earnings' })
+            lines.push({ accountId: cyeAccount.id, debit: 0, credit: Math.abs(cyeAccount.balance), description: 'Close current year earnings' })
+          }
         }
 
         if (lines.length > 0) {
