@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import supabase from '../db/supabase.js'
+import { createJournalEntry } from '../services/accountingEngine.js'
 
 const router = Router()
 
@@ -264,7 +265,6 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
         }
 
         if (lines.length > 0) {
-          const { createJournalEntry } = await import('../services/accountingEngine.js')
           await createJournalEntry({
             date: period.end_date,
             description: `Year-end closing for ${period.name}`,
@@ -288,8 +288,8 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
 
     res.json({ message: 'Fiscal period closed successfully' })
   } catch (err) {
-    console.error('Close fiscal period error:', err)
-    res.status(500).json({ error: 'Internal server error' })
+    console.error('Close fiscal period error:', err.message, err.stack)
+    res.status(500).json({ error: err.message || 'Internal server error' })
   }
 })
 
