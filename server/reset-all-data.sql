@@ -1,8 +1,10 @@
--- Reset all data EXCEPT users
--- Run this in Supabase SQL Editor
+-- ============================================================
+-- RESET ALL DATA (except users)
+-- Truncates all transactional data, re-seeds settings & accounts
+-- ============================================================
 
--- Truncate all tables (CASCADE handles foreign keys)
 TRUNCATE TABLE
+  refund_items,
   order_items,
   payment_splits,
   stock_movements,
@@ -28,40 +30,44 @@ CASCADE;
 
 -- Re-seed store settings
 INSERT INTO store_settings (key, value) VALUES
-  ('storeName', 'متجر النيل'),
+  ('storeName', 'My Store'),
+  ('storeAddress', ''),
+  ('storePhone', ''),
+  ('storeLogo', ''),
+  ('taxRate', '14'),
   ('currency', 'EGP'),
-  ('vatRate', '14'),
-  ('receiptNote', 'شكراً لتسوقكم من متجر النيل'),
+  ('currencySymbol', 'ج.م'),
+  ('receiptFooter', 'Thank you for your purchase!'),
   ('lowStockThreshold', '10'),
-  ('loyaltyPointsPerCurrency', '0.01')
+  ('loyaltyPointsPerCurrency', '1')
 ON CONFLICT (key) DO NOTHING;
 
 -- Re-seed chart of accounts
 INSERT INTO accounts (code, name, account_type, description) VALUES
-  ('1010', 'Cash on Hand', 'asset', 'Physical cash in register and vault'),
-  ('1020', 'Bank Account', 'asset', 'Business bank account'),
-  ('1030', 'Accounts Receivable', 'asset', 'Amounts owed by customers'),
-  ('1040', 'Petty Cash', 'asset', 'Small daily operational cash'),
-  ('1050', 'Inventory', 'asset', 'Products held for resale'),
-  ('1060', 'Prepaid Expenses', 'asset', 'Advance payments'),
-  ('2010', 'Accounts Payable', 'liability', 'Amounts owed to suppliers'),
-  ('2020', 'Loans Payable', 'liability', 'Business loans'),
-  ('2030', 'VAT Payable', 'liability', 'Tax collected on sales'),
-  ('2040', 'Accrued Expenses', 'liability', 'Expenses incurred but not yet paid'),
-  ('3010', 'Owner Equity', 'equity', 'Capital invested by owner'),
-  ('3020', 'Retained Earnings', 'equity', 'Accumulated profit'),
-  ('3030', 'Current Year Earnings', 'equity', 'Net income for current period'),
-  ('4010', 'Sales Revenue', 'revenue', 'Revenue from product sales'),
-  ('4020', 'Sales Returns', 'revenue', 'Returns and refunds'),
-  ('4030', 'Other Income', 'revenue', 'Miscellaneous income'),
-  ('5010', 'Cost of Goods Sold', 'expense', 'Direct cost of products sold'),
-  ('5020', 'Operating Expenses', 'expense', 'General operating costs'),
-  ('5030', 'Salary Expense', 'expense', 'Employee salaries'),
-  ('5040', 'Rent Expense', 'expense', 'Office/store rent'),
-  ('5050', 'Utilities Expense', 'expense', 'Electricity, water, internet')
+  ('1010', 'Cash on Hand',          'asset',     'Physical cash in register and vault'),
+  ('1020', 'Bank Account',          'asset',     'Business bank account'),
+  ('1030', 'Accounts Receivable',   'asset',     'Amounts owed by customers'),
+  ('1040', 'Petty Cash',            'asset',     'Small daily operational cash'),
+  ('1050', 'Inventory',             'asset',     'Products held for resale'),
+  ('1060', 'Prepaid Expenses',      'asset',     'Advance payments'),
+  ('2010', 'Accounts Payable',      'liability', 'Amounts owed to suppliers'),
+  ('2020', 'Loans Payable',         'liability', 'Business loans'),
+  ('2030', 'VAT Payable',           'liability', 'Tax collected on sales'),
+  ('2040', 'Accrued Expenses',      'liability', 'Expenses incurred but not yet paid'),
+  ('3010', 'Owner Equity',          'equity',    'Capital invested by owner'),
+  ('3020', 'Retained Earnings',     'equity',    'Accumulated profit'),
+  ('3030', 'Current Year Earnings', 'equity',    'Net income for current period'),
+  ('4010', 'Sales Revenue',         'revenue',   'Revenue from product sales'),
+  ('4020', 'Sales Returns',         'revenue',   'Returns and refunds'),
+  ('4030', 'Other Income',          'revenue',   'Miscellaneous income'),
+  ('5010', 'Cost of Goods Sold',    'expense',   'Direct cost of products sold'),
+  ('5020', 'Operating Expenses',    'expense',   'General operating costs'),
+  ('5030', 'Salary Expense',        'expense',   'Employee salaries'),
+  ('5040', 'Rent Expense',          'expense',   'Office/store rent'),
+  ('5050', 'Utilities Expense',     'expense',   'Electricity, water, internet')
 ON CONFLICT (code) DO NOTHING;
 
--- Re-seed current fiscal period
+-- Re-seed default fiscal period
 INSERT INTO fiscal_periods (name, start_date, end_date)
 SELECT
   'FY ' || EXTRACT(YEAR FROM NOW()),

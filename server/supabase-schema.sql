@@ -1,11 +1,11 @@
 -- ============================================================
--- STORE MANAGEMENT SYSTEM - COMPLETE INITIAL SCHEMA
--- Run this single file in Supabase SQL Editor
--- Creates all tables, indexes, RLS policies, admin user
--- Password: admin123
+-- STORE MANAGEMENT SYSTEM - COMPLETE DATABASE SCHEMA
+-- Single consolidated file — includes all tables, columns,
+-- indexes, RLS policies, seed data, and admin user.
+-- Run this in Supabase SQL Editor to set up or reset the DB.
 -- ============================================================
 
--- Enable pgcrypto for password hashing in SQL
+-- Enable pgcrypto for password hashing
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ============================================================
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
   is_active BOOLEAN DEFAULT true,
   must_change_password BOOLEAN DEFAULT false,
   session_token TEXT,
-  employee_id BIGINT,
+  employee_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
   last_login TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -96,125 +96,6 @@ CREATE TABLE IF NOT EXISTS employees (
   user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id BIGINT REFERENCES employees(id) ON DELETE SET NULL;
-
-CREATE TABLE IF NOT EXISTS orders (
-  id BIGSERIAL PRIMARY KEY,
-  order_number TEXT NOT NULL UNIQUE,
-  subtotal NUMERIC NOT NULL DEFAULT 0,
-  discount_amount NUMERIC DEFAULT 0,
-  tax_amount NUMERIC DEFAULT 0,
-  total NUMERIC NOT NULL DEFAULT 0,
-  payment_method TEXT DEFAULT 'cash',
-  payment_status TEXT DEFAULT 'paid',
-  user_id BIGINT REFERENCES users(id),
-  customer_id BIGINT REFERENCES customers(id),
-  is_refunded BOOLEAN DEFAULT false,
-  journal_entry_id BIGINT REFERENCES journal_entries(id),
-  completed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS order_items (
-  id BIGSERIAL PRIMARY KEY,
-  order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  product_id BIGINT NOT NULL REFERENCES products(id),
-  quantity INTEGER NOT NULL DEFAULT 1,
-  unit_price NUMERIC NOT NULL DEFAULT 0,
-  discount NUMERIC DEFAULT 0,
-  total NUMERIC NOT NULL DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS payment_splits (
-  id BIGSERIAL PRIMARY KEY,
-  order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  method TEXT NOT NULL,
-  amount NUMERIC NOT NULL DEFAULT 0,
-  reference TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS stock_movements (
-  id BIGSERIAL PRIMARY KEY,
-  product_id BIGINT NOT NULL REFERENCES products(id),
-  type TEXT NOT NULL,
-  quantity INTEGER NOT NULL,
-  reference_id BIGINT,
-  notes TEXT,
-  created_by TEXT DEFAULT 'system',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS promotions (
-  id BIGSERIAL PRIMARY KEY,
-  code TEXT NOT NULL UNIQUE,
-  type TEXT NOT NULL,
-  value NUMERIC NOT NULL DEFAULT 0,
-  min_order_amount NUMERIC,
-  max_uses INTEGER,
-  used_count INTEGER DEFAULT 0,
-  start_date TIMESTAMPTZ,
-  end_date TIMESTAMPTZ,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS store_settings (
-  id BIGSERIAL PRIMARY KEY,
-  key TEXT NOT NULL UNIQUE,
-  value TEXT
-);
-
-CREATE TABLE IF NOT EXISTS expenses (
-  id BIGSERIAL PRIMARY KEY,
-  category TEXT NOT NULL,
-  amount NUMERIC NOT NULL DEFAULT 0,
-  description TEXT,
-  receipt_image TEXT,
-  recorded_by BIGINT REFERENCES users(id),
-  expense_date DATE DEFAULT CURRENT_DATE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS refunds (
-  id BIGSERIAL PRIMARY KEY,
-  order_id BIGINT NOT NULL REFERENCES orders(id),
-  amount NUMERIC NOT NULL DEFAULT 0,
-  reason TEXT,
-  processed_by BIGINT REFERENCES users(id),
-  refund_date TIMESTAMPTZ DEFAULT NOW(),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS notifications (
-  id BIGSERIAL PRIMARY KEY,
-  type TEXT NOT NULL,
-  title TEXT NOT NULL,
-  message TEXT,
-  priority TEXT DEFAULT 'normal',
-  is_read BOOLEAN DEFAULT false,
-  read_at TIMESTAMPTZ,
-  action_url TEXT,
-  action_label TEXT,
-  promotion_id BIGINT,
-  recipient_count INTEGER DEFAULT 0,
-  status TEXT DEFAULT 'sent',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS activity_log (
-  id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
-  user_name TEXT,
-  action TEXT NOT NULL,
-  entity_type TEXT NOT NULL,
-  entity_id BIGINT,
-  entity_name TEXT,
-  details JSONB DEFAULT '{}',
-  ip_address TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================================
@@ -302,7 +183,150 @@ CREATE TABLE IF NOT EXISTS account_balances (
 );
 
 -- ============================================================
--- 3. INDEXES
+-- 3. ORDERS & SALES
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS orders (
+  id BIGSERIAL PRIMARY KEY,
+  order_number TEXT NOT NULL UNIQUE,
+  subtotal NUMERIC NOT NULL DEFAULT 0,
+  discount_amount NUMERIC DEFAULT 0,
+  tax_amount NUMERIC DEFAULT 0,
+  total NUMERIC NOT NULL DEFAULT 0,
+  payment_method TEXT DEFAULT 'cash',
+  payment_status TEXT DEFAULT 'paid',
+  user_id BIGINT REFERENCES users(id),
+  customer_id BIGINT REFERENCES customers(id),
+  is_refunded BOOLEAN DEFAULT false,
+  journal_entry_id BIGINT REFERENCES journal_entries(id),
+  client_order_id TEXT UNIQUE,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id BIGSERIAL PRIMARY KEY,
+  order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id BIGINT NOT NULL REFERENCES products(id),
+  quantity INTEGER NOT NULL DEFAULT 1,
+  unit_price NUMERIC NOT NULL DEFAULT 0,
+  discount NUMERIC DEFAULT 0,
+  total NUMERIC NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS payment_splits (
+  id BIGSERIAL PRIMARY KEY,
+  order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  method TEXT NOT NULL,
+  amount NUMERIC NOT NULL DEFAULT 0,
+  reference TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+  id BIGSERIAL PRIMARY KEY,
+  product_id BIGINT NOT NULL REFERENCES products(id),
+  type TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  reference_id BIGINT,
+  notes TEXT,
+  created_by TEXT DEFAULT 'system',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS promotions (
+  id BIGSERIAL PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  type TEXT NOT NULL,
+  value NUMERIC NOT NULL DEFAULT 0,
+  min_order_amount NUMERIC,
+  max_uses INTEGER,
+  used_count INTEGER DEFAULT 0,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- 4. REFUNDS (full & item-level)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS refunds (
+  id BIGSERIAL PRIMARY KEY,
+  order_id BIGINT NOT NULL REFERENCES orders(id),
+  amount NUMERIC NOT NULL DEFAULT 0,
+  reason TEXT,
+  is_partial BOOLEAN DEFAULT false,
+  processed_by BIGINT REFERENCES users(id),
+  refund_date TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS refund_items (
+  id BIGSERIAL PRIMARY KEY,
+  refund_id BIGINT NOT NULL REFERENCES refunds(id) ON DELETE CASCADE,
+  order_item_id BIGINT NOT NULL REFERENCES order_items(id),
+  product_id BIGINT NOT NULL REFERENCES products(id),
+  quantity INTEGER NOT NULL DEFAULT 1,
+  unit_price NUMERIC NOT NULL DEFAULT 0,
+  discount NUMERIC DEFAULT 0,
+  total NUMERIC NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- 5. EXPENSES, SETTINGS, NOTIFICATIONS, ACTIVITY
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id BIGSERIAL PRIMARY KEY,
+  category TEXT NOT NULL,
+  amount NUMERIC NOT NULL DEFAULT 0,
+  description TEXT,
+  receipt_image TEXT,
+  recorded_by BIGINT REFERENCES users(id),
+  expense_date DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS store_settings (
+  id BIGSERIAL PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGSERIAL PRIMARY KEY,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT,
+  priority TEXT DEFAULT 'normal',
+  is_read BOOLEAN DEFAULT false,
+  read_at TIMESTAMPTZ,
+  action_url TEXT,
+  action_label TEXT,
+  promotion_id BIGINT,
+  recipient_count INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'sent',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS activity_log (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  user_name TEXT,
+  action TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id BIGINT,
+  entity_name TEXT,
+  details JSONB DEFAULT '{}',
+  ip_address TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- 6. INDEXES
 -- ============================================================
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -314,6 +338,7 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_supplier ON products(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_orders_number ON orders(order_number);
 CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_client_order_id ON orders(client_order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
@@ -325,6 +350,8 @@ CREATE INDEX IF NOT EXISTS idx_employees_user ON employees(user_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_refunds_order ON refunds(order_id);
+CREATE INDEX IF NOT EXISTS idx_refund_items_refund ON refund_items(refund_id);
+CREATE INDEX IF NOT EXISTS idx_refund_items_order_item ON refund_items(order_item_id);
 CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_log_entity ON activity_log(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_activity_log_action ON activity_log(action);
@@ -343,8 +370,7 @@ CREATE INDEX IF NOT EXISTS idx_account_balances_period ON account_balances(perio
 CREATE INDEX IF NOT EXISTS idx_fiscal_periods_dates ON fiscal_periods(start_date, end_date);
 
 -- ============================================================
--- 4. ROW LEVEL SECURITY (RLS)
--- ALL tables must have RLS enabled with an open policy
+-- 7. ROW LEVEL SECURITY (ALL tables)
 -- ============================================================
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -403,6 +429,10 @@ ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON refunds;
 CREATE POLICY "Allow all" ON refunds FOR ALL USING (true) WITH CHECK (true);
 
+ALTER TABLE refund_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON refund_items;
+CREATE POLICY "Allow all" ON refund_items FOR ALL USING (true) WITH CHECK (true);
+
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON notifications;
 CREATE POLICY "Allow all" ON notifications FOR ALL USING (true) WITH CHECK (true);
@@ -436,8 +466,7 @@ DROP POLICY IF EXISTS "Allow all" ON account_balances;
 CREATE POLICY "Allow all" ON account_balances FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
--- 5. ADMIN USER (password: admin123)
--- Uses pgcrypto crypt() to avoid hash corruption
+-- 8. SEED: Admin User (password: admin123)
 -- ============================================================
 
 DELETE FROM users WHERE username = 'admin';
@@ -454,51 +483,52 @@ VALUES (
 );
 
 -- ============================================================
--- 6. DEFAULT STORE SETTINGS
+-- 9. SEED: Default Store Settings
 -- ============================================================
 
 INSERT INTO store_settings (key, value) VALUES
-  ('storeName', 'متجر النيل'),
+  ('storeName', 'My Store'),
   ('storeAddress', ''),
   ('storePhone', ''),
+  ('storeLogo', ''),
   ('taxRate', '14'),
   ('currency', 'EGP'),
   ('currencySymbol', 'ج.م'),
-  ('receiptFooter', 'شكراً لشرائكم!'),
+  ('receiptFooter', 'Thank you for your purchase!'),
   ('lowStockThreshold', '10'),
   ('loyaltyPointsPerCurrency', '1')
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================
--- 7. CHART OF ACCOUNTS (required for accounting module)
+-- 10. SEED: Chart of Accounts (21 accounts)
 -- ============================================================
 
 INSERT INTO accounts (code, name, account_type, description) VALUES
-  ('1010', 'Cash on Hand', 'asset', 'Physical cash in register and vault'),
-  ('1020', 'Bank Account', 'asset', 'Business bank account'),
-  ('1030', 'Accounts Receivable', 'asset', 'Amounts owed by customers'),
-  ('1040', 'Petty Cash', 'asset', 'Small daily operational cash'),
-  ('1050', 'Inventory', 'asset', 'Products held for resale'),
-  ('1060', 'Prepaid Expenses', 'asset', 'Advance payments'),
-  ('2010', 'Accounts Payable', 'liability', 'Amounts owed to suppliers'),
-  ('2020', 'Loans Payable', 'liability', 'Business loans'),
-  ('2030', 'VAT Payable', 'liability', 'Tax collected on sales'),
-  ('2040', 'Accrued Expenses', 'liability', 'Expenses incurred but not yet paid'),
-  ('3010', 'Owner Equity', 'equity', 'Capital invested by owner'),
-  ('3020', 'Retained Earnings', 'equity', 'Accumulated profit'),
-  ('3030', 'Current Year Earnings', 'equity', 'Net income for current period'),
-  ('4010', 'Sales Revenue', 'revenue', 'Revenue from product sales'),
-  ('4020', 'Sales Returns', 'revenue', 'Returns and refunds'),
-  ('4030', 'Other Income', 'revenue', 'Miscellaneous income'),
-  ('5010', 'Cost of Goods Sold', 'expense', 'Direct cost of products sold'),
-  ('5020', 'Operating Expenses', 'expense', 'General operating costs'),
-  ('5030', 'Salary Expense', 'expense', 'Employee salaries'),
-  ('5040', 'Rent Expense', 'expense', 'Office/store rent'),
-  ('5050', 'Utilities Expense', 'expense', 'Electricity, water, internet')
+  ('1010', 'Cash on Hand',          'asset',     'Physical cash in register and vault'),
+  ('1020', 'Bank Account',          'asset',     'Business bank account'),
+  ('1030', 'Accounts Receivable',   'asset',     'Amounts owed by customers'),
+  ('1040', 'Petty Cash',            'asset',     'Small daily operational cash'),
+  ('1050', 'Inventory',             'asset',     'Products held for resale'),
+  ('1060', 'Prepaid Expenses',      'asset',     'Advance payments'),
+  ('2010', 'Accounts Payable',      'liability', 'Amounts owed to suppliers'),
+  ('2020', 'Loans Payable',         'liability', 'Business loans'),
+  ('2030', 'VAT Payable',           'liability', 'Tax collected on sales'),
+  ('2040', 'Accrued Expenses',      'liability', 'Expenses incurred but not yet paid'),
+  ('3010', 'Owner Equity',          'equity',    'Capital invested by owner'),
+  ('3020', 'Retained Earnings',     'equity',    'Accumulated profit'),
+  ('3030', 'Current Year Earnings', 'equity',    'Net income for current period'),
+  ('4010', 'Sales Revenue',         'revenue',   'Revenue from product sales'),
+  ('4020', 'Sales Returns',         'revenue',   'Returns and refunds'),
+  ('4030', 'Other Income',          'revenue',   'Miscellaneous income'),
+  ('5010', 'Cost of Goods Sold',    'expense',   'Direct cost of products sold'),
+  ('5020', 'Operating Expenses',    'expense',   'General operating costs'),
+  ('5030', 'Salary Expense',        'expense',   'Employee salaries'),
+  ('5040', 'Rent Expense',          'expense',   'Office/store rent'),
+  ('5050', 'Utilities Expense',     'expense',   'Electricity, water, internet')
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================
--- 8. DEFAULT FISCAL PERIOD (current year)
+-- 11. SEED: Default Fiscal Period (current year)
 -- ============================================================
 
 INSERT INTO fiscal_periods (name, start_date, end_date)
