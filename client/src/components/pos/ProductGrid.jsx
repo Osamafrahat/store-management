@@ -47,9 +47,14 @@ export default function ProductGrid({ products, onAddToCart }) {
                   SKU: {product.sku}
                 </p>
               )}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-1">
                 <p className="text-lg font-bold text-primary-600">
                   {formatCurrency(product.price)}
+                  {product.unit_of_measure && product.unit_of_measure !== 'quantity' && (
+                    <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+                      /{product.unit_of_measure === 'kilo' ? 'kg' : product.unit_of_measure === 'liter' ? 'L' : product.unit_of_measure === 'meter' ? 'm' : product.unit_of_measure}
+                    </span>
+                  )}
                 </p>
                 <span className={`
                   text-xs px-2 py-0.5 rounded-full
