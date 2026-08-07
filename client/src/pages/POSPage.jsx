@@ -24,6 +24,8 @@ export default function POSPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [customerSearch, setCustomerSearch] = useState('')
   const searchInputRef = useRef(null)
+  const barcodeInputRef = useRef(null)
+  const barcodeTimeoutRef = useRef(null)
 
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
   const { addItem, items, getTotal } = useCartStore()
@@ -40,6 +42,26 @@ export default function POSPage() {
   useEffect(() => {
     searchInputRef.current?.focus()
   }, [])
+
+  // Keep barcode input focused
+  useEffect(() => {
+    const focusBarcode = () => barcodeInputRef.current?.focus()
+    focusBarcode()
+    document.addEventListener('click', focusBarcode)
+    return () => document.removeEventListener('click', focusBarcode)
+  }, [])
+
+  // Handle barcode scanner input (USB scanner types fast, collects then submits)
+  const handleBarcodeInput = (e) => {
+    const value = e.target.value
+    if (barcodeTimeoutRef.current) clearTimeout(barcodeTimeoutRef.current)
+    barcodeTimeoutRef.current = setTimeout(async () => {
+      if (value.trim()) {
+        await handleBarcodeScan(value.trim())
+        if (barcodeInputRef.current) barcodeInputRef.current.value = ''
+      }
+    }, 150)
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -159,6 +181,28 @@ export default function POSPage() {
             <Zap className="w-5 h-5" />
             <span className="hidden sm:inline">{t('pos.scan')}</span>
           </button>
+        </div>
+
+        {/* Barcode Scanner Input (always focused for USB scanners) */}
+        <div className="relative">
+          <input
+            ref={barcodeInputRef}
+            type="text"
+            onChange={handleBarcodeInput}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const value = barcodeInputRef.current?.value?.trim()
+                if (value) {
+                  handleBarcodeScan(value)
+                  barcodeInputRef.current.value = ''
+                }
+              }
+            }}
+            placeholder={t('pos.scanBarcode') || 'Scan barcode here...'}
+            className="w-full px-4 py-2.5 rounded-lg border-2 border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-900/20 focus:ring-2 focus:ring-primary-500 focus:border-solid text-sm"
+            autoComplete="off"
+          />
         </div>
 
         {/* Category Filter */}
