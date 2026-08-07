@@ -158,6 +158,7 @@ export default function InventoryPrintSheet({ products, categories, settings, us
                 <th>{t('print.sku')}</th>
                 <th>{t('print.barcode')}</th>
                 <th>{t('print.category')}</th>
+                <th>{t('print.unit') || 'Unit'}</th>
                 <th>{t('print.qty')}</th>
                 <th style={{ textAlign: 'center' }}>✓</th>
               </tr>
@@ -171,6 +172,12 @@ export default function InventoryPrintSheet({ products, categories, settings, us
                     <td style={{ fontSize: '8px' }}>{product.sku || '-'}</td>
                     <td style={{ fontSize: '8px' }}>{product.barcode || '-'}</td>
                     <td>{getCategoryName(product.category_id)}</td>
+                    <td style={{ fontSize: '8px' }}>
+                      {product.unit_of_measure === 'kilo' ? 'kg' :
+                       product.unit_of_measure === 'liter' ? 'L' :
+                       product.unit_of_measure === 'meter' ? 'm' :
+                       'Pcs'}
+                    </td>
                     <td style={{ fontWeight: 700, color: product.stock_quantity <= product.low_stock_threshold ? '#dc2626' : 'inherit' }}>
                       {product.stock_quantity}
                     </td>
@@ -183,7 +190,7 @@ export default function InventoryPrintSheet({ products, categories, settings, us
             </tbody>
             <tfoot>
               <tr className="totals-row">
-                <td colSpan="5" style={{ textAlign: 'right', fontWeight: 'bold' }}>{t('print.totals')}</td>
+                <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>{t('print.totals')}</td>
                 <td style={{ fontWeight: 'bold' }}>{totalQuantity.toLocaleString()}</td>
                 <td></td>
               </tr>
