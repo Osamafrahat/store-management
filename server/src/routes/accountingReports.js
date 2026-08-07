@@ -215,13 +215,15 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
     if (period.is_closed) return res.status(400).json({ error: 'Period is already closed' })
 
     // Post net income to retained earnings
-    const { data: accounts } = await supabase
+    const { data: accounts, error: accountsErr } = await supabase
       .from('accounts')
       .select('id, account_type, balance')
 
-    const revenue = accounts.filter(a => a.account_type === 'revenue')
-    const expenses = accounts.filter(a => a.account_type === 'expense')
-    const netIncome = revenue.reduce((s, a) => s + a.balance, 0) - expenses.reduce((s, a) => s + a.balance, 0)
+    if (accountsErr) throw accountsErr
+
+    const revenue = (accounts || []).filter(a => a.account_type === 'revenue')
+    const expenses = (accounts || []).filter(a => a.account_type === 'expense')
+    const netIncome = revenue.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0) - expenses.reduce((s, a) => s + (parseFloat(a.balance) || 0), 0)
 
     if (Math.abs(netIncome) > 0.01) {
       const { data: retainedEarnings } = await supabase.from('accounts').select('id').eq('code', '3020').single()
