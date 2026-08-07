@@ -69,6 +69,14 @@ router.post('/', [
       return res.status(404).json({ error: 'Order not found' })
     }
 
+    // Check if order is older than 14 days
+    const orderDate = new Date(order.created_at)
+    const now = new Date()
+    const daysSinceOrder = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24))
+    if (daysSinceOrder > 14) {
+      return res.status(400).json({ error: `Refund not allowed. Order is ${daysSinceOrder} days old. Refund window is 14 days.` })
+    }
+
     // For full refunds, check if already fully refunded
     if (!is_partial && order.is_refunded) {
       return res.status(400).json({ error: 'Order already fully refunded' })

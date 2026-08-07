@@ -173,6 +173,15 @@ function RefundForm({ onSave, onClose }) {
       const detailRes = await ordersApi.getById(foundOrder.id)
       const fullOrder = detailRes.data
 
+      // Check if order is older than 14 days
+      const orderDate = new Date(fullOrder.created_at)
+      const now = new Date()
+      const daysSinceOrder = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24))
+      if (daysSinceOrder > 14) {
+        setError(t('refunds.exceeded14Days').replace('{days}', daysSinceOrder))
+        return
+      }
+
       setOrder(fullOrder)
       setOrderItems(fullOrder.items || [])
 
