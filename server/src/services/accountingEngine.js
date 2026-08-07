@@ -651,7 +651,6 @@ export async function seedChartOfAccounts() {
     { code: '1050', name: 'Inventory', account_type: 'asset' },
     // Liabilities
     { code: '2010', name: 'Accounts Payable', account_type: 'liability' },
-    { code: '2020', name: 'Loans Payable', account_type: 'liability' },
     { code: '2030', name: 'VAT Payable', account_type: 'liability' },
     // Equity
     { code: '3010', name: 'Owner Equity', account_type: 'equity' },
