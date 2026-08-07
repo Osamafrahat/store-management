@@ -76,7 +76,12 @@ CREATE TABLE IF NOT EXISTS orders (
   total NUMERIC NOT NULL DEFAULT 0,
   payment_method TEXT DEFAULT 'cash',
   payment_status TEXT DEFAULT 'paid',
+  user_id BIGINT REFERENCES users(id),
+  customer_id BIGINT REFERENCES customers(id),
   promotion_id BIGINT REFERENCES promotions(id),
+  is_refunded BOOLEAN DEFAULT false,
+  journal_entry_id BIGINT REFERENCES journal_entries(id),
+  client_order_id TEXT UNIQUE,
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -85,7 +90,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   id BIGSERIAL PRIMARY KEY,
   order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   product_id BIGINT NOT NULL REFERENCES products(id),
-  quantity INTEGER NOT NULL DEFAULT 1,
+  quantity NUMERIC NOT NULL DEFAULT 1,
   unit_price NUMERIC NOT NULL DEFAULT 0,
   discount NUMERIC DEFAULT 0,
   total NUMERIC NOT NULL DEFAULT 0
@@ -104,7 +109,7 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   id BIGSERIAL PRIMARY KEY,
   product_id BIGINT NOT NULL REFERENCES products(id),
   type TEXT NOT NULL,
-  quantity INTEGER NOT NULL,
+  quantity NUMERIC NOT NULL,
   reference_id BIGINT,
   notes TEXT,
   created_by TEXT DEFAULT 'system',
