@@ -245,17 +245,23 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
 
       const lines = []
 
-      // Close revenue accounts (debit them to zero)
+      // Close revenue accounts (debit positive balances, credit negative balances to zero)
       for (const acc of revenue) {
-        if (acc.balance > 0) {
-          lines.push({ accountId: acc.id, debit: acc.balance, credit: 0, description: 'Year-end closing' })
+        const bal = parseFloat(acc.balance) || 0
+        if (bal > 0) {
+          lines.push({ accountId: acc.id, debit: bal, credit: 0, description: 'Year-end closing' })
+        } else if (bal < 0) {
+          lines.push({ accountId: acc.id, debit: 0, credit: Math.abs(bal), description: 'Year-end closing' })
         }
       }
 
-      // Close expense accounts (credit them to zero)
+      // Close expense accounts (credit positive balances, debit negative balances to zero)
       for (const acc of expenses) {
-        if (acc.balance > 0) {
-          lines.push({ accountId: acc.id, debit: 0, credit: acc.balance, description: 'Year-end closing' })
+        const bal = parseFloat(acc.balance) || 0
+        if (bal > 0) {
+          lines.push({ accountId: acc.id, debit: 0, credit: bal, description: 'Year-end closing' })
+        } else if (bal < 0) {
+          lines.push({ accountId: acc.id, debit: Math.abs(bal), credit: 0, description: 'Year-end closing' })
         }
       }
 
