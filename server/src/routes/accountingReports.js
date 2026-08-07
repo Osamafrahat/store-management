@@ -291,4 +291,52 @@ router.post('/fiscal-periods/:id/close', async (req, res) => {
   }
 })
 
+// Force recalculate Current Year Earnings (3030)
+router.post('/recalculate-cye', async (req, res) => {
+  try {
+    const { data: accounts } = await supabase
+      .from('accounts')
+      .select('id, account_type, balance')
+      .in('account_type', ['revenue', 'expense'])
+
+    const totalRevenue = (accounts || [])
+      .filter(a => a.account_type === 'revenue')
+      .reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0)
+
+    const totalExpenses = (accounts || [])
+      .filter(a => a.account_type === 'expense')
+      .reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0)
+
+    const netIncome = totalRevenue - totalExpenses
+
+    // Find or create 3030
+    let { data: cye } = await supabase.from('accounts').select('id, balance').eq('code', '3030').single()
+
+    if (!cye) {
+      const { data: newAccount } = await supabase
+        .from('accounts')
+        .insert({ code: '3030', name: 'Current Year Earnings', account_type: 'equity', balance: netIncome })
+        .select('id, balance')
+        .single()
+      cye = newAccount
+    } else if (Math.abs(cye.balance - netIncome) > 0.01) {
+      await supabase
+        .from('accounts')
+        .update({ balance: netIncome, updated_at: new Date().toISOString() })
+        .eq('id', cye.id)
+    }
+
+    res.json({
+      totalRevenue,
+      totalExpenses,
+      netIncome,
+      cyeBalance: netIncome,
+      updated: true
+    })
+  } catch (err) {
+    console.error('Recalculate CYE error:', err)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 export { router as accountingReportsRouter }
