@@ -183,28 +183,6 @@ export default function POSPage() {
           </button>
         </div>
 
-        {/* Barcode Scanner Input (always focused for USB scanners) */}
-        <div className="relative">
-          <input
-            ref={barcodeInputRef}
-            type="text"
-            onChange={handleBarcodeInput}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                const value = barcodeInputRef.current?.value?.trim()
-                if (value) {
-                  handleBarcodeScan(value)
-                  barcodeInputRef.current.value = ''
-                }
-              }
-            }}
-            placeholder={t('pos.scanBarcode') || 'Scan barcode here...'}
-            className="w-full px-4 py-2.5 rounded-lg border-2 border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-900/20 focus:ring-2 focus:ring-primary-500 focus:border-solid text-sm"
-            autoComplete="off"
-          />
-        </div>
-
         {/* Category Filter */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           <button
@@ -288,6 +266,28 @@ export default function POSPage() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Barcode Scanner Input (always focused for USB scanners) */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+          <input
+            ref={barcodeInputRef}
+            type="text"
+            onChange={handleBarcodeInput}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const value = barcodeInputRef.current?.value?.trim()
+                if (value) {
+                  handleBarcodeScan(value)
+                  barcodeInputRef.current.value = ''
+                }
+              }
+            }}
+            placeholder={t('pos.scanBarcode') || 'Scan barcode here...'}
+            className="w-full px-3 py-2 text-sm rounded-lg border-2 border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-900/20 focus:ring-2 focus:ring-primary-500 focus:border-solid"
+            autoComplete="off"
+          />
         </div>
 
         <div className="flex-1">
