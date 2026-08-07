@@ -610,7 +610,6 @@ export async function seedChartOfAccounts() {
     // Revenue
     { code: '4010', name: 'Sales Revenue', account_type: 'revenue' },
     { code: '4020', name: 'Sales Returns', account_type: 'revenue' },
-    { code: '4030', name: 'Other Income', account_type: 'revenue' },
     // Expenses
     { code: '5010', name: 'Cost of Goods Sold', account_type: 'expense' },
     { code: '5020', name: 'Operating Expenses', account_type: 'expense' },
