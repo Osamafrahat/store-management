@@ -309,8 +309,7 @@ function CustomerForm({ customer, onSave, onClose }) {
         return
       }
     }
-    const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : ''
-    onSave({ ...formData, phone: fullPhone })
+    onSave({ ...formData, phone: formData.phone || '' })
   }
 
   const config = getCountryConfig()
