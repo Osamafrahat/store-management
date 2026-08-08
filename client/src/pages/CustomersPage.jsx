@@ -212,11 +212,13 @@ function CustomerForm({ customer, onSave, onClose }) {
     address: customer?.address || '',
     notes: customer?.notes || '',
   })
+  const [phoneError, setPhoneError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
     if (name === 'phone') {
       setFormData(prev => ({ ...prev, phone: value.replace(/\D/g, '').slice(0, 11) }))
+      setPhoneError('')
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
@@ -224,6 +226,11 @@ function CustomerForm({ customer, onSave, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (formData.phone && formData.phone.length !== 11) {
+      setPhoneError('Phone must be exactly 11 digits')
+      return
+    }
+    setPhoneError('')
     onSave({ ...formData, phone: formData.phone || '' })
   }
 
@@ -269,8 +276,16 @@ function CustomerForm({ customer, onSave, onClose }) {
               placeholder="01xxxxxxxxx"
               inputMode="numeric"
               maxLength={11}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className={`w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-800 ${
+                phoneError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
+              }`}
             />
+            {phoneError && (
+              <p className="mt-1 text-xs text-red-500 dark:text-red-400">{phoneError}</p>
+            )}
+            {!phoneError && formData.phone && formData.phone.length < 11 && (
+              <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">{11 - formData.phone.length} digits remaining</p>
+            )}
           </div>
 
           <div>
