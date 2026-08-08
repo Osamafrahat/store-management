@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { customersApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, User, Phone, Mail, MapPin, Star, AlertCircle, CheckCircle } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, User, Phone, Mail, MapPin, Star } from 'lucide-react'
 
 export default function CustomersPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -204,117 +204,24 @@ export default function CustomersPage() {
 
 function CustomerForm({ customer, onSave, onClose }) {
   const { t } = useAppStore()
-  const parsePhone = (phone) => {
-    if (!phone) return { countryCode: '+20', number: '' }
-    // Strip all non-digits first
-    const digits = phone.replace(/[^0-9]/g, '')
-    if (!digits) return { countryCode: '+20', number: '' }
-
-    // Known country code lengths (digits, without +)
-    const codeLengths = { '20': 2, '966': 3, '971': 3, '965': 3, '973': 3, '974': 3, '968': 3, '962': 3, '961': 3, '216': 3, '212': 3, '213': 3, '1': 1, '44': 2 }
-
-    // If starts with 0 → local format, strip it
-    if (digits.startsWith('0')) {
-      return { countryCode: '+20', number: digits.substring(1) }
-    }
-
-    // Try to match country code prefix
-    for (const [code, len] of Object.entries(codeLengths)) {
-      if (digits.startsWith(code) && digits.length > len) {
-        return { countryCode: '+' + code, number: digits.substring(len) }
-      }
-    }
-
-    // Default: assume Egypt, return all digits
-    return { countryCode: '+20', number: digits }
-  }
-
-  const parsed = parsePhone(customer?.phone)
 
   const [formData, setFormData] = useState({
     name: customer?.name || '',
-    countryCode: parsed.countryCode,
-    phone: parsed.number,
+    phone: customer?.phone || '',
     email: customer?.email || '',
     address: customer?.address || '',
     notes: customer?.notes || '',
   })
-  const [phoneError, setPhoneError] = useState('')
-  const [phoneTouched, setPhoneTouched] = useState(false)
-
-  const countryCodes = [
-    { code: '+20', name: t('country.egypt'), flag: '🇪🇬', pattern: /^1\d{9}$/, len: 10, example: '1XXXXXXXXX' },
-    { code: '+966', name: t('country.saudiArabia'), flag: '🇸🇦', pattern: /^5\d{8}$/, len: 9, example: '5XXXXXXXX' },
-    { code: '+971', name: t('country.uae'), flag: '🇦🇪', pattern: /^[4579]\d{8}$/, len: 9, example: '5XXXXXXXX' },
-    { code: '+965', name: t('country.kuwait'), flag: '🇰🇼', pattern: /^[569]\d{7}$/, len: 8, example: '5XXXXXXX' },
-    { code: '+973', name: t('country.bahrain'), flag: '🇧🇭', pattern: /^[36]\d{7}$/, len: 8, example: '3XXXXXXX' },
-    { code: '+974', name: t('country.qatar'), flag: '🇶🇦', pattern: /^[3567]\d{7}$/, len: 8, example: '5XXXXXXX' },
-    { code: '+968', name: t('country.oman'), flag: '🇴🇲', pattern: /^[79]\d{7}$/, len: 8, example: '7XXXXXXX' },
-    { code: '+962', name: t('country.jordan'), flag: '🇯🇴', pattern: /^[79]\d{8}$/, len: 9, example: '7XXXXXXXX' },
-    { code: '+961', name: t('country.lebanon'), flag: '🇱🇧', pattern: /^[13789]\d{7}$/, len: 8, example: '7XXXXXXX' },
-    { code: '+216', name: t('country.tunisia'), flag: '🇹🇳', pattern: /^[24579]\d{7}$/, len: 8, example: '2XXXXXXX' },
-    { code: '+212', name: t('country.morocco'), flag: '🇲🇦', pattern: /^[567]\d{8}$/, len: 9, example: '6XXXXXXXX' },
-    { code: '+213', name: t('country.algeria'), flag: '🇩🇿', pattern: /^[567]\d{8}$/, len: 9, example: '5XXXXXXXX' },
-    { code: '+1', name: t('country.usaCanada'), flag: '🇺🇸', pattern: /^[2-9]\d{9}$/, len: 10, example: '2015551234' },
-    { code: '+44', name: t('country.uk'), flag: '🇬🇧', pattern: /^[1-9]\d{9,10}$/, len: 10, example: '7911123456' },
-  ]
-
-  const getCountryConfig = () => countryCodes.find(c => c.code === formData.countryCode) || countryCodes[0]
-
-  const validatePhone = (phone, countryCode) => {
-    return ''
-  }
-
-  // Run initial validation on mount when editing
-  useEffect(() => {
-    if (customer?.phone && parsed.number) {
-      const error = validatePhone(parsed.number, parsed.countryCode)
-      if (error) {
-        setPhoneError(error)
-        setPhoneTouched(true)
-      }
-    }
-  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    if (name === 'phone') {
-      let digits = value.replace(/\D/g, '')
-      setFormData(prev => ({ ...prev, phone: digits }))
-      if (phoneTouched) {
-        setPhoneError(validatePhone(digits, formData.countryCode))
-      }
-    } else if (name === 'countryCode') {
-      setFormData(prev => ({ ...prev, countryCode: value }))
-      if (phoneTouched && formData.phone) {
-        setPhoneError(validatePhone(formData.phone, value))
-      }
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }))
-    }
-  }
-
-  const handlePhoneBlur = () => {
-    setPhoneTouched(true)
-    setPhoneError(validatePhone(formData.phone, formData.countryCode))
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (formData.phone && formData.phone.trim()) {
-      const error = validatePhone(formData.phone, formData.countryCode)
-      if (error) {
-        setPhoneError(error)
-        setPhoneTouched(true)
-        return
-      }
-    }
     onSave({ ...formData, phone: formData.phone || '' })
   }
-
-  const config = getCountryConfig()
-  const hasPhone = formData.phone && formData.phone.trim().length > 0
-  const showPhoneError = phoneTouched && hasPhone && phoneError
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -350,45 +257,16 @@ function CustomerForm({ customer, onSave, onClose }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('customers.phone')}
             </label>
-            <div className="flex gap-2">
-              <select
-                name="countryCode"
-                value={formData.countryCode}
-                onChange={handleChange}
-                className="w-32 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
-              >
-                {countryCodes.map(c => (
-                  <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                onBlur={handlePhoneBlur}
-                placeholder={config.example}
-                inputMode="numeric"
-                maxLength={15}
-                className={`flex-1 px-4 py-2 rounded-lg border bg-white dark:bg-gray-800 ${
-                  showPhoneError
-                    ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-300'
-                    : 'border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary-300'
-                } outline-none transition-all`}
-              />
-            </div>
-            {showPhoneError && (
-              <p className="mt-1.5 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                {phoneError}
-              </p>
-            )}
-            {!showPhoneError && hasPhone && phoneTouched && (
-              <p className="mt-1.5 text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" />
-                {t('customers.phoneValid') || 'Valid phone number'}
-              </p>
-            )}
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="01284896213"
+              inputMode="numeric"
+              maxLength={15}
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+            />
           </div>
 
           <div>
