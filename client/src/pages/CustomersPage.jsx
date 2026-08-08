@@ -280,18 +280,6 @@ function CustomerForm({ customer, onSave, onClose }) {
     const { name, value } = e.target
     if (name === 'phone') {
       let digits = value.replace(/\D/g, '')
-      // Strip leading 0 (local format)
-      if (digits.startsWith('0') && digits.length > 1) {
-        digits = digits.substring(1)
-      }
-      // Strip country code prefix if pasted
-      const codeLengths = { '20': 2, '966': 3, '971': 3, '965': 3, '973': 3, '974': 3, '968': 3, '962': 3, '961': 3, '216': 3, '212': 3, '213': 3, '1': 1, '44': 2 }
-      for (const [code, len] of Object.entries(codeLengths)) {
-        if (digits.startsWith(code) && digits.length > len) {
-          digits = digits.substring(len)
-          break
-        }
-      }
       setFormData(prev => ({ ...prev, phone: digits }))
       if (phoneTouched) {
         setPhoneError(validatePhone(digits, formData.countryCode))
