@@ -215,7 +215,11 @@ function CustomerForm({ customer, onSave, onClose }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    if (name === 'phone') {
+      setFormData(prev => ({ ...prev, phone: value.replace(/\D/g, '').slice(0, 11) }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = (e) => {
@@ -264,7 +268,7 @@ function CustomerForm({ customer, onSave, onClose }) {
               onChange={handleChange}
               placeholder="01xxxxxxxxx"
               inputMode="numeric"
-              maxLength={15}
+              maxLength={11}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             />
           </div>
