@@ -69,11 +69,11 @@ router.post('/', [
         .select('id, name')
         .eq('phone', phone)
         .eq('is_active', true)
-        .single()
+        .limit(1)
 
-      if (existing) {
+      if (existing && existing.length > 0) {
         return res.status(400).json({
-          error: `This phone number is already registered to: ${existing.name}`
+          error: `This phone number is already registered to: ${existing[0].name}`
         })
       }
     }
@@ -114,11 +114,11 @@ router.put('/:id', [
         .eq('phone', phone)
         .eq('is_active', true)
         .neq('id', req.params.id)
-        .single()
+        .limit(1)
 
-      if (existing) {
+      if (existing && existing.length > 0) {
         return res.status(400).json({
-          error: `This phone number is already registered to: ${existing.name}`
+          error: `This phone number is already registered to: ${existing[0].name}`
         })
       }
     }

@@ -271,12 +271,6 @@ function CustomerForm({ customer, onSave, onClose }) {
     if (digits.length < config.len) {
       return t('customers.phoneTooShort') || `Phone must be at least ${config.len} digits (${config.example})`
     }
-    if (digits.length > config.len) {
-      return t('customers.phoneTooLong') || `Phone must be exactly ${config.len} digits (${config.example})`
-    }
-    if (config.pattern && !config.pattern.test(digits)) {
-      return t('customers.phoneInvalidFormat') || `Invalid phone number format (${config.example})`
-    }
     return ''
   }
 
