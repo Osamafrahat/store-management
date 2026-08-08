@@ -262,7 +262,7 @@ function CustomerForm({ customer, onSave, onClose }) {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="01284896213"
+              placeholder="01xxxxxxxxx"
               inputMode="numeric"
               maxLength={15}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
