@@ -205,19 +205,50 @@ export default function CustomersPage() {
 function CustomerForm({ customer, onSave, onClose }) {
   const { t } = useAppStore()
 
+  const parsePhone = (phone) => {
+    if (!phone) return { countryCode: '+20', number: '' }
+    const codes = ['+20','+966','+971','+965','+973','+974','+968','+962','+961','+216','+212','+213','+1','+44']
+    for (const code of codes) {
+      if (phone.startsWith(code)) {
+        return { countryCode: code, number: phone.slice(code.length).replace(/^0+/, '') }
+      }
+    }
+    return { countryCode: '+20', number: phone.replace(/^0+/, '') }
+  }
+
+  const parsed = parsePhone(customer?.phone)
+
   const [formData, setFormData] = useState({
     name: customer?.name || '',
-    phone: customer?.phone || '',
+    countryCode: parsed.countryCode,
+    phone: parsed.number,
     email: customer?.email || '',
     address: customer?.address || '',
     notes: customer?.notes || '',
   })
   const [phoneError, setPhoneError] = useState('')
 
+  const countryCodes = [
+    { code: '+20', name: t('country.egypt'), flag: '🇪🇬' },
+    { code: '+966', name: t('country.saudiArabia'), flag: '🇸🇦' },
+    { code: '+971', name: t('country.uae'), flag: '🇦🇪' },
+    { code: '+965', name: t('country.kuwait'), flag: '🇰🇼' },
+    { code: '+973', name: t('country.bahrain'), flag: '🇧🇭' },
+    { code: '+974', name: t('country.qatar'), flag: '🇶🇦' },
+    { code: '+968', name: t('country.oman'), flag: '🇴🇲' },
+    { code: '+962', name: t('country.jordan'), flag: '🇯🇴' },
+    { code: '+961', name: t('country.lebanon'), flag: '🇱🇧' },
+    { code: '+216', name: t('country.tunisia'), flag: '🇹🇳' },
+    { code: '+212', name: t('country.morocco'), flag: '🇲🇦' },
+    { code: '+213', name: t('country.algeria'), flag: '🇩🇿' },
+    { code: '+1', name: t('country.usaCanada'), flag: '🇺🇸' },
+    { code: '+44', name: t('country.uk'), flag: '🇬🇧' },
+  ]
+
   const handleChange = (e) => {
     const { name, value } = e.target
     if (name === 'phone') {
-      setFormData(prev => ({ ...prev, phone: value.replace(/\D/g, '').slice(0, 11) }))
+      setFormData(prev => ({ ...prev, phone: value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 11) }))
       setPhoneError('')
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
@@ -226,12 +257,13 @@ function CustomerForm({ customer, onSave, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (formData.phone && formData.phone.length !== 11) {
-      setPhoneError('Phone must be exactly 11 digits')
+    if (formData.phone && formData.phone.length !== 10) {
+      setPhoneError('Phone must be exactly 10 digits (without leading 0)')
       return
     }
     setPhoneError('')
-    onSave({ ...formData, phone: formData.phone || '' })
+    const fullPhone = formData.phone ? `${formData.countryCode}${formData.phone}` : ''
+    onSave({ ...formData, phone: fullPhone })
   }
 
   return (
@@ -268,23 +300,35 @@ function CustomerForm({ customer, onSave, onClose }) {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('customers.phone')}
             </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="01xxxxxxxxx"
-              inputMode="numeric"
-              maxLength={11}
-              className={`w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-800 ${
-                phoneError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
-              }`}
-            />
+            <div className="flex gap-2">
+              <select
+                name="countryCode"
+                value={formData.countryCode}
+                onChange={handleChange}
+                className="w-32 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+              >
+                {countryCodes.map(c => (
+                  <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="1xxxxxxxxx"
+                inputMode="numeric"
+                maxLength={10}
+                className={`flex-1 px-4 py-2 rounded-lg border bg-white dark:bg-gray-800 ${
+                  phoneError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
+                }`}
+              />
+            </div>
             {phoneError && (
               <p className="mt-1 text-xs text-red-500 dark:text-red-400">{phoneError}</p>
             )}
-            {!phoneError && formData.phone && formData.phone.length < 11 && (
-              <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">{11 - formData.phone.length} digits remaining</p>
+            {!phoneError && formData.phone && formData.phone.length < 10 && (
+              <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">{10 - formData.phone.length} digits remaining</p>
             )}
           </div>
 
