@@ -32,7 +32,7 @@ router.post('/order', async (req, res, next) => {
     }
 
     // Use the authenticated user's ID (or override for sync)
-    const userId = req.user?.id || user_id
+    const userId = req.user.id
 
     // Create order with client_order_id for dedup
     const { data: order, error: orderError } = await supabase
@@ -98,7 +98,7 @@ router.post('/bulk', async (req, res, next) => {
           continue
         }
 
-        const userId = req.user?.id || orderData.user_id
+        const userId = req.user.id
 
         const { data: order, error } = await supabase
           .from('orders')

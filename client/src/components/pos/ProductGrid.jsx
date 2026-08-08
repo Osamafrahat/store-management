@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
 import { Package, Plus } from 'lucide-react'
 
-export default function ProductGrid({ products, onAddToCart }) {
+export default memo(function ProductGrid({ products, onAddToCart }) {
   const { t } = useAppStore()
   const [qtyModal, setQtyModal] = useState(null)
   const [qtyValue, setQtyValue] = useState('')
@@ -148,4 +148,4 @@ export default function ProductGrid({ products, onAddToCart }) {
       )}
     </div>
   )
-}
+})

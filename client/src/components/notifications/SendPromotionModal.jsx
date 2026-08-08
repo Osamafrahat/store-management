@@ -93,7 +93,6 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
       setEmailResults(null)
 
       const { data: health } = await healthApi.check()
-      console.log('[SendPromotion] Health check:', health)
 
       if (!health?.smtp) {
         setEmailResults({ emailSkipped: true, reason: 'SMTP env vars not detected on server' })

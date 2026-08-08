@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from './stores/appStore'
 import { useUserStore } from './stores/userStore'
@@ -6,50 +6,51 @@ import Layout from './components/layout/Layout'
 import Toast from './components/Toast'
 import SessionTimeout from './components/SessionTimeout'
 import ForcePasswordChange from './components/ForcePasswordChange'
-import LoginPage from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import POSPage from './pages/POSPage'
-import InventoryPage from './pages/InventoryPage'
-import ReportsPage from './pages/ReportsPage'
-import SuppliersPage from './pages/SuppliersPage'
-import PromotionsPage from './pages/PromotionsPage'
-import SettingsPage from './pages/SettingsPage'
-import UsersPage from './pages/UsersPage'
-import CustomersPage from './pages/CustomersPage'
-import EmployeesPage from './pages/EmployeesPage'
-import ExpensesPage from './pages/ExpensesPage'
-import RefundsPage from './pages/RefundsPage'
-import ActivitiesPage from './pages/ActivitiesPage'
-import ProfilePage from './pages/ProfilePage'
-import ChartOfAccountsPage from './pages/ChartOfAccountsPage'
-import JournalEntriesPage from './pages/JournalEntriesPage'
-import AccountingReportsPage from './pages/AccountingReportsPage'
-import PaymentsPage from './pages/PaymentsPage'
-import InvoicesPage from './pages/InvoicesPage'
+import ErrorBoundary from './components/ErrorBoundary'
 
-// Protected Route Component
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const POSPage = lazy(() => import('./pages/POSPage'))
+const InventoryPage = lazy(() => import('./pages/InventoryPage'))
+const ReportsPage = lazy(() => import('./pages/ReportsPage'))
+const SuppliersPage = lazy(() => import('./pages/SuppliersPage'))
+const PromotionsPage = lazy(() => import('./pages/PromotionsPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const UsersPage = lazy(() => import('./pages/UsersPage'))
+const CustomersPage = lazy(() => import('./pages/CustomersPage'))
+const EmployeesPage = lazy(() => import('./pages/EmployeesPage'))
+const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
+const RefundsPage = lazy(() => import('./pages/RefundsPage'))
+const ActivitiesPage = lazy(() => import('./pages/ActivitiesPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const ChartOfAccountsPage = lazy(() => import('./pages/ChartOfAccountsPage'))
+const JournalEntriesPage = lazy(() => import('./pages/JournalEntriesPage'))
+const AccountingReportsPage = lazy(() => import('./pages/AccountingReportsPage'))
+const PaymentsPage = lazy(() => import('./pages/PaymentsPage'))
+const InvoicesPage = lazy(() => import('./pages/InvoicesPage'))
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useUserStore()
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-
+  if (!isAuthenticated) return <Navigate to="/login" replace />
   return children
+}
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    </div>
+  )
 }
 
 function App() {
   const { theme, settings, loadSettings } = useAppStore()
   const { isAuthenticated, mustChangePassword } = useUserStore()
 
-  // Load settings from database on app startup (only when authenticated)
   useEffect(() => {
-    if (isAuthenticated) {
-      loadSettings()
-    }
+    if (isAuthenticated) loadSettings()
   }, [isAuthenticated, loadSettings])
 
-  // Update document title with store name
   useEffect(() => {
     document.title = settings.storeName || 'Store POS'
   }, [settings.storeName])
@@ -60,123 +61,41 @@ function App() {
     <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <Router>
-          {/* Toast Notifications */}
           <Toast />
-
-          {/* Session Timeout Handler */}
           <SessionTimeout />
+          {showForcePasswordChange && <ForcePasswordChange />}
 
-          {/* Force Password Change Modal */}
-          {showForcePasswordChange && (
-            <ForcePasswordChange />
-          )}
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={
+                  isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+                } />
 
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={
-              isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-            } />
+                <Route path="/" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
+                <Route path="/pos" element={<ProtectedRoute><Layout><POSPage /></Layout></ProtectedRoute>} />
+                <Route path="/inventory" element={<ProtectedRoute><Layout><InventoryPage /></Layout></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><Layout><ReportsPage /></Layout></ProtectedRoute>} />
+                <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
+                <Route path="/promotions" element={<ProtectedRoute><Layout><PromotionsPage /></Layout></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute><Layout><UsersPage /></Layout></ProtectedRoute>} />
+                <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
+                <Route path="/employees" element={<ProtectedRoute><Layout><EmployeesPage /></Layout></ProtectedRoute>} />
+                <Route path="/expenses" element={<ProtectedRoute><Layout><ExpensesPage /></Layout></ProtectedRoute>} />
+                <Route path="/refunds" element={<ProtectedRoute><Layout><RefundsPage /></Layout></ProtectedRoute>} />
+                <Route path="/activities" element={<ProtectedRoute><Layout><ActivitiesPage /></Layout></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/accounts" element={<ProtectedRoute><Layout><ChartOfAccountsPage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/journals" element={<ProtectedRoute><Layout><JournalEntriesPage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/reports" element={<ProtectedRoute><Layout><AccountingReportsPage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/payments" element={<ProtectedRoute><Layout><PaymentsPage /></Layout></ProtectedRoute>} />
+                <Route path="/invoices" element={<ProtectedRoute><Layout><InvoicesPage /></Layout></ProtectedRoute>} />
 
-            {/* Protected Routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout><DashboardPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/pos" element={
-              <ProtectedRoute>
-                <Layout><POSPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/inventory" element={
-              <ProtectedRoute>
-                <Layout><InventoryPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/reports" element={
-              <ProtectedRoute>
-                <Layout><ReportsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/suppliers" element={
-              <ProtectedRoute>
-                <Layout><SuppliersPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/promotions" element={
-              <ProtectedRoute>
-                <Layout><PromotionsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Layout><SettingsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/users" element={
-              <ProtectedRoute>
-                <Layout><UsersPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/customers" element={
-              <ProtectedRoute>
-                <Layout><CustomersPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/employees" element={
-              <ProtectedRoute>
-                <Layout><EmployeesPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/expenses" element={
-              <ProtectedRoute>
-                <Layout><ExpensesPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/refunds" element={
-              <ProtectedRoute>
-                <Layout><RefundsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/activities" element={
-              <ProtectedRoute>
-                <Layout><ActivitiesPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Layout><ProfilePage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/accounting/accounts" element={
-              <ProtectedRoute>
-                <Layout><ChartOfAccountsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/accounting/journals" element={
-              <ProtectedRoute>
-                <Layout><JournalEntriesPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/accounting/reports" element={
-              <ProtectedRoute>
-                <Layout><AccountingReportsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/accounting/payments" element={
-              <ProtectedRoute>
-                <Layout><PaymentsPage /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/invoices" element={
-              <ProtectedRoute>
-                <Layout><InvoicesPage /></Layout>
-              </ProtectedRoute>
-            } />
-
-            {/* Catch all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </Router>
       </div>
     </div>

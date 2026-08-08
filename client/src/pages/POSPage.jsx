@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useAppStore } from '../stores/appStore'
@@ -139,7 +139,7 @@ export default function POSPage() {
     addItem(product)
   }
 
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = useMemo(() => products.filter(p => {
     if (!p.is_active) return false
     if (selectedCategory && p.category_id !== selectedCategory) return false
     if (searchQuery) {
@@ -151,13 +151,13 @@ export default function POSPage() {
       )
     }
     return true
-  })
+  }), [products, selectedCategory, searchQuery])
 
-  const filteredCustomers = customers.filter(c => {
+  const filteredCustomers = useMemo(() => customers.filter(c => {
     if (!customerSearch) return true
     const query = customerSearch.toLowerCase()
     return c.name?.toLowerCase().includes(query) || c.phone?.includes(query)
-  })
+  }), [customers, customerSearch])
 
   return (
     <div className="flex flex-col md:flex-row md:h-[calc(100vh-8rem)] gap-4 md:overflow-hidden">

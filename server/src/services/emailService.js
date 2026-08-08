@@ -97,6 +97,15 @@ export async function sendPromotionEmail({ recipients, promotion, storeName }) {
   return results
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export async function sendCustomEmail({ recipients, subject, message, storeName }) {
   const client = getResendClient()
   if (!client) throw new Error('RESEND_API_KEY not configured')
@@ -116,8 +125,8 @@ export async function sendCustomEmail({ recipients, subject, message, storeName 
     </head>
     <body>
       <div class="container">
-        <div class="header"><h1>${subject}</h1></div>
-        <div class="content"><p>${message}</p></div>
+        <div class="header"><h1>${escapeHtml(subject)}</h1></div>
+        <div class="content"><p>${escapeHtml(message)}</p></div>
         <div class="footer"><p>${storeName} | جميع الحقوق محفوظة © ${new Date().getFullYear()}</p></div>
       </div>
     </body>

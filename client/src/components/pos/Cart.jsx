@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useCartStore } from '../../stores/cartStore'
 import { useAppStore } from '../../stores/appStore'
 import { promotionsApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
 import { Trash2, Plus, Minus, Tag, ShoppingBag, X } from 'lucide-react'
 
-export default function Cart({ onCheckout }) {
+export default memo(function Cart({ onCheckout }) {
   const { items, removeItem, updateQuantity, clearCart, getSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount, applyPromo, removePromo } = useCartStore()
   const { settings, t } = useAppStore()
   const [promoInput, setPromoInput] = useState('')
@@ -233,4 +233,4 @@ export default function Cart({ onCheckout }) {
       )}
     </div>
   )
-}
+})

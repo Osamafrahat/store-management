@@ -184,46 +184,4 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// Debug: Check payments and their journal links
-router.get('/debug', async (req, res) => {
-  try {
-    // Get recent payments with journal links
-    const { data: payments, error: paymentsError } = await supabase
-      .from('payments')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    if (paymentsError) throw paymentsError
-
-    // Get journal entries for these payments
-    const journalIds = payments?.filter(p => p.journal_entry_id).map(p => p.journal_entry_id) || []
-    let journalEntries = []
-    if (journalIds.length > 0) {
-      const { data: journals } = await supabase
-        .from('journal_entries')
-        .select('*, journal_entry_lines(*)')
-        .in('id', journalIds)
-      journalEntries = journals || []
-    }
-
-    // Get account balances
-    const { data: accounts } = await supabase
-      .from('accounts')
-      .select('id, code, name, account_type, balance')
-      .order('code')
-
-    res.json({
-      paymentsCount: payments?.length || 0,
-      payments: payments || [],
-      journalEntriesCount: journalEntries.length,
-      journalEntries: journalEntries,
-      accounts: accounts || []
-    })
-  } catch (err) {
-    console.error('Debug error:', err)
-    res.status(500).json({ error: err.message })
-  }
-})
-
 export { router as paymentsRouter }

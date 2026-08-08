@@ -44,15 +44,13 @@ app.use(helmet({
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean)
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true)
-        } else {
-          callback(new Error('Not allowed by CORS'))
-        }
-      }
-    : '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -60,8 +58,8 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(express.json({ limit: '1mb' }))
+app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -80,7 +78,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 })
 app.use('/api/auth/login', authLimiter)
-app.use('/api/auth/register', authLimiter)
+app.use('/api/auth/change-password', authLimiter)
 
 app.disable('x-powered-by')
 
@@ -102,16 +100,16 @@ app.use('/api/refunds', authenticateToken, activityLogger, refundsRouter)
 app.use('/api/notifications', authenticateToken, activityLogger, emailRouter)
 app.use('/api/activities', authenticateToken, requireManager, activitiesRouter)
 
-app.use('/api/accounting/accounts', authenticateToken, activityLogger, accountsRouter)
-app.use('/api/accounting/journals', authenticateToken, activityLogger, journalsRouter)
-app.use('/api/accounting/reports', authenticateToken, accountingReportsRouter)
-app.use('/api/accounting/payments', authenticateToken, activityLogger, paymentsRouter)
+app.use('/api/accounting/accounts', authenticateToken, requireManager, activityLogger, accountsRouter)
+app.use('/api/accounting/journals', authenticateToken, requireManager, activityLogger, journalsRouter)
+app.use('/api/accounting/reports', authenticateToken, requireManager, accountingReportsRouter)
+app.use('/api/accounting/payments', authenticateToken, requireManager, activityLogger, paymentsRouter)
 app.use('/api/sync', authenticateToken, syncRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)
   const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS)
-  console.log(`[HEALTH] email=${emailConfigured} smtp=${smtpConfigured} RESEND_API_KEY=${process.env.RESEND_API_KEY ? 'set' : 'MISSING'}`)
+  console.log(`[HEALTH] email=${emailConfigured} smtp=${smtpConfigured}`)
   res.json({
     status: 'ok',
     smtp: emailConfigured || smtpConfigured,
