@@ -262,15 +262,6 @@ function CustomerForm({ customer, onSave, onClose }) {
   const getCountryConfig = () => countryCodes.find(c => c.code === formData.countryCode) || countryCodes[0]
 
   const validatePhone = (phone, countryCode) => {
-    if (!phone || !phone.trim()) return ''
-    const digits = phone.replace(/\D/g, '')
-    if (digits.length === 0) return ''
-
-    const config = countryCodes.find(c => c.code === countryCode) || countryCodes[0]
-
-    if (digits.length < config.len) {
-      return t('customers.phoneTooShort') || `Phone must be at least ${config.len} digits (${config.example})`
-    }
     return ''
   }
 
