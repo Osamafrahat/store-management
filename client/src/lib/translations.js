@@ -841,6 +841,7 @@ export const translations = {
     'accounting.sourcePayment': 'Payment',
     'accounting.sourcePaymentReverse': 'Payment Reverse',
     'accounting.sourcePeriodClose': 'Period Close',
+    'accounting.sourceInitialCapital': 'Initial Capital',
 
     // Journal entry description keys
     'accounting.desc.paymentFor': 'Payment for',
@@ -1865,6 +1866,7 @@ export const translations = {
     'accounting.sourcePayment': 'دفعة',
     'accounting.sourcePaymentReverse': 'عكس دفعة',
     'accounting.sourcePeriodClose': 'إغلاق دورة',
+    'accounting.sourceInitialCapital': 'رأس المال الأولي',
 
     // Journal entry description keys (Arabic)
     'accounting.desc.paymentFor': 'دفعة للطلب',
