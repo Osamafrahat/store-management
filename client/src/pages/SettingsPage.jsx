@@ -314,6 +314,128 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* ETA Integration Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+              <Receipt className="w-5 h-5 text-indigo-600" />
+            </div>
+            <h2 className="text-lg font-semibold">{t('settings.etaIntegration') || 'ETA Integration (Egyptian Tax Authority)'}</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                {t('settings.etaWarning') || 'Register your POS system on ETA portal to get credentials. Required for B2C e-receipt compliance.'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.etaClientId') || 'Client ID'}
+                </label>
+                <input
+                  type="text"
+                  name="eta_client_id"
+                  value={formData.eta_client_id || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  placeholder="d0394a9f-..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.etaClientSecret') || 'Client Secret'}
+                </label>
+                <input
+                  type="password"
+                  name="eta_client_secret"
+                  value={formData.eta_client_secret || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  placeholder="6d62315e-..."
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.etaPosSerial') || 'POS Serial Number'}
+                </label>
+                <input
+                  type="text"
+                  name="eta_pos_serial"
+                  value={formData.eta_pos_serial || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  placeholder="1234567899"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.etaRegistrationNumber') || 'Registration Number (RIN)'}
+                </label>
+                <input
+                  type="text"
+                  name="eta_registration_number"
+                  value={formData.eta_registration_number || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  placeholder="674859545"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.etaActivityCode') || 'Taxpayer Activity Code'}
+                </label>
+                <input
+                  type="text"
+                  name="eta_activity_code"
+                  value={formData.eta_activity_code || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  placeholder="4711"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.etaGovernate') || 'Governorate'}
+                </label>
+                <input
+                  type="text"
+                  name="eta_store_governate"
+                  value={formData.eta_store_governate || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                  placeholder="Cairo"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('settings.etaAutoSubmit') || 'Auto-submit receipts to ETA'}
+              </label>
+              <select
+                name="eta_auto_submit"
+                value={formData.eta_auto_submit || 'disabled'}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              >
+                <option value="disabled">{t('settings.etaDisabled') || 'Disabled'}</option>
+                <option value="enabled">{t('settings.etaEnabled') || 'Enabled (submit on every sale)'}</option>
+                <option value="manual">{t('settings.etaManual') || 'Manual (submit from invoice)'}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* Save Button */}
         <div className="flex justify-end">
           <button

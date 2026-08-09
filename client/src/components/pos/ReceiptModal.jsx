@@ -1,11 +1,21 @@
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency, formatDateTime } from '../../lib/utils'
 import { Printer, X } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import { etaApi } from '../../lib/api'
 
 export default function ReceiptModal({ order, onClose }) {
   const { settings, t } = useAppStore()
   const receiptRef = useRef(null)
+  const [etaQR, setEtaQR] = useState(order.eta_qr_code || '')
+
+  useEffect(() => {
+    if (!etaQR && settings.eta_auto_submit !== 'disabled' && order.id) {
+      etaApi.getQR(order.id).then(res => {
+        if (res.data?.qrContent) setEtaQR(res.data.qrContent)
+      }).catch(() => {})
+    }
+  }, [order.id])
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank')
@@ -107,6 +117,12 @@ export default function ReceiptModal({ order, onClose }) {
         <div class="footer">
           ${settings.receiptFooter || t('receipt.thankYou')}
         </div>
+        ${etaQR ? `
+          <div style="text-align: center; margin-top: 10px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(etaQR)}" alt="ETA QR" width="120" height="120" />
+            <div style="font-size: 8px; color: #666; margin-top: 4px;">Scan for ETA receipt</div>
+          </div>
+        ` : ''}
       </body>
       </html>
     `)
@@ -222,6 +238,20 @@ export default function ReceiptModal({ order, onClose }) {
             <div className="text-center text-xs text-gray-500">
               {settings.receiptFooter || t('receipt.thankYou')}
             </div>
+
+            {/* ETA QR Code */}
+            {etaQR && (
+              <div className="text-center mt-4">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(etaQR)}`}
+                  alt="ETA QR"
+                  className="mx-auto"
+                  width={120}
+                  height={120}
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Scan for ETA receipt</p>
+              </div>
+            )}
           </div>
         </div>
 

@@ -226,4 +226,12 @@ export const syncOrdersApi = {
   getStatus: () => api.get('/sync/status'),
 }
 
+// ETA API (Egyptian Tax Authority)
+export const etaApi = {
+  test: () => api.post('/eta/test'),
+  submit: (orderId) => api.post('/eta/submit', { order_id: orderId }),
+  getStatus: (etaUUID) => api.get(`/eta/status/${etaUUID}`),
+  getQR: (orderId) => api.post('/eta/qr', { order_id: orderId }),
+}
+
 export default api

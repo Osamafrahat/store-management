@@ -31,6 +31,7 @@ import { journalsRouter } from './routes/journals.js'
 import { accountingReportsRouter } from './routes/accountingReports.js'
 import { paymentsRouter } from './routes/payments.js'
 import syncRouter from './routes/sync.js'
+import etaRouter from './routes/eta.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -105,6 +106,7 @@ app.use('/api/accounting/journals', authenticateToken, requireManager, activityL
 app.use('/api/accounting/reports', authenticateToken, requireManager, accountingReportsRouter)
 app.use('/api/accounting/payments', authenticateToken, requireManager, activityLogger, paymentsRouter)
 app.use('/api/sync', authenticateToken, syncRouter)
+app.use('/api/eta', authenticateToken, etaRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)
