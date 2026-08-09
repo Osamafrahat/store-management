@@ -33,6 +33,7 @@ export function translateDescription(t, desc) {
     { en: 'Payment inbound: ', key: 'accounting.desc.paymentReceived' },
     { en: 'Payment outbound: ', key: 'accounting.desc.paymentMade' },
     { en: 'Year-end closing for ', key: 'accounting.desc.yearEndClosing' },
+    { en: 'Initial capital contribution - ', key: 'accounting.desc.initialCapital' },
   ]
 
   for (const p of prefixes) {

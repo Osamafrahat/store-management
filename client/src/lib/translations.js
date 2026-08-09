@@ -872,6 +872,7 @@ export const translations = {
     'accounting.desc.yearEndClosing': 'Year-end closing for',
     'accounting.desc.paymentInbound': 'Payment received',
     'accounting.desc.paymentOutbound': 'Payment made',
+    'accounting.desc.initialCapital': 'Initial capital contribution',
 
     // Account names by code
     'accounting.account.1010': 'Cash on Hand',
@@ -1897,6 +1898,7 @@ export const translations = {
     'accounting.desc.yearEndClosing': 'إقفال نهاية السنة لـ',
     'accounting.desc.paymentInbound': 'دفعة مستلمة',
     'accounting.desc.paymentOutbound': 'دفعة صادرة',
+    'accounting.desc.initialCapital': 'مساهمة رأس المال الأولي',
     'accounting.account.1010': 'النقدي على اليد',
     'accounting.account.1020': 'الحساب البنكي',
     'accounting.account.1030': 'المدينون (الذمم المدينة)',
