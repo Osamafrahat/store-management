@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { ordersApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
-import { FileText, Search, Printer, Eye, Filter, RefreshCcw, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { FileText, Search, Eye, Filter, RefreshCcw, CheckCircle, XCircle, Clock } from 'lucide-react'
 import ReceiptModal from '../components/pos/ReceiptModal'
 
 const STATUS_COLORS = {
@@ -80,72 +80,6 @@ export default function InvoicesPage() {
     }
   }
 
-  const handlePrintReceipt = async (order) => {
-    try {
-      const { data: fullOrder } = await ordersApi.getById(order.id)
-      printReceipt(fullOrder)
-    } catch (err) {
-      console.error('Failed to load order:', err)
-    }
-  }
-
-  const printReceipt = (order) => {
-    const { settings } = JSON.parse(localStorage.getItem('settings') || '{}')
-    const storeName = settings?.storeName || 'Store'
-    const storeAddress = settings?.storeAddress || ''
-    const storePhone = settings?.storePhone || ''
-
-    const itemsHtml = (order.items || []).map(item => `
-      <div style="margin: 4px 0;">
-        <div style="display: flex; justify-content: space-between;">
-          <span>${item.products?.name || 'Item'}</span>
-          <span>${formatCurrency(item.unit_price)}</span>
-        </div>
-        <div style="font-size: 10px; color: #666;">x${item.quantity}${item.discount ? ` (-${formatCurrency(item.discount)})` : ''}</div>
-      </div>
-    `).join('')
-
-    const printWindow = window.open('', '_blank')
-    printWindow.document.write(`
-      <!DOCTYPE html><html><head><title>Receipt - ${order.order_number}</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Courier New', monospace; width: 80mm; padding: 5mm; font-size: 12px; line-height: 1.4; }
-        .header { text-align: center; margin-bottom: 10px; }
-        .store-name { font-size: 16px; font-weight: bold; }
-        .store-info { font-size: 10px; color: #666; }
-        .divider { border-top: 1px dashed #000; margin: 10px 0; }
-        .row { display: flex; justify-content: space-between; margin: 3px 0; }
-        .total-row { font-weight: bold; font-size: 14px; margin-top: 10px; }
-        .footer { text-align: center; margin-top: 15px; font-size: 10px; }
-      </style></head><body>
-        <div class="header">
-          <div class="store-name">${storeName}</div>
-          ${storeAddress ? `<div class="store-info">${storeAddress}</div>` : ''}
-          ${storePhone ? `<div class="store-info">${storePhone}</div>` : ''}
-        </div>
-        <div class="divider"></div>
-        <div class="row"><span>Order:</span><span>${order.order_number}</span></div>
-        <div class="row"><span>Date:</span><span>${new Date(order.created_at).toLocaleString()}</span></div>
-        ${order.users?.full_name ? `<div class="row"><span>Cashier:</span><span>${order.users.full_name}</span></div>` : ''}
-        <div class="divider"></div>
-        <div style="font-weight: bold; margin-bottom: 5px;">Items:</div>
-        ${itemsHtml}
-        <div class="divider"></div>
-        <div class="row"><span>Subtotal:</span><span>${formatCurrency(order.subtotal)}</span></div>
-        ${parseFloat(order.discount_amount) > 0 ? `<div class="row"><span>Discount:</span><span>-${formatCurrency(order.discount_amount)}</span></div>` : ''}
-        ${parseFloat(order.tax_amount) > 0 ? `<div class="row"><span>Tax:</span><span>${formatCurrency(order.tax_amount)}</span></div>` : ''}
-        <div class="total-row row"><span>TOTAL:</span><span>${formatCurrency(order.total)}</span></div>
-        <div class="divider"></div>
-        <div class="row"><span>Payment:</span><span>${order.payment_method}</span></div>
-        ${order.is_refunded ? '<div class="row" style="color: red; font-weight: bold;"><span>*** REFUNDED ***</span></div>' : ''}
-        <div class="footer">Thank you for your purchase!</div>
-      </body></html>
-    `)
-    printWindow.document.close()
-    printWindow.onload = () => { printWindow.print() }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -159,7 +93,7 @@ export default function InvoicesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t('invoices.title') || 'Invoices'}</h1>
-          <p className="text-gray-500 dark:text-gray-400">{t('invoices.subtitle') || 'View and reprint all invoices'}</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('invoices.subtitle') || 'View all invoices'}</p>
         </div>
         <button onClick={loadOrders} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2 text-sm">
           <RefreshCcw className="w-4 h-4" /> {t('common.refresh') || 'Refresh'}
@@ -307,13 +241,6 @@ export default function InvoicesPage() {
                             title={t('common.view') || 'View'}
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handlePrintReceipt(order)}
-                            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
-                            title={t('common.print') || 'Print'}
-                          >
-                            <Printer className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
