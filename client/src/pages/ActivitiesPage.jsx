@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { activitiesApi } from '../lib/api'
-import { Activity, Search, Filter, Trash2, User, ShoppingCart, Package, Truck, Tag, DollarSign, RotateCcw, Users, ClipboardList } from 'lucide-react'
+import { Activity, Search, User, ShoppingCart, Package, Truck, Tag, DollarSign, RotateCcw, Users, ClipboardList } from 'lucide-react'
 
 const ACTION_ICONS = {
   created: { icon: '➕', color: 'text-green-600 bg-green-50 dark:bg-green-900/20' },

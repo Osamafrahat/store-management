@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { journalsApi, accountsApi } from '../lib/api'
 import { translateDescription } from '../lib/translateDescription'
-import { BookOpen, Plus, Search, Eye, RotateCcw, Trash2, Save, X } from 'lucide-react'
+import { Plus, Search, Eye, RotateCcw, Save, X } from 'lucide-react'
 
 export default function JournalEntriesPage() {
   const { t, toastSuccess, toastError } = useAppStore()

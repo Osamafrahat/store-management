@@ -27,14 +27,10 @@ export default function Toast() {
   const { toasts, removeToast } = useAppStore()
 
   useEffect(() => {
-    toasts.forEach(toast => {
-      if (toast.duration !== 0) {
-        const timer = setTimeout(() => {
-          removeToast(toast.id)
-        }, toast.duration || 4000)
-        return () => clearTimeout(timer)
-      }
-    })
+    const timers = toasts
+      .filter(t => t.duration !== 0)
+      .map(toast => setTimeout(() => removeToast(toast.id), toast.duration || 4000))
+    return () => timers.forEach(id => clearTimeout(id))
   }, [toasts, removeToast])
 
   if (toasts.length === 0) return null

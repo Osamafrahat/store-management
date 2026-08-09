@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { ordersApi, etaApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
-import { FileText, Search, Eye, Filter, RefreshCcw, CheckCircle, XCircle, Clock, Send } from 'lucide-react'
+import { FileText, Search, Eye, RefreshCcw, CheckCircle, XCircle, Clock, Send } from 'lucide-react'
 import ReceiptModal from '../components/pos/ReceiptModal'
 
 const STATUS_COLORS = {
@@ -93,7 +93,7 @@ export default function InvoicesPage() {
       } else {
         toastError(data.rejectedDocuments?.[0]?.error || 'Submission rejected by ETA')
       }
-      fetchOrders()
+      loadOrders()
     } catch (err) {
       toastError(err.response?.data?.error || err.message || 'Failed to submit to ETA')
     } finally {

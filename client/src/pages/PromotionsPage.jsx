@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { promotionsApi } from '../lib/api'
 import { formatCurrency, formatDate } from '../lib/utils'
-import { X, Plus, Edit2, Trash2, Tag, Percent, DollarSign, CheckCircle, XCircle, Send, Bell } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, Tag, Percent, DollarSign, CheckCircle, XCircle, Send } from 'lucide-react'
 import SendPromotionModal from '../components/notifications/SendPromotionModal'
 
 export default function PromotionsPage() {

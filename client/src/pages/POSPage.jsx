@@ -4,14 +4,14 @@ import { useCartStore } from '../stores/cartStore'
 import { useAppStore } from '../stores/appStore'
 import { useUserStore } from '../stores/userStore'
 import { useOfflineStore } from '../stores/offlineStore'
-import { productsApi, categoriesApi, promotionsApi, ordersApi, customersApi } from '../lib/api'
+import { productsApi, categoriesApi, ordersApi, customersApi } from '../lib/api'
 import { formatCurrency, generateOrderNumber } from '../lib/utils'
 import ProductGrid from '../components/pos/ProductGrid'
 import Cart from '../components/pos/Cart'
 import PaymentModal from '../components/pos/PaymentModal'
 import BarcodeScanner from '../components/pos/BarcodeScanner'
 import ReceiptModal from '../components/pos/ReceiptModal'
-import { Search, ShoppingCart, Zap, User, WifiOff } from 'lucide-react'
+import { Search, Zap, User } from 'lucide-react'
 
 export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState('')

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { generateSKU } from '../../lib/utils'
-import { X, Package, RefreshCw } from 'lucide-react'
+import { X, RefreshCw } from 'lucide-react'
 
 export default function ProductForm({ product, categories, suppliers, onSave, onClose }) {
   const { t } = useAppStore()

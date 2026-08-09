@@ -4,7 +4,7 @@ import { refundsApi, ordersApi } from '../lib/api'
 import { X, RotateCcw, AlertCircle, CheckCircle, Package, Search } from 'lucide-react'
 
 export default function RefundsPage() {
-  const { t, formatCurrency } = useAppStore()
+  const { t } = useAppStore()
   const [refunds, setRefunds] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)

@@ -7,7 +7,6 @@ import { errorHandler } from './middleware/errorHandler.js'
 import { activityLogger } from './middleware/activityLogger.js'
 import { authRouter } from './routes/auth.js'
 import { authenticateToken, requireManager } from './middleware/auth.js'
-import supabase from './db/supabase.js'
 
 dotenv.config()
 

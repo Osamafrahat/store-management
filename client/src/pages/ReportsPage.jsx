@@ -3,7 +3,7 @@ import { useAppStore } from '../stores/appStore'
 import { reportsApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
 import { BarChart3, TrendingUp, Package, AlertTriangle, DollarSign, Receipt, TrendingDown, Wallet } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
 

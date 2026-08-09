@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useUserStore, ROLES, PERMISSIONS } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
 import { usersApi, employeesApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, User, UserCheck, Shield, Check, XCircle } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, User, UserCheck, Shield } from 'lucide-react'
 
 const permissionLabelsEn = {
   [PERMISSIONS.POS_ACCESS]: 'POS Access',
