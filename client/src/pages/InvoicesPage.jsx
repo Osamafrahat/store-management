@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
-import { ordersApi } from '../lib/api'
+import { ordersApi, etaApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
-import { FileText, Search, Eye, Filter, RefreshCcw, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { FileText, Search, Eye, Filter, RefreshCcw, CheckCircle, XCircle, Clock, Send } from 'lucide-react'
 import ReceiptModal from '../components/pos/ReceiptModal'
 
 const STATUS_COLORS = {
@@ -20,13 +20,14 @@ const STATUS_ICONS = {
 }
 
 export default function InvoicesPage() {
-  const { t } = useAppStore()
+  const { t, toastSuccess, toastError } = useAppStore()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [showReceipt, setShowReceipt] = useState(false)
+  const [etaSubmitting, setEtaSubmitting] = useState(null)
 
   useEffect(() => { loadOrders() }, [])
 
@@ -77,6 +78,26 @@ export default function InvoicesPage() {
       setShowReceipt(true)
     } catch (err) {
       console.error('Failed to load order:', err)
+    }
+  }
+
+  const handleEtaSubmit = async (order) => {
+    setEtaSubmitting(order.id)
+    try {
+      const res = await etaApi.submit(order.id)
+      const data = res.data
+      if (data.alreadySubmitted) {
+        toastSuccess(`Already submitted to ETA. UUID: ${data.etaUUID?.substring(0, 12)}...`)
+      } else if (data.status === 'submitted') {
+        toastSuccess(`Submitted to ETA. UUID: ${data.etaUUID?.substring(0, 12)}...`)
+      } else {
+        toastError(data.rejectedDocuments?.[0]?.error || 'Submission rejected by ETA')
+      }
+      fetchOrders()
+    } catch (err) {
+      toastError(err.response?.data?.error || err.message || 'Failed to submit to ETA')
+    } finally {
+      setEtaSubmitting(null)
     }
   }
 
@@ -235,6 +256,25 @@ export default function InvoicesPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
+                          {!order.eta_uuid && (
+                            <button
+                              onClick={() => handleEtaSubmit(order)}
+                              disabled={etaSubmitting === order.id}
+                              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-gray-500 hover:text-green-600 transition-colors disabled:opacity-50"
+                              title={t('invoices.submitEta') || 'Submit to ETA'}
+                            >
+                              {etaSubmitting === order.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              ) : (
+                                <Send className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                          {order.eta_uuid && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" title={order.eta_uuid}>
+                              ETA
+                            </span>
+                          )}
                           <button
                             onClick={() => handleViewReceipt(order)}
                             className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600 transition-colors"
