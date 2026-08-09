@@ -7,7 +7,11 @@ const router = Router()
 const ALLOWED_SETTINGS = [
   'storeName', 'storeAddress', 'storePhone', 'storeLogo',
   'taxRate', 'currency', 'currencySymbol',
-  'receiptFooter', 'lowStockThreshold'
+  'receiptFooter', 'lowStockThreshold',
+  'loyaltyPointsPerCurrency',
+  'eta_client_id', 'eta_client_secret', 'eta_pos_serial',
+  'eta_registration_number', 'eta_activity_code',
+  'eta_store_governate', 'eta_auto_submit',
 ]
 
 router.get('/', async (req, res, next) => {
