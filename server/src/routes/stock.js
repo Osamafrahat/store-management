@@ -78,13 +78,14 @@ router.post('/receive', [
         targetProductId = existingDup.id
         targetProduct = { ...product, stock_quantity: existingDup.stock_quantity, cost_price: existingDup.cost_price || product.cost_price }
       } else {
-        // Duplicate product for new supplier
+        // Duplicate product for new supplier — generate unique barcode
+        const newBarcode = `SUP${newSupplierId}-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
         const { data: newProduct, error: dupError } = await supabase
           .from('products')
           .insert({
             name: product.name,
             sku: product.sku ? `${product.sku}-S${newSupplierId}` : null,
-            barcode: product.barcode,
+            barcode: newBarcode,
             category_id: product.category_id,
             supplier_id: newSupplierId,
             price: product.price,
