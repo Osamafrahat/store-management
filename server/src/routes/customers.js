@@ -91,6 +91,16 @@ router.post('/', [
       .single()
 
     if (error) throw error
+
+    // Auto-assign account_code for per-customer AR tracking
+    const accountCode = `1030-C${data.id}`
+    await supabase
+      .from('customers')
+      .update({ account_code: accountCode })
+      .eq('id', data.id)
+
+    data.account_code = accountCode
+
     req.logActivity({ action: 'created', entity_type: 'customer', entity_name: data.name })
     res.status(201).json(data)
   } catch (err) {

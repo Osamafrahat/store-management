@@ -287,7 +287,23 @@ async function processOrderBackground(order, items, payments, customer_id, userI
 
       const cashAccount = await findAcc('1010')
       const bankAccount = await findAcc('1020')
-      const arAccount = await findAcc('1030')
+
+      // Use customer-specific AR if available
+      let arAccount = null
+      if (customer_id) {
+        const { data: cust } = await supabase
+          .from('customers')
+          .select('account_code')
+          .eq('id', customer_id)
+          .single()
+        if (cust?.account_code) {
+          const { data } = await supabase.from('accounts').select('id, code').eq('code', cust.account_code).single()
+          arAccount = data
+        }
+      }
+      if (!arAccount) {
+        arAccount = await findAcc('1030')
+      }
 
       for (const p of payments) {
         try {
@@ -320,7 +336,19 @@ async function processOrderBackground(order, items, payments, customer_id, userI
       const { data: product } = await supabase.from('products').select('cost_price').eq('id', item.product_id).single()
       return { ...item, cost_price: product?.cost_price || 0 }
     }))
-    const journalEntry = await postOrderJournal(order, itemsWithCost)
+
+    // Fetch customer info for per-customer AR
+    let customerInfo = null
+    if (customer_id) {
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('id, name, account_code')
+        .eq('id', customer_id)
+        .single()
+      customerInfo = cust
+    }
+
+    const journalEntry = await postOrderJournal(order, itemsWithCost, customerInfo)
     if (journalEntry) {
       await supabase.from('orders').update({ journal_entry_id: journalEntry.id }).eq('id', order.id)
     }

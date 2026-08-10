@@ -160,6 +160,12 @@ INSERT INTO store_settings (key, value) VALUES
   ('receipt_footer', 'Come again!')
 ON CONFLICT (key) DO NOTHING;
 
+-- Ensure customers has account_code column
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS account_code TEXT;
+
+-- Ensure expenses has method column
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS method TEXT DEFAULT 'cash';
+
 -- Default admin user
 `)
     process.exit(1)
@@ -223,6 +229,22 @@ ON CONFLICT (key) DO NOTHING;
     await supabase
       .from('store_settings')
       .upsert(setting, { onConflict: 'key' })
+  }
+
+  // Backfill account_code for existing customers
+  const { data: customersWithoutCode } = await supabase
+    .from('customers')
+    .select('id')
+    .is('account_code', null)
+
+  if (customersWithoutCode && customersWithoutCode.length > 0) {
+    for (const cust of customersWithoutCode) {
+      await supabase
+        .from('customers')
+        .update({ account_code: `1030-C${cust.id}` })
+        .eq('id', cust.id)
+    }
+    console.log(`Backfilled account_code for ${customersWithoutCode.length} customers`)
   }
 
   console.log('Seed completed successfully!')

@@ -93,7 +93,7 @@ router.post('/', [
   body('amount').isNumeric().withMessage('Amount must be a number'),
 ], validate, async (req, res, next) => {
   try {
-    const { category, amount, description, receipt_image, expense_date } = req.body
+    const { category, amount, description, receipt_image, expense_date, method } = req.body
 
     const { data, error } = await supabase
       .from('expenses')
@@ -103,7 +103,8 @@ router.post('/', [
         description: description || null,
         receipt_image: receipt_image || null,
         recorded_by: req.user?.id || null,
-        expense_date: expense_date || new Date().toISOString().split('T')[0]
+        expense_date: expense_date || new Date().toISOString().split('T')[0],
+        method: method || 'cash'
       })
       .select()
       .single()

@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS customers (
   total_spent NUMERIC DEFAULT 0,
   notes TEXT,
   is_active BOOLEAN DEFAULT true,
+  account_code TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -290,6 +291,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   receipt_image TEXT,
   recorded_by BIGINT REFERENCES users(id),
   expense_date DATE DEFAULT CURRENT_DATE,
+  method TEXT DEFAULT 'cash',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

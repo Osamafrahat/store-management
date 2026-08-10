@@ -80,6 +80,20 @@ router.post('/', async (req, res) => {
     const bankAccount = await findAccount('1020')
     const arAccount = await findAccount('1030')
 
+    // For inbound payments from customers, use customer-specific AR account
+    let customerArAccount = null
+    if (payment_type === 'inbound' && partner_type === 'customer' && partner_id) {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('account_code')
+        .eq('id', partner_id)
+        .single()
+      if (customer?.account_code) {
+        customerArAccount = await findAccount(customer.account_code)
+      }
+    }
+    const effectiveArAccount = customerArAccount || arAccount
+
     // For outbound payments to suppliers, use supplier-specific AP account
     let apAccount = null
     if (payment_type === 'outbound' && partner_type === 'supplier' && partner_id) {
@@ -101,11 +115,11 @@ router.post('/', async (req, res) => {
     const lines = []
 
     if (payment_type === 'inbound') {
-      // Customer pays us: debit cash/bank, credit AR
+      // Customer pays us: debit cash/bank, credit customer AR
       if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: parseFloat(amount), credit: 0, description: `Payment received - ${paymentNumber}` })
-      if (arAccount) lines.push({ accountId: arAccount.id, debit: 0, credit: parseFloat(amount), description: `AR reduction - ${paymentNumber}` })
+      if (effectiveArAccount) lines.push({ accountId: effectiveArAccount.id, debit: 0, credit: parseFloat(amount), description: `AR reduction - ${paymentNumber}` })
     } else {
-      // We pay supplier: debit AP, credit cash/bank
+      // We pay supplier: debit supplier AP, credit cash/bank
       if (apAccount) lines.push({ accountId: apAccount.id, debit: parseFloat(amount), credit: 0, description: `AP reduction - ${paymentNumber}` })
       if (sourceAccount) lines.push({ accountId: sourceAccount.id, debit: 0, credit: parseFloat(amount), description: `Payment made - ${paymentNumber}` })
     }

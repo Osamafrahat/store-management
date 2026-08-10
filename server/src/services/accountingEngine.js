@@ -234,12 +234,20 @@ async function recalculateCurrentYearEarnings() {
 }
 
 // Auto-post order to journal
-export async function postOrderJournal(order, orderItems) {
+export async function postOrderJournal(order, orderItems, customer = null) {
   // Ensure accounts exist
   await seedChartOfAccounts()
 
-  // Find accounts
-  const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
+  // Find accounts - use customer-specific AR if available
+  let arAccount = null
+  if (customer && customer.account_code) {
+    const { data } = await supabase.from('accounts').select('id').eq('code', customer.account_code).single()
+    arAccount = data
+  }
+  if (!arAccount) {
+    const { data } = await supabase.from('accounts').select('id').eq('code', '1030').single()
+    arAccount = data
+  }
   const { data: salesAccount } = await supabase.from('accounts').select('id').eq('code', '4010').single()
   const { data: vatAccount } = await supabase.from('accounts').select('id').eq('code', '2030').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
@@ -323,8 +331,28 @@ export async function postOrderJournal(order, orderItems) {
 export async function postRefundJournal(refund, refundItems = null) {
   const { data: refundAccount } = await supabase.from('accounts').select('id').eq('code', '4020').single()
   const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
+  const { data: bankAccount } = await supabase.from('accounts').select('id').eq('code', '1020').single()
+  const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
   const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
+
+  // Determine the correct credit account for refund
+  // Look up original order's payment method to decide
+  let creditAccount = cashAccount // default: cash refund
+  if (refund.order_id) {
+    const { data: orderPayments } = await supabase
+      .from('payments')
+      .select('method')
+      .eq('order_id', refund.order_id)
+      .limit(1)
+    if (orderPayments && orderPayments.length > 0) {
+      const originalMethod = orderPayments[0].method
+      creditAccount = originalMethod === 'cash' ? cashAccount : bankAccount
+    } else {
+      // No payment record found - order was on credit, credit AR instead
+      creditAccount = arAccount
+    }
+  }
 
   const lines = []
 
@@ -338,13 +366,13 @@ export async function postRefundJournal(refund, refundItems = null) {
     })
   }
 
-  // Credit cash (money returned)
-  if (cashAccount) {
+  // Credit the correct account (cash/bank/AR)
+  if (creditAccount) {
     lines.push({
-      accountId: cashAccount.id,
+      accountId: creditAccount.id,
       debit: 0,
       credit: parseFloat(refund.amount),
-      description: 'Refund payment',
+      description: creditAccount.id === arAccount?.id ? 'Refund - AR reduction' : 'Refund payment',
     })
   }
 
@@ -442,7 +470,11 @@ export async function postExpenseJournal(expense) {
   }
   const accountCode = categoryAccountMap[expense.category] || '5020'
   const { data: expenseAccount } = await supabase.from('accounts').select('id').eq('code', accountCode).single()
-  const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
+
+  // Use correct source account based on payment method
+  const method = expense.method || 'cash'
+  const sourceCode = method === 'cash' ? '1010' : '1020'
+  const { data: sourceAccount } = await supabase.from('accounts').select('id').eq('code', sourceCode).single()
 
   const lines = []
 
@@ -455,9 +487,9 @@ export async function postExpenseJournal(expense) {
     })
   }
 
-  if (cashAccount) {
+  if (sourceAccount) {
     lines.push({
-      accountId: cashAccount.id,
+      accountId: sourceAccount.id,
       debit: 0,
       credit: parseFloat(expense.amount),
       description: `Payment for expense`,
