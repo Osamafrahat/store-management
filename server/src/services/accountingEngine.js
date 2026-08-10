@@ -329,14 +329,13 @@ export async function postOrderJournal(order, orderItems, customer = null) {
 
 // Auto-post refund to journal
 export async function postRefundJournal(refund, refundItems = null) {
-  const { data: salesAccount } = await supabase.from('accounts').select('id').eq('code', '4010').single()
+  const { data: returnsAccount } = await supabase.from('accounts').select('id').eq('code', '4020').single()
   const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
   const { data: bankAccount } = await supabase.from('accounts').select('id').eq('code', '1020').single()
   const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
   const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
 
-  // Determine the correct credit account for refund
   let creditAccount = cashAccount
   if (refund.order_id) {
     const { data: orderPayments } = await supabase
@@ -354,22 +353,22 @@ export async function postRefundJournal(refund, refundItems = null) {
 
   const lines = []
 
-  // Credit sales (reduces revenue directly — no separate refund account)
-  if (salesAccount) {
+  // Debit Sales Returns (4020) — accumulates total returns, does not touch Sales (4010)
+  if (returnsAccount) {
     lines.push({
-      accountId: salesAccount.id,
-      debit: 0,
-      credit: parseFloat(refund.amount),
+      accountId: returnsAccount.id,
+      debit: parseFloat(refund.amount),
+      credit: 0,
       description: refundItems ? 'Refund - partial' : 'Refund - full order',
     })
   }
 
-  // Debit cash/bank/AR (reduces asset)
+  // Credit cash/bank/AR (reduces asset)
   if (creditAccount) {
     lines.push({
       accountId: creditAccount.id,
-      debit: parseFloat(refund.amount),
-      credit: 0,
+      debit: 0,
+      credit: parseFloat(refund.amount),
       description: creditAccount.id === arAccount?.id ? 'Refund - AR reduction' : 'Refund payment',
     })
   }
