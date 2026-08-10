@@ -79,7 +79,22 @@ router.post('/', async (req, res) => {
     const cashAccount = await findAccount('1010')
     const bankAccount = await findAccount('1020')
     const arAccount = await findAccount('1030')
-    const apAccount = await findAccount('2010')
+
+    // For outbound payments to suppliers, use supplier-specific AP account
+    let apAccount = null
+    if (payment_type === 'outbound' && partner_type === 'supplier' && partner_id) {
+      const { data: supplier } = await supabase
+        .from('suppliers')
+        .select('account_code')
+        .eq('id', partner_id)
+        .single()
+      if (supplier?.account_code) {
+        apAccount = await findAccount(supplier.account_code)
+      }
+    }
+    if (!apAccount) {
+      apAccount = await findAccount('2010')
+    }
 
     // Card, check, bank_transfer all settle to bank account
     const sourceAccount = method === 'cash' ? cashAccount : bankAccount
