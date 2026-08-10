@@ -108,7 +108,7 @@ app.use('/api/accounting/reports', authenticateToken, requireManager, accounting
 app.use('/api/accounting/payments', authenticateToken, requireManager, activityLogger, paymentsRouter)
 app.use('/api/sync', authenticateToken, syncRouter)
 app.use('/api/eta', authenticateToken, etaRouter)
-app.use('/api/backup', authenticateToken, requireManager, backupRouter)
+app.use('/api/backup', authenticateToken, requireManager, activityLogger, backupRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)
