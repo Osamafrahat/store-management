@@ -12,6 +12,7 @@ export default function PromotionsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingPromo, setEditingPromo] = useState(null)
   const [sendPromo, setSendPromo] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchPromotions()
@@ -36,6 +37,8 @@ export default function PromotionsPage() {
 
   const handleDelete = async (id) => {
     if (!confirm(t('promotions.deleteConfirm'))) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await promotionsApi.delete(id)
       toastSuccess(t('promotions.deleted') || 'Promotion deleted successfully')
@@ -43,10 +46,14 @@ export default function PromotionsPage() {
     } catch (err) {
       console.error('Failed to delete promotion:', err)
       toastError(t('promotions.failedToDelete'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleToggleActive = async (promo) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await promotionsApi.update(promo.id, { is_active: !promo.is_active })
       toastSuccess(t('promotions.updated') || 'Promotion updated')
@@ -54,10 +61,14 @@ export default function PromotionsPage() {
     } catch (err) {
       console.error('Failed to update promotion:', err)
       toastError(t('promotions.failedToUpdate') || 'Failed to update promotion')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleSave = async (promoData) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       let savedPromo
       if (editingPromo) {
@@ -80,6 +91,8 @@ export default function PromotionsPage() {
     } catch (err) {
       console.error('Failed to save promotion:', err)
       toastError(t('promotions.failedToSave'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

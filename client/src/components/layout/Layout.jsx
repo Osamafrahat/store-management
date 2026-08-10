@@ -46,6 +46,7 @@ export default function Layout({ children }) {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState({})
   const [showSyncPanel, setShowSyncPanel] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   // Initialize offline store
   useEffect(() => {
@@ -164,6 +165,8 @@ export default function Layout({ children }) {
   }
 
   const handleLogout = () => {
+    if (loggingOut) return
+    setLoggingOut(true)
     logout()
     navigate('/login')
   }

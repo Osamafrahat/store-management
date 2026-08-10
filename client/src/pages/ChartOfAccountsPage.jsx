@@ -16,6 +16,7 @@ export default function ChartOfAccountsPage() {
   const [capitalAmount, setCapitalAmount] = useState('')
   const [capitalDesc, setCapitalDesc] = useState('')
   const [capitalLoading, setCapitalLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const getAccountName = (account) => {
     const key = `accounting.account.${account.code}`
@@ -42,14 +43,19 @@ export default function ChartOfAccountsPage() {
   }
 
   const handleSeed = async () => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await accountsApi.seed()
       toastSuccess(t('accounting.seedSuccess'))
       fetchAccounts()
     } catch (err) { toastError(t('accounting.seedFailed')) }
+    finally { setIsSubmitting(false) }
   }
 
   const handleRecalculate = async () => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       setLoading(true)
       await api.post('/accounting/accounts/recalculate-balances')
@@ -58,6 +64,8 @@ export default function ChartOfAccountsPage() {
     } catch (err) {
       console.error(err)
       toastError(t('common.error'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -79,6 +87,8 @@ export default function ChartOfAccountsPage() {
   }
 
   const handleSubmit = async () => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingId) {
         await accountsApi.update(editingId, formData)
@@ -92,6 +102,7 @@ export default function ChartOfAccountsPage() {
       setFormData({ code: '', name: '', account_type: 'asset', description: '' })
       fetchAccounts()
     } catch (err) { toastError(err.response?.data?.error || t('common.error')) }
+    finally { setIsSubmitting(false) }
   }
 
   const handleEdit = (account) => {
@@ -102,11 +113,14 @@ export default function ChartOfAccountsPage() {
 
   const handleDelete = async (id) => {
     if (!confirm(t('accounting.deleteConfirm'))) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await accountsApi.delete(id)
       toastSuccess(t('accounting.accountDeleted'))
       fetchAccounts()
     } catch (err) { toastError(err.response?.data?.error || t('common.error')) }
+    finally { setIsSubmitting(false) }
   }
 
   const filteredAccounts = accounts.filter(a => {

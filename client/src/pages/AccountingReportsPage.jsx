@@ -11,6 +11,7 @@ export default function AccountingReportsPage() {
   const [profitLoss, setProfitLoss] = useState(null)
   const [fiscalPeriods, setFiscalPeriods] = useState([])
   const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     loadReport()
@@ -44,12 +45,16 @@ export default function AccountingReportsPage() {
 
   const handleClosePeriod = async (id) => {
     if (!confirm(t('accounting.periodCloseConfirm'))) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await accountingReportsApi.closeFiscalPeriod(id)
       toastSuccess(t('accounting.periodClosed'))
       loadFiscalPeriods()
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

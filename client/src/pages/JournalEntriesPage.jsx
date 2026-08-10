@@ -14,6 +14,7 @@ export default function JournalEntriesPage() {
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showDetail, setShowDetail] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const getAccountName = (account) => {
     if (!account) return ''
@@ -73,6 +74,8 @@ export default function JournalEntriesPage() {
   const handleSubmit = async () => {
     if (!formData.description) return toastError(t('accounting.descRequired'))
     if (!isBalanced) return toastError(t('accounting.entryNotBalanced'))
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await journalsApi.create({
         ...formData,
@@ -84,17 +87,23 @@ export default function JournalEntriesPage() {
       fetchEntries()
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleReverse = async (id) => {
     if (!confirm(t('accounting.reverseConfirm'))) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await journalsApi.reverse(id)
       toastSuccess(t('accounting.entryReversed'))
       fetchEntries()
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

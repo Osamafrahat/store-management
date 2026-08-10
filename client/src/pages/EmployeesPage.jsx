@@ -21,6 +21,7 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchEmployees()
@@ -68,6 +69,8 @@ export default function EmployeesPage() {
 
   const handleDelete = async (id) => {
     if (!confirm(t('employees.deleteConfirm') || 'Are you sure you want to delete this employee?')) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await employeesApi.delete(id)
       toastSuccess(t('employees.deleted') || 'Employee deleted successfully')
@@ -76,10 +79,14 @@ export default function EmployeesPage() {
     } catch (err) {
       console.error('Failed to delete employee:', err)
       toastError(t('employees.failedToDelete') || 'Failed to delete employee')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleToggleActive = async (id) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await employeesApi.toggleActive(id)
       await fetchEmployees()
@@ -87,10 +94,14 @@ export default function EmployeesPage() {
     } catch (err) {
       console.error('Failed to toggle employee status:', err)
       toastError(t('employees.failedToToggle') || 'Failed to toggle employee status')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleSave = async (employeeData) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingEmployee) {
         await employeesApi.update(editingEmployee.id, employeeData)
@@ -105,6 +116,8 @@ export default function EmployeesPage() {
     } catch (err) {
       console.error('Failed to save employee:', err)
       toastError(t('employees.failedToSave') || 'Failed to save employee')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

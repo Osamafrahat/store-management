@@ -10,6 +10,7 @@ export default function CustomersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchCustomers()
@@ -39,6 +40,8 @@ export default function CustomersPage() {
 
   const handleDelete = async (id) => {
     if (!confirm(t('customers.deleteConfirm') || 'Are you sure you want to delete this customer?')) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await customersApi.delete(id)
       toastSuccess(t('customers.deleted') || 'Customer deleted successfully')
@@ -46,10 +49,14 @@ export default function CustomersPage() {
     } catch (err) {
       console.error('Failed to delete customer:', err)
       toastError(t('customers.failedToDelete') || 'Failed to delete customer')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleSave = async (customerData) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingCustomer) {
         await customersApi.update(editingCustomer.id, customerData)
@@ -65,6 +72,8 @@ export default function CustomersPage() {
       console.error('Failed to save customer:', err)
       const errorMsg = err.response?.data?.error || t('customers.failedToSave') || 'Failed to save customer'
       toastError(errorMsg)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

@@ -57,6 +57,7 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [employees, setEmployees] = useState([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const loadUsers = async () => {
     try {
@@ -123,15 +124,27 @@ export default function UsersPage() {
 
   const handleDelete = async (userId) => {
     if (!confirm(t('inventory.deleteConfirm'))) return
-    const result = await deleteUser(userId)
-    if (!result.success) {
-      alert(result.error)
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    try {
+      const result = await deleteUser(userId)
+      if (!result.success) {
+        alert(result.error)
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleToggleActive = async (userId) => {
-    await toggleUserActive(userId)
-    loadUsers()
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    try {
+      await toggleUserActive(userId)
+      loadUsers()
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -257,16 +270,22 @@ export default function UsersPage() {
           user={editingUser}
           employees={employees}
           onSave={async (userData) => {
-            let result
-            if (editingUser) {
-              result = await updateUser(editingUser.id, userData)
-            } else {
-              result = await addUser(userData)
-            }
-            if (result?.success !== false) {
-              setShowForm(false)
-              setEditingUser(null)
-              loadUsers()
+            if (isSubmitting) return
+            setIsSubmitting(true)
+            try {
+              let result
+              if (editingUser) {
+                result = await updateUser(editingUser.id, userData)
+              } else {
+                result = await addUser(userData)
+              }
+              if (result?.success !== false) {
+                setShowForm(false)
+                setEditingUser(null)
+                loadUsers()
+              }
+            } finally {
+              setIsSubmitting(false)
             }
           }}
           onClose={() => {

@@ -15,6 +15,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
   const [suppliers, setSuppliers] = useState([])
   const [receiveSupplierId, setReceiveSupplierId] = useState('')
   const [receiveCostPrice, setReceiveCostPrice] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     suppliersApi.getAll()
@@ -244,8 +245,13 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => onDelete(product.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                      onClick={() => {
+                        if (deletingId) return
+                        setDeletingId(product.id)
+                        onDelete(product.id).finally(() => setDeletingId(null))
+                      }}
+                      disabled={deletingId}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg disabled:opacity-50"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

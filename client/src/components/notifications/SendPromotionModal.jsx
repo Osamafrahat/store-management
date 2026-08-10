@@ -29,6 +29,7 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
   const { t } = useAppStore()
   const [sendMethod, setSendMethod] = useState('whatsapp')
   const [step, setStep] = useState('form')
+  const [isSending, setIsSending] = useState(false)
 
   const [whatsappState, setWhatsappState] = useState('idle')
   const [whatsappLinks, setWhatsappLinks] = useState([])
@@ -114,6 +115,8 @@ export default function SendPromotionModal({ promotion, onClose, onSent }) {
   }, [promotion.id])
 
   const handleSend = async () => {
+    if (isSending) return
+    setIsSending(true)
     const doWhatsApp = sendMethod === 'whatsapp' || sendMethod === 'both'
     const doEmail = sendMethod === 'email' || sendMethod === 'both'
 

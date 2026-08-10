@@ -24,6 +24,7 @@ export default function ExpensesPage() {
   const [editingExpense, setEditingExpense] = useState(null)
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchExpenses()
@@ -67,6 +68,8 @@ export default function ExpensesPage() {
 
   const handleDelete = async (id) => {
     if (!confirm(t('expenses.deleteConfirm') || 'Are you sure you want to delete this expense?')) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await expensesApi.delete(id)
       toastSuccess(t('expenses.deleted') || 'Expense deleted successfully')
@@ -75,10 +78,14 @@ export default function ExpensesPage() {
     } catch (err) {
       console.error('Failed to delete expense:', err)
       toastError(t('expenses.failedToDelete') || 'Failed to delete expense')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleSave = async (expenseData) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingExpense) {
         await expensesApi.update(editingExpense.id, expenseData)
@@ -94,6 +101,8 @@ export default function ExpensesPage() {
     } catch (err) {
       console.error('Failed to save expense:', err)
       toastError(t('expenses.failedToSave') || 'Failed to save expense')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

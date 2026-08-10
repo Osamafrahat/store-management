@@ -8,6 +8,7 @@ export default function RefundsPage() {
   const [refunds, setRefunds] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchRefunds()
@@ -26,6 +27,8 @@ export default function RefundsPage() {
   }
 
   const handleRefund = async (refundData) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await refundsApi.create(refundData)
       setShowForm(false)
@@ -33,6 +36,8 @@ export default function RefundsPage() {
     } catch (err) {
       console.error('Failed to process refund:', err)
       alert(err.response?.data?.error || t('refunds.failedToProcess'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -131,13 +136,14 @@ export default function RefundsPage() {
         <RefundForm
           onSave={handleRefund}
           onClose={() => setShowForm(false)}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
   )
 }
 
-function RefundForm({ onSave, onClose }) {
+function RefundForm({ onSave, onClose, isSubmitting }) {
   const { t, settings } = useAppStore()
   const [orderNumber, setOrderNumber] = useState('')
   const [order, setOrder] = useState(null)
@@ -589,11 +595,11 @@ function RefundForm({ onSave, onClose }) {
           </button>
           <button
             type="submit"
-            disabled={!order || !reason.trim() || selectedItems.length === 0}
+            disabled={!order || !reason.trim() || selectedItems.length === 0 || isSubmitting}
             onClick={handleSubmit}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {t('refunds.processRefund')} ({formatAmount(refund.totalRefund)})
+            {isSubmitting ? (t('common.processing') || 'Processing...') : `${t('refunds.processRefund')} (${formatAmount(refund.totalRefund)})`}
           </button>
         </div>
       </div>

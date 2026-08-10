@@ -22,6 +22,7 @@ export default function PaymentsPage() {
     partner_type: '',
     partner_id: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchPayments()
@@ -53,6 +54,8 @@ export default function PaymentsPage() {
 
   const handleSubmit = async () => {
     if (!formData.amount || parseFloat(formData.amount) <= 0) return toastError(t('accounting.enterAmount'))
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingId) {
         await paymentsApi.update(editingId, formData)
@@ -67,17 +70,23 @@ export default function PaymentsPage() {
       fetchPayments()
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleDelete = async (id) => {
     if (!confirm(t('accounting.deletePaymentConfirm'))) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await paymentsApi.delete(id)
       toastSuccess(t('accounting.paymentDeleted'))
       fetchPayments()
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

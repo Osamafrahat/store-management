@@ -9,6 +9,7 @@ export default function SuppliersPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchSuppliers()
@@ -33,6 +34,8 @@ export default function SuppliersPage() {
 
   const handleDelete = async (id) => {
     if (!confirm(t('suppliers.deleteConfirm'))) return
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       await suppliersApi.delete(id)
       toastSuccess(t('suppliers.deleted') || 'Supplier deleted successfully')
@@ -40,10 +43,14 @@ export default function SuppliersPage() {
     } catch (err) {
       console.error('Failed to delete supplier:', err)
       toastError(t('suppliers.failedToDelete'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleSave = async (supplierData) => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       if (editingSupplier) {
         await suppliersApi.update(editingSupplier.id, supplierData)
@@ -58,6 +65,8 @@ export default function SuppliersPage() {
     } catch (err) {
       console.error('Failed to save supplier:', err)
       toastError(t('suppliers.failedToSave'))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

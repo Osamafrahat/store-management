@@ -13,6 +13,7 @@ export default function SessionTimeout() {
   const navigate = useNavigate()
   const [showWarning, setShowWarning] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   // Track user activity
   const handleActivity = useCallback(() => {
@@ -63,6 +64,8 @@ export default function SessionTimeout() {
   }, [isAuthenticated, lastActivity, checkSessionTimeout, navigate])
 
   const handleLogout = () => {
+    if (loggingOut) return
+    setLoggingOut(true)
     logout()
     navigate('/login')
   }
