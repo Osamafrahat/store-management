@@ -3,6 +3,10 @@
 -- Truncates all transactional data, re-seeds settings & accounts
 -- ============================================================
 
+-- Ensure new columns exist
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS account_code TEXT;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS method TEXT DEFAULT 'cash';
+
 TRUNCATE TABLE
   refund_items,
   order_items,
