@@ -23,6 +23,7 @@ export default function POSPage() {
   const [customers, setCustomers] = useState([])
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [customerSearch, setCustomerSearch] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const searchInputRef = useRef(null)
   const barcodeInputRef = useRef(null)
   const barcodeTimeoutRef = useRef(null)
@@ -322,7 +323,10 @@ export default function POSPage() {
       {showPayment && (
         <PaymentModal
           onClose={() => setShowPayment(false)}
+          isSubmitting={isSubmitting}
           onComplete={async (paymentData) => {
+            if (isSubmitting) return
+            setIsSubmitting(true)
             try {
               const orderData = {
                 order_number: generateOrderNumber(),
@@ -347,7 +351,8 @@ export default function POSPage() {
 
               if (navigator.onLine) {
                 // Online: send to server immediately
-                const response = await ordersApi.create(orderData)
+                const clientOrderId = `ONL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+                const response = await ordersApi.create({ ...orderData, client_order_id: clientOrderId })
                 let completedOrder
                 if (response.data?.id) {
                   const fullOrderRes = await ordersApi.getById(response.data.id)
@@ -392,6 +397,8 @@ export default function POSPage() {
             } catch (err) {
               console.error('Failed to create order:', err)
               alert(t('common.error'))
+            } finally {
+              setIsSubmitting(false)
             }
           }}
         />

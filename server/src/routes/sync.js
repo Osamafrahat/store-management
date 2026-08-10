@@ -176,12 +176,13 @@ async function processSyncedOrder(order, items, payments, customer_id, userId, o
   // Create order items and update stock
   for (const item of items) {
     try {
-      const itemTotal = item.quantity * item.unit_price - (item.discount || 0)
+      const qty = parseFloat(item.quantity)
+      const itemTotal = qty * item.unit_price - (item.discount || 0)
 
       await supabase.from('order_items').insert({
         order_id: order.id,
         product_id: item.product_id,
-        quantity: item.quantity,
+        quantity: qty,
         unit_price: item.unit_price,
         discount: item.discount || 0,
         total: itemTotal
@@ -190,7 +191,7 @@ async function processSyncedOrder(order, items, payments, customer_id, userId, o
       const { data: product } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).single()
       if (product) {
         await supabase.from('products').update({
-          stock_quantity: Math.max(0, product.stock_quantity - item.quantity),
+          stock_quantity: Math.max(0, product.stock_quantity - qty),
           updated_at: new Date().toISOString()
         }).eq('id', item.product_id)
       }
@@ -198,7 +199,7 @@ async function processSyncedOrder(order, items, payments, customer_id, userId, o
       await supabase.from('stock_movements').insert({
         product_id: item.product_id,
         type: 'sale',
-        quantity: -item.quantity,
+        quantity: -qty,
         reference_id: order.id,
         notes: `Order ${order_number} (synced)`
       })

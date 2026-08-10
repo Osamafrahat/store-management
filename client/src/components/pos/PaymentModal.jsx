@@ -4,7 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { formatCurrency, calculateChange } from '../../lib/utils'
 import { X, CreditCard, Banknote, Smartphone, Check } from 'lucide-react'
 
-export default function PaymentModal({ onClose, onComplete }) {
+export default function PaymentModal({ onClose, onComplete, isSubmitting }) {
   const { items, getSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount } = useCartStore()
   const { settings, t } = useAppStore()
 
@@ -245,10 +245,10 @@ export default function PaymentModal({ onClose, onComplete }) {
           </div>
           <button
             onClick={handleComplete}
-            disabled={remaining > 0.01}
+            disabled={remaining > 0.01 || isSubmitting}
             className={`
               w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2
-              ${remaining <= 0.01
+              ${remaining <= 0.01 && !isSubmitting
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
               }

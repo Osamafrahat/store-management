@@ -155,10 +155,22 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { order_number, items, subtotal, discount_amount, tax_amount, total,
-      payment_method, payment_status, payments, customer_id, promotion_id } = req.body
+      payment_method, payment_status, payments, customer_id, promotion_id, client_order_id } = req.body
 
     if (!order_number || !items || items.length === 0) {
       return res.status(400).json({ error: 'Order number and items are required' })
+    }
+
+    // Dedup: if client_order_id already exists, return existing order
+    if (client_order_id) {
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('client_order_id', client_order_id)
+        .single()
+      if (existing) {
+        return res.status(200).json({ ...existing, duplicate: true })
+      }
     }
 
     const userId = req.user.id
@@ -177,6 +189,7 @@ router.post('/', async (req, res, next) => {
         user_id: userId,
         customer_id: customer_id || null,
         promotion_id: promotion_id || null,
+        client_order_id: client_order_id || null,
         completed_at: new Date().toISOString()
       })
       .select()
@@ -236,12 +249,13 @@ async function processOrderBackground(order, items, payments, customer_id, userI
   // Create order items and update stock
   for (const item of items) {
     try {
-      const itemTotal = item.quantity * item.unit_price - (item.discount || 0)
+      const qty = parseFloat(item.quantity)
+      const itemTotal = qty * item.unit_price - (item.discount || 0)
 
       await supabase.from('order_items').insert({
         order_id: order.id,
         product_id: item.product_id,
-        quantity: item.quantity,
+        quantity: qty,
         unit_price: item.unit_price,
         discount: item.discount || 0,
         total: itemTotal
@@ -251,7 +265,7 @@ async function processOrderBackground(order, items, payments, customer_id, userI
       const { data: product } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).single()
       if (product) {
         await supabase.from('products').update({
-          stock_quantity: Math.max(0, product.stock_quantity - item.quantity),
+          stock_quantity: Math.max(0, product.stock_quantity - qty),
           updated_at: new Date().toISOString()
         }).eq('id', item.product_id)
       }
@@ -260,7 +274,7 @@ async function processOrderBackground(order, items, payments, customer_id, userI
       await supabase.from('stock_movements').insert({
         product_id: item.product_id,
         type: 'sale',
-        quantity: -item.quantity,
+        quantity: -qty,
         reference_id: order.id,
         notes: `Order ${order_number}`
       })

@@ -36,8 +36,11 @@ export function generateOrderNumber() {
   const prefix = 'ORD'
   const timestamp = date.getFullYear().toString().slice(-2) +
     String(date.getMonth() + 1).padStart(2, '0') +
-    String(date.getDate()).padStart(2, '0')
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+    String(date.getDate()).padStart(2, '0') +
+    String(date.getHours()).padStart(2, '0') +
+    String(date.getMinutes()).padStart(2, '0') +
+    String(date.getSeconds()).padStart(2, '0')
+  const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0')
   return `${prefix}-${timestamp}-${random}`
 }
 
