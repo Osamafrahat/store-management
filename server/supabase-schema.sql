@@ -12,24 +12,6 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- 1. CORE TABLES
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS users (
-  id BIGSERIAL PRIMARY KEY,
-  username TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL,
-  full_name TEXT NOT NULL,
-  phone TEXT,
-  email TEXT,
-  role TEXT NOT NULL DEFAULT 'VIEWER',
-  permissions JSONB DEFAULT '[]',
-  is_active BOOLEAN DEFAULT true,
-  must_change_password BOOLEAN DEFAULT false,
-  session_token TEXT,
-  employee_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
-  last_login TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS categories (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -96,7 +78,24 @@ CREATE TABLE IF NOT EXISTS employees (
   hire_date DATE,
   is_active BOOLEAN DEFAULT true,
   notes TEXT,
-  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGSERIAL PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  full_name TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  role TEXT NOT NULL DEFAULT 'VIEWER',
+  permissions JSONB DEFAULT '[]',
+  is_active BOOLEAN DEFAULT true,
+  must_change_password BOOLEAN DEFAULT false,
+  session_token TEXT,
+  employee_id BIGINT REFERENCES employees(id) ON DELETE SET NULL,
+  last_login TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -351,7 +350,6 @@ CREATE INDEX IF NOT EXISTS idx_promotions_code ON promotions(code);
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
 CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
 CREATE INDEX IF NOT EXISTS idx_employees_name ON employees(name);
-CREATE INDEX IF NOT EXISTS idx_employees_user ON employees(user_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_refunds_order ON refunds(order_id);
@@ -378,10 +376,6 @@ CREATE INDEX IF NOT EXISTS idx_fiscal_periods_dates ON fiscal_periods(start_date
 -- 7. ROW LEVEL SECURITY (ALL tables)
 -- ============================================================
 
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON users;
-CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
-
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON categories;
 CREATE POLICY "Allow all" ON categories FOR ALL USING (true) WITH CHECK (true);
@@ -402,49 +396,9 @@ ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON employees;
 CREATE POLICY "Allow all" ON employees FOR ALL USING (true) WITH CHECK (true);
 
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON orders;
-CREATE POLICY "Allow all" ON orders FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON order_items;
-CREATE POLICY "Allow all" ON order_items FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE payment_splits ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON payment_splits;
-CREATE POLICY "Allow all" ON payment_splits FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON stock_movements;
-CREATE POLICY "Allow all" ON stock_movements FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE promotions ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON promotions;
-CREATE POLICY "Allow all" ON promotions FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE store_settings ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON store_settings;
-CREATE POLICY "Allow all" ON store_settings FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON expenses;
-CREATE POLICY "Allow all" ON expenses FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON refunds;
-CREATE POLICY "Allow all" ON refunds FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE refund_items ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON refund_items;
-CREATE POLICY "Allow all" ON refund_items FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON notifications;
-CREATE POLICY "Allow all" ON notifications FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON activity_log;
-CREATE POLICY "Allow all" ON activity_log FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON users;
+CREATE POLICY "Allow all" ON users FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON accounts;
@@ -469,6 +423,50 @@ CREATE POLICY "Allow all" ON payments FOR ALL USING (true) WITH CHECK (true);
 ALTER TABLE account_balances ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON account_balances;
 CREATE POLICY "Allow all" ON account_balances FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON orders;
+CREATE POLICY "Allow all" ON orders FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON order_items;
+CREATE POLICY "Allow all" ON order_items FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE payment_splits ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON payment_splits;
+CREATE POLICY "Allow all" ON payment_splits FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON stock_movements;
+CREATE POLICY "Allow all" ON stock_movements FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE promotions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON promotions;
+CREATE POLICY "Allow all" ON promotions FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON refunds;
+CREATE POLICY "Allow all" ON refunds FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE refund_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON refund_items;
+CREATE POLICY "Allow all" ON refund_items FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON expenses;
+CREATE POLICY "Allow all" ON expenses FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE store_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON store_settings;
+CREATE POLICY "Allow all" ON store_settings FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON notifications;
+CREATE POLICY "Allow all" ON notifications FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all" ON activity_log;
+CREATE POLICY "Allow all" ON activity_log FOR ALL USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- 8. SEED: Admin User (password: admin123)
@@ -505,26 +503,21 @@ INSERT INTO store_settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================
--- 10. SEED: Chart of Accounts (21 accounts)
+-- 10. SEED: Chart of Accounts (15 accounts)
 -- ============================================================
 
 INSERT INTO accounts (code, name, account_type, description) VALUES
-  ('1010', 'Cash on Hand',          'asset',     'Physical cash in register and vault'),
+  ('1010', 'Cash',                  'asset',     'Physical cash in register and vault'),
   ('1020', 'Bank Account',          'asset',     'Business bank account'),
   ('1030', 'Accounts Receivable',   'asset',     'Amounts owed by customers'),
-  ('1040', 'Petty Cash',            'asset',     'Small daily operational cash'),
   ('1050', 'Inventory',             'asset',     'Products held for resale'),
-  ('1060', 'Prepaid Expenses',      'asset',     'Advance payments'),
   ('2010', 'Accounts Payable',      'liability', 'Amounts owed to suppliers'),
-  ('2020', 'Loans Payable',         'liability', 'Business loans'),
   ('2030', 'VAT Payable',           'liability', 'Tax collected on sales'),
-  ('2040', 'Accrued Expenses',      'liability', 'Expenses incurred but not yet paid'),
   ('3010', 'Owner Equity',          'equity',    'Capital invested by owner'),
   ('3020', 'Retained Earnings',     'equity',    'Accumulated profit'),
   ('3030', 'Current Year Earnings', 'equity',    'Net income for current period'),
   ('4010', 'Sales Revenue',         'revenue',   'Revenue from product sales'),
   ('4020', 'Sales Returns',         'revenue',   'Returns and refunds'),
-  ('4030', 'Other Income',          'revenue',   'Miscellaneous income'),
   ('5010', 'Cost of Goods Sold',    'expense',   'Direct cost of products sold'),
   ('5020', 'Operating Expenses',    'expense',   'General operating costs'),
   ('5030', 'Salary Expense',        'expense',   'Employee salaries'),
