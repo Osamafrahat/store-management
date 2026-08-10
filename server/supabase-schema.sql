@@ -283,7 +283,7 @@ CREATE TABLE IF NOT EXISTS refund_items (
 );
 
 -- ============================================================
--- 5. EXPENSES, SETTINGS, NOTIFICATIONS, ACTIVITY
+-- 5. EXPENSES, SETTINGS, ACTIVITY
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS expenses (
@@ -302,22 +302,6 @@ CREATE TABLE IF NOT EXISTS store_settings (
   id BIGSERIAL PRIMARY KEY,
   "key" TEXT NOT NULL UNIQUE,
   value TEXT
-);
-
-CREATE TABLE IF NOT EXISTS notifications (
-  id BIGSERIAL PRIMARY KEY,
-  type TEXT NOT NULL,
-  title TEXT NOT NULL,
-  message TEXT,
-  priority TEXT DEFAULT 'normal',
-  is_read BOOLEAN DEFAULT false,
-  read_at TIMESTAMPTZ,
-  action_url TEXT,
-  action_label TEXT,
-  promotion_id BIGINT,
-  recipient_count INTEGER DEFAULT 0,
-  status TEXT DEFAULT 'sent',
-  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS activity_log (
@@ -463,10 +447,6 @@ CREATE POLICY "Allow all" ON expenses FOR ALL USING (true) WITH CHECK (true);
 ALTER TABLE store_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON store_settings;
 CREATE POLICY "Allow all" ON store_settings FOR ALL USING (true) WITH CHECK (true);
-
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all" ON notifications;
-CREATE POLICY "Allow all" ON notifications FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all" ON activity_log;
