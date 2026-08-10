@@ -2025,7 +2025,7 @@ export const translations = {
     'password.failedToChange': 'فشل تغيير كلمة المرور',
 
     // Payment Modal
-    'payment.exceedsBalance': 'مبلغ الدفع يتجاوز الرصيد المتبقي',
+    'payment.exceedsBalance': 'المبلغ المدخل يتجاوز المتبقي من الفاتورة',
     'payment.notComplete': 'الدفع غير مكتمل',
     'payment.fullAmount': 'المبلغ الكامل:',
 

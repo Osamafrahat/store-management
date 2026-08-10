@@ -6,7 +6,7 @@ import { X, CreditCard, Banknote, Smartphone, Check } from 'lucide-react'
 
 export default function PaymentModal({ onClose, onComplete, isSubmitting }) {
   const { items, getSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount } = useCartStore()
-  const { settings, t } = useAppStore()
+  const { settings, t, toastError } = useAppStore()
 
   const paymentMethods = [
     { id: 'cash', name: t('payment.cash'), icon: Banknote, color: 'text-green-600' },
@@ -56,7 +56,7 @@ export default function PaymentModal({ onClose, onComplete, isSubmitting }) {
 
     // Allow small floating point tolerance (0.01)
     if (amount > remaining + 0.01) {
-      alert(t('payment.exceedsBalance'))
+      toastError(t('payment.exceedsBalance'))
       return
     }
 
@@ -75,7 +75,7 @@ export default function PaymentModal({ onClose, onComplete, isSubmitting }) {
 
   const handleComplete = () => {
     if (remaining > 0.01) {
-      alert(t('payment.notComplete'))
+      toastError(t('payment.notComplete'))
       return
     }
     onComplete({ method: payments[0]?.method || 'cash', payments })
