@@ -378,10 +378,10 @@ function ExpenseForm({ expense, onSave, onClose }) {
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               >
-                <option value="cash">{t('pos.cash') || 'Cash'}</option>
-                <option value="bank_transfer">{t('pos.bankTransfer') || 'Bank Transfer'}</option>
-                <option value="card">{t('pos.card') || 'Card'}</option>
-                <option value="check">{t('pos.check') || 'Check'}</option>
+                <option value="cash">{t('accounting.methodCash') || 'Cash'}</option>
+                <option value="bank_transfer">{t('accounting.methodBankTransfer') || 'Bank Transfer'}</option>
+                <option value="card">{t('accounting.methodCard') || 'Card'}</option>
+                <option value="check">{t('accounting.methodCheck') || 'Check'}</option>
               </select>
             </div>
           </div>
