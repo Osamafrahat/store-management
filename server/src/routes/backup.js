@@ -9,9 +9,20 @@ import {
   deleteBackup,
   cleanupOldBackups
 } from '../services/backupService.js'
+import { logActivity } from '../middleware/activityLogger.js'
 
 const router = Router()
 const BACKUP_DIR = path.resolve(process.cwd(), 'backups')
+
+function log(req, params) {
+  const user = req.user || {}
+  logActivity({
+    user_id: user.id || null,
+    user_name: user.full_name || user.username || 'System',
+    ip_address: req.ip || req.connection?.remoteAddress,
+    ...params,
+  }).catch(() => {})
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -25,7 +36,7 @@ router.get('/', async (req, res) => {
 
 router.post('/json', async (req, res) => {
   try {
-    req.logActivity({ action: 'created', entity_type: 'backup', entity_name: 'JSON backup' })
+    log(req, { action: 'created', entity_type: 'backup', entity_name: 'JSON backup' })
     const result = await backupToJson()
     res.json({ message: 'JSON backup created', ...result })
   } catch (err) {
@@ -36,7 +47,7 @@ router.post('/json', async (req, res) => {
 
 router.post('/sql', async (req, res) => {
   try {
-    req.logActivity({ action: 'created', entity_type: 'backup', entity_name: 'SQL backup' })
+    log(req, { action: 'created', entity_type: 'backup', entity_name: 'SQL backup' })
     const result = await backupToSql()
     res.json({ message: 'SQL backup created', ...result })
   } catch (err) {
@@ -74,7 +85,7 @@ router.post('/restore', async (req, res) => {
       return res.status(404).json({ error: 'JSON backup not found' })
     }
 
-    req.logActivity({ action: 'restored', entity_type: 'backup', entity_name: filename })
+    log(req, { action: 'restored', entity_type: 'backup', entity_name: filename })
     const result = await restoreFromJson(jsonPath)
     res.json({ message: 'Database restored', ...result })
   } catch (err) {
@@ -86,7 +97,7 @@ router.post('/restore', async (req, res) => {
 router.delete('/:filename', async (req, res) => {
   try {
     await deleteBackup(req.params.filename)
-    req.logActivity({ action: 'deleted', entity_type: 'backup', entity_name: req.params.filename })
+    log(req, { action: 'deleted', entity_type: 'backup', entity_name: req.params.filename })
     res.json({ message: 'Backup deleted' })
   } catch (err) {
     console.error('Delete backup error:', err)
