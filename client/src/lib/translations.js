@@ -78,6 +78,7 @@ export const translations = {
     'nav.groupHR': 'HR',
     'nav.groupReporting': 'Reporting',
     'nav.groupSettings': 'Settings',
+    'nav.backup': 'Backup',
 
     // POS Page
     'pos.search': 'Search products by name, SKU, or scan barcode...',
@@ -1135,6 +1136,7 @@ export const translations = {
     'nav.groupHR': 'الموارد البشرية',
     'nav.groupReporting': 'التقارير',
     'nav.groupSettings': 'الإعدادات',
+    'nav.backup': 'النسخ الاحتياطي',
 
     // POS Page
     'pos.search': 'البحث عن المنتجات بالاسم أو الكود أو مسح الباركود...',
