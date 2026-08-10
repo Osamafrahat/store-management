@@ -185,7 +185,25 @@ CREATE TABLE IF NOT EXISTS account_balances (
 );
 
 -- ============================================================
--- 3. ORDERS & SALES
+-- 3. PROMOTIONS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS promotions (
+  id BIGSERIAL PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  type TEXT NOT NULL,
+  value NUMERIC NOT NULL DEFAULT 0,
+  min_order_amount NUMERIC,
+  max_uses INTEGER,
+  used_count INTEGER DEFAULT 0,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- 4. ORDERS & SALES
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -234,20 +252,6 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   reference_id BIGINT,
   notes TEXT,
   created_by TEXT DEFAULT 'system',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS promotions (
-  id BIGSERIAL PRIMARY KEY,
-  code TEXT NOT NULL UNIQUE,
-  type TEXT NOT NULL,
-  value NUMERIC NOT NULL DEFAULT 0,
-  min_order_amount NUMERIC,
-  max_uses INTEGER,
-  used_count INTEGER DEFAULT 0,
-  start_date TIMESTAMPTZ,
-  end_date TIMESTAMPTZ,
-  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
