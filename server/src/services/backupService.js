@@ -1,4 +1,4 @@
-import supabase from '../db/supabase.js'
+import supabase, { supabaseStorage } from '../db/supabase.js'
 import { promises as fs } from 'fs'
 import path from 'path'
 
@@ -207,13 +207,18 @@ export async function cleanupOldBackups(retentionDays = 30) {
 
 export async function ensureCloudBucket() {
   try {
-    const { error } = await supabase.storage.getBucket(CLOUD_BUCKET)
-    if (error && error.message.includes('not found')) {
-      await supabase.storage.createBucket(CLOUD_BUCKET, { public: false })
-      console.log(`[BACKUP] Created cloud bucket: ${CLOUD_BUCKET}`)
+    const { data: buckets } = await supabaseStorage.storage.listBuckets()
+    const exists = buckets?.some(b => b.name === CLOUD_BUCKET)
+    if (!exists) {
+      const { error } = await supabaseStorage.storage.createBucket(CLOUD_BUCKET, { public: false })
+      if (error) {
+        console.error(`[BACKUP] Cannot create bucket "${CLOUD_BUCKET}". Create it manually in Supabase Dashboard > Storage.`)
+      } else {
+        console.log(`[BACKUP] Created cloud bucket: ${CLOUD_BUCKET}`)
+      }
     }
   } catch (err) {
-    console.error('[BACKUP] Error ensuring cloud bucket:', err.message)
+    console.error('[BACKUP] Bucket check error:', err.message)
   }
 }
 
@@ -231,10 +236,11 @@ export async function backupToCloud(format = 'json') {
     fileContent = await fs.readFile(result.filePath)
   }
 
-  const { error } = await supabase.storage
+  const { error } = await supabaseStorage.storage
     .from(CLOUD_BUCKET)
     .upload(filename, fileContent, {
       contentType: format === 'json' ? 'application/json' : 'application/sql',
+      upsert: true,
     })
 
   if (error) throw error
@@ -245,7 +251,7 @@ export async function backupToCloud(format = 'json') {
 
 export async function listCloudBackups() {
   await ensureCloudBucket()
-  const { data, error } = await supabase.storage.from(CLOUD_BUCKET).list('', {
+  const { data, error } = await supabaseStorage.storage.from(CLOUD_BUCKET).list('', {
     sortBy: { column: 'created_at', order: 'desc' },
   })
 
@@ -260,13 +266,13 @@ export async function listCloudBackups() {
 }
 
 export async function downloadFromCloud(filename) {
-  const { data, error } = await supabase.storage.from(CLOUD_BUCKET).download(filename)
+  const { data, error } = await supabaseStorage.storage.from(CLOUD_BUCKET).download(filename)
   if (error) throw error
   return data
 }
 
 export async function deleteCloudBackup(filename) {
-  const { error } = await supabase.storage.from(CLOUD_BUCKET).remove([filename])
+  const { error } = await supabaseStorage.storage.from(CLOUD_BUCKET).remove([filename])
   if (error) throw error
   return { deleted: true, filename }
 }
