@@ -4,7 +4,7 @@ import { generateSKU } from '../../lib/utils'
 import { X, RefreshCw } from 'lucide-react'
 
 export default function ProductForm({ product, categories, suppliers, onSave, onClose }) {
-  const { t } = useAppStore()
+  const { t, toastError } = useAppStore()
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -57,10 +57,16 @@ export default function ProductForm({ product, categories, suppliers, onSave, on
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const price = parseFloat(formData.price)
+    const costPrice = formData.cost_price ? parseFloat(formData.cost_price) : null
+    if (costPrice !== null && costPrice > price) {
+      toastError(t('inventory.costExceedsPrice') || 'Cost price cannot exceed selling price')
+      return
+    }
     onSave({
       ...formData,
-      price: parseFloat(formData.price),
-      cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+      price,
+      cost_price: costPrice,
       stock_quantity: parseInt(formData.stock_quantity),
       low_stock_threshold: parseInt(formData.low_stock_threshold),
       category_id: formData.category_id ? parseInt(formData.category_id) : null,

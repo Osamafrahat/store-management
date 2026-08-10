@@ -121,6 +121,11 @@ router.post('/', [
       }
     }
 
+    // Validate cost price vs selling price
+    if (cost_price !== undefined && cost_price !== null && parseFloat(cost_price) > parseFloat(price)) {
+      return res.status(400).json({ error: 'Cost price cannot exceed selling price' })
+    }
+
     const { data, error } = await supabase
       .from('products')
       .insert({
@@ -212,6 +217,13 @@ router.put('/:id', [
       if (dupBarcode) {
         return res.status(409).json({ error: 'Barcode already exists' })
       }
+    }
+
+    // Validate cost price vs selling price
+    const finalPrice = price !== undefined ? parseFloat(price) : parseFloat(existing.price)
+    const finalCost = cost_price !== undefined && cost_price !== null ? parseFloat(cost_price) : (existing.cost_price !== null ? parseFloat(existing.cost_price) : null)
+    if (finalCost !== null && finalCost > finalPrice) {
+      return res.status(400).json({ error: 'Cost price cannot exceed selling price' })
     }
 
     const { data, error } = await supabase
