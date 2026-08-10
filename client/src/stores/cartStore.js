@@ -9,33 +9,66 @@ export const useCartStore = create(
       promoDiscount: 0,
       promoId: null,
 
-      addItem: (product, quantity = 1) => set((state) => {
+      addItem: (product, quantity = 1) => {
+        const state = get()
         const existingItem = state.items.find(item => item.product.id === product.id)
-        if (existingItem) {
-          return {
-            items: state.items.map(item =>
-              item.product.id === product.id
-                ? { ...item, quantity: item.quantity + quantity }
-                : item
-            )
+        const currentQty = existingItem ? existingItem.quantity : 0
+        const newQty = currentQty + quantity
+
+        // Stock validation
+        if (product.stock_quantity !== undefined && product.stock_quantity !== null) {
+          if (product.stock_quantity <= 0 && !existingItem) {
+            return false
+          }
+          if (newQty > product.stock_quantity) {
+            return false
           }
         }
-        return { items: [...state.items, { product, quantity }] }
-      }),
+
+        set((state) => {
+          if (existingItem) {
+            return {
+              items: state.items.map(item =>
+                item.product.id === product.id
+                  ? { ...item, quantity: item.quantity + quantity }
+                  : item
+              )
+            }
+          }
+          return { items: [...state.items, { product, quantity }] }
+        })
+        return true
+      },
 
       removeItem: (productId) => set((state) => ({
         items: state.items.filter(item => item.product.id !== productId)
       })),
 
-      updateQuantity: (productId, quantity) => set((state) => ({
-        items: quantity <= 0
-          ? state.items.filter(item => item.product.id !== productId)
-          : state.items.map(item =>
-              item.product.id === productId
-                ? { ...item, quantity }
-                : item
-            )
-      })),
+      updateQuantity: (productId, quantity) => {
+        if (quantity <= 0) {
+          set((state) => ({
+            items: state.items.filter(item => item.product.id !== productId)
+          }))
+          return true
+        }
+
+        const state = get()
+        const item = state.items.find(i => i.product.id === productId)
+        if (!item) return false
+
+        // Stock validation
+        const stock = item.product.stock_quantity
+        if (stock !== undefined && stock !== null && quantity > stock) {
+          return false
+        }
+
+        set((state) => ({
+          items: state.items.map(i =>
+            i.product.id === productId ? { ...i, quantity } : i
+          )
+        }))
+        return true
+      },
 
       clearCart: () => set({ items: [], promoCode: null, promoDiscount: 0, promoId: null }),
 

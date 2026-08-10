@@ -7,7 +7,7 @@ import { Trash2, Plus, Minus, Tag, ShoppingBag, X } from 'lucide-react'
 
 export default memo(function Cart({ onCheckout }) {
   const { items, removeItem, updateQuantity, clearCart, getSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount, applyPromo, removePromo } = useCartStore()
-  const { settings, t } = useAppStore()
+  const { settings, t, toastError } = useAppStore()
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
@@ -111,7 +111,12 @@ export default memo(function Cart({ onCheckout }) {
                           value={item.quantity}
                           onChange={(e) => {
                             const val = parseFloat(e.target.value)
-                            if (val > 0) updateQuantity(item.product.id, val)
+                            if (val > 0) {
+                              const updated = updateQuantity(item.product.id, val)
+                              if (!updated) {
+                                toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${item.product.stock_quantity})`)
+                              }
+                            }
                           }}
                           className="w-20 px-2 py-1 text-sm text-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                         />
@@ -129,7 +134,12 @@ export default memo(function Cart({ onCheckout }) {
                         </button>
                         <span className="w-8 text-center font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          onClick={() => {
+                            const updated = updateQuantity(item.product.id, item.quantity + 1)
+                            if (!updated) {
+                              toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${item.product.stock_quantity})`)
+                            }
+                          }}
                           className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
                         >
                           <Plus className="w-3 h-3" />

@@ -29,7 +29,7 @@ export default function POSPage() {
 
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
   const { addItem, items, getTotal } = useCartStore()
-  const { settings, t, toastSuccess } = useAppStore()
+  const { settings, t, toastSuccess, toastError } = useAppStore()
   const { currentUser } = useUserStore()
   const { isOnline, cacheData, loadCachedData, queueOrder } = useOfflineStore()
 
@@ -118,7 +118,14 @@ export default function POSPage() {
       try {
         const response = await productsApi.getByBarcode(barcode)
         if (response.data) {
-          addItem(response.data)
+          const added = addItem(response.data)
+          if (!added) {
+            if (response.data.stock_quantity <= 0) {
+              toastError(t('pos.outOfStock') || 'Out of stock')
+            } else {
+              toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${response.data.stock_quantity})`)
+            }
+          }
           return response.data.name
         }
       } catch (err) {
@@ -128,7 +135,14 @@ export default function POSPage() {
     // Fallback to local products
     const localProduct = products.find(p => p.barcode === barcode)
     if (localProduct) {
-      addItem(localProduct)
+      const added = addItem(localProduct)
+      if (!added) {
+        if (localProduct.stock_quantity <= 0) {
+          toastError(t('pos.outOfStock') || 'Out of stock')
+        } else {
+          toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${localProduct.stock_quantity})`)
+        }
+      }
       return localProduct.name
     }
     console.error('Product not found:', barcode)
@@ -136,7 +150,14 @@ export default function POSPage() {
   }
 
   const handleQuickSale = async (product, quantity = 1) => {
-    addItem(product, quantity)
+    const added = addItem(product, quantity)
+    if (!added) {
+      if (product.stock_quantity <= 0) {
+        toastError(t('pos.outOfStock') || 'Out of stock')
+      } else {
+        toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${product.stock_quantity})`)
+      }
+    }
   }
 
   const filteredProducts = useMemo(() => products.filter(p => {

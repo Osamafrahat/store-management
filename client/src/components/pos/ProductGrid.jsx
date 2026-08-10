@@ -4,7 +4,7 @@ import { formatCurrency } from '../../lib/utils'
 import { Package, Plus } from 'lucide-react'
 
 export default memo(function ProductGrid({ products, onAddToCart }) {
-  const { t } = useAppStore()
+  const { t, toastError } = useAppStore()
   const [qtyModal, setQtyModal] = useState(null)
   const [qtyValue, setQtyValue] = useState('')
 
@@ -12,7 +12,15 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
     return product.unit_of_measure && product.unit_of_measure !== 'quantity'
   }
 
+  const isOutOfStock = (product) => {
+    return product.stock_quantity !== undefined && product.stock_quantity !== null && product.stock_quantity <= 0
+  }
+
   const handleProductClick = (product) => {
+    if (isOutOfStock(product)) {
+      toastError(t('pos.outOfStock') || 'Out of stock')
+      return
+    }
     if (isSplittable(product)) {
       setQtyModal(product)
       setQtyValue('')
@@ -24,6 +32,10 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
   const handleConfirmQty = () => {
     const qty = parseFloat(qtyValue)
     if (qtyModal && qty > 0) {
+      if (qtyModal.stock_quantity !== undefined && qtyModal.stock_quantity !== null && qty > qtyModal.stock_quantity) {
+        toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${qtyModal.stock_quantity})`)
+        return
+      }
       onAddToCart(qtyModal, qty)
       setQtyModal(null)
       setQtyValue('')
