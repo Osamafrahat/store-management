@@ -12,6 +12,10 @@ import {
   AlertCircle,
   RefreshCw,
   HardDrive,
+  Zap,
+  ZapOff,
+  Calendar,
+  DownloadCloud,
 } from 'lucide-react'
 
 export default function BackupPage() {
@@ -22,6 +26,9 @@ export default function BackupPage() {
   const [restoring, setRestoring] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [message, setMessage] = useState(null)
+  const [autoStatus, setAutoStatus] = useState(null)
+  const [togglingAuto, setTogglingAuto] = useState(false)
+  const [downloadingAll, setDownloadingAll] = useState(false)
 
   const loadBackups = async () => {
     try {
@@ -35,7 +42,14 @@ export default function BackupPage() {
     }
   }
 
-  useEffect(() => { loadBackups() }, [])
+  const loadAutoStatus = async () => {
+    try {
+      const res = await api.get('/backup/auto-status')
+      setAutoStatus(res.data)
+    } catch {}
+  }
+
+  useEffect(() => { loadBackups(); loadAutoStatus() }, [])
 
   const showMessage = (type, text) => {
     setMessage({ type, text })
@@ -55,6 +69,25 @@ export default function BackupPage() {
     }
   }
 
+  const toggleAutoBackup = async () => {
+    try {
+      setTogglingAuto(true)
+      if (autoStatus?.enabled) {
+        const res = await api.post('/backup/auto-disable')
+        setAutoStatus(res.data)
+        showMessage('success', t('backup.autoDisabled'))
+      } else {
+        const res = await api.post('/backup/auto-enable')
+        setAutoStatus(res.data)
+        showMessage('success', t('backup.autoEnabled'))
+      }
+    } catch (err) {
+      showMessage('error', t('backup.autoToggleFailed'))
+    } finally {
+      setTogglingAuto(false)
+    }
+  }
+
   const downloadBackup = async (filename) => {
     try {
       const res = await api.get(`/backup/download/${filename}`, { responseType: 'blob' })
@@ -68,6 +101,21 @@ export default function BackupPage() {
       window.URL.revokeObjectURL(url)
     } catch (err) {
       showMessage('error', t('backup.downloadFailed'))
+    }
+  }
+
+  const downloadAllBackups = async () => {
+    try {
+      setDownloadingAll(true)
+      for (const backup of backups) {
+        await downloadBackup(backup.name)
+        await new Promise(r => setTimeout(r, 500))
+      }
+      showMessage('success', t('backup.downloadAllDone').replace('{count}', backups.length))
+    } catch (err) {
+      showMessage('error', t('backup.downloadFailed'))
+    } finally {
+      setDownloadingAll(false)
     }
   }
 
@@ -104,17 +152,13 @@ export default function BackupPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleString()
-  }
+  const formatDate = (date) => date ? new Date(date).toLocaleString() : '-'
 
   return (
     <div className="space-y-6">
       {message && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all duration-300 ${
-          message.type === 'success'
-            ? 'bg-green-500 text-white'
-            : 'bg-red-500 text-white'
+          message.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
         }`}>
           {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           {message.text}
@@ -126,11 +170,65 @@ export default function BackupPage() {
           <HardDrive className="w-7 h-7" />
           {t('backup.title')}
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {t('backup.subtitle')}
-        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('backup.subtitle')}</p>
       </div>
 
+      {/* Auto-Backup Status Card */}
+      <div className={`rounded-2xl border p-6 shadow-sm ${
+        autoStatus?.enabled
+          ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              autoStatus?.enabled
+                ? 'bg-green-100 dark:bg-green-900/30'
+                : 'bg-gray-100 dark:bg-gray-700'
+            }`}>
+              {autoStatus?.enabled ? (
+                <Zap className="w-6 h-6 text-green-600 dark:text-green-400" />
+              ) : (
+                <ZapOff className="w-6 h-6 text-gray-400" />
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white">{t('backup.autoBackup')}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {autoStatus?.enabled
+                  ? `${t('backup.autoRunsDaily')} ${autoStatus.schedule}`
+                  : t('backup.autoDisabled')}
+              </p>
+              {autoStatus?.lastBackupTime && (
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {t('backup.lastBackup')}: {formatDate(autoStatus.lastBackupTime)}
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={toggleAutoBackup}
+            disabled={togglingAuto}
+            className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all ${
+              autoStatus?.enabled
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            } disabled:opacity-50`}
+          >
+            {togglingAuto ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : autoStatus?.enabled ? (
+              <ZapOff className="w-4 h-4" />
+            ) : (
+              <Zap className="w-4 h-4" />
+            )}
+            {autoStatus?.enabled ? t('backup.disableAuto') : t('backup.enableAuto')}
+          </button>
+        </div>
+      </div>
+
+      {/* Create Backup Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
@@ -147,11 +245,7 @@ export default function BackupPage() {
             disabled={creating === 'json'}
             className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
           >
-            {creating === 'json' ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+            {creating === 'json' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {creating === 'json' ? t('backup.creating') : t('backup.createJson')}
           </button>
         </div>
@@ -171,28 +265,34 @@ export default function BackupPage() {
             disabled={creating === 'sql'}
             className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
           >
-            {creating === 'sql' ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+            {creating === 'sql' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {creating === 'sql' ? t('backup.creating') : t('backup.createSql')}
           </button>
         </div>
       </div>
 
+      {/* Backup List */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Clock className="w-5 h-5" />
             {t('backup.existingBackups')} ({backups.length})
           </h3>
-          <button
-            onClick={loadBackups}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            {backups.length > 0 && (
+              <button
+                onClick={downloadAllBackups}
+                disabled={downloadingAll}
+                className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              >
+                {downloadingAll ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <DownloadCloud className="w-3.5 h-3.5" />}
+                {t('backup.downloadAll')}
+              </button>
+            )}
+            <button onClick={loadBackups} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -210,9 +310,7 @@ export default function BackupPage() {
             {backups.map((backup) => (
               <div key={backup.name} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  backup.type === 'json'
-                    ? 'bg-blue-100 dark:bg-blue-900/30'
-                    : 'bg-purple-100 dark:bg-purple-900/30'
+                  backup.type === 'json' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-purple-100 dark:bg-purple-900/30'
                 }`}>
                   {backup.type === 'json' ? (
                     <Database className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -220,14 +318,12 @@ export default function BackupPage() {
                     <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                   )}
                 </div>
-
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 dark:text-white truncate">{backup.name}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {formatDate(backup.created)} • {formatSize(backup.size)}
                   </p>
                 </div>
-
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => downloadBackup(backup.name)}
@@ -242,11 +338,7 @@ export default function BackupPage() {
                     className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors disabled:opacity-50"
                     title={t('backup.restore')}
                   >
-                    {restoring === backup.name ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4" />
-                    )}
+                    {restoring === backup.name ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => deleteBackupFile(backup.name)}
@@ -254,11 +346,7 @@ export default function BackupPage() {
                     className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors disabled:opacity-50"
                     title={t('backup.delete')}
                   >
-                    {deleting === backup.name ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
+                    {deleting === backup.name ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>

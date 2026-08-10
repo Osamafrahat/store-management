@@ -10,6 +10,11 @@ import {
   cleanupOldBackups
 } from '../services/backupService.js'
 import { logActivity } from '../middleware/activityLogger.js'
+import {
+  enableAutoBackup,
+  disableAutoBackup,
+  getAutoBackupStatus
+} from '../services/backupScheduler.js'
 
 const router = Router()
 const BACKUP_DIR = path.resolve(process.cwd(), 'backups')
@@ -114,6 +119,22 @@ router.post('/cleanup', async (req, res) => {
     console.error('Cleanup error:', err)
     res.status(500).json({ error: 'Failed to cleanup' })
   }
+})
+
+router.get('/auto-status', (req, res) => {
+  res.json(getAutoBackupStatus())
+})
+
+router.post('/auto-enable', (req, res) => {
+  enableAutoBackup()
+  log(req, { action: 'updated', entity_type: 'backup', entity_name: 'Auto-backup enabled' })
+  res.json({ message: 'Auto-backup enabled', ...getAutoBackupStatus() })
+})
+
+router.post('/auto-disable', (req, res) => {
+  disableAutoBackup()
+  log(req, { action: 'updated', entity_type: 'backup', entity_name: 'Auto-backup disabled' })
+  res.json({ message: 'Auto-backup disabled', ...getAutoBackupStatus() })
 })
 
 export { router as backupRouter }

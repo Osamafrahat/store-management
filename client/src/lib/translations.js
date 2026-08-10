@@ -1056,6 +1056,18 @@ export const translations = {
     'backup.restoreFailed': 'Failed to restore backup',
     'backup.deleteFailed': 'Failed to delete backup',
     'backup.downloadFailed': 'Failed to download backup',
+    // Auto-backup
+    'backup.autoBackup': 'Automatic Backup',
+    'backup.autoRunsDaily': 'Runs daily at',
+    'backup.autoDisabled': 'Auto-backup is off',
+    'backup.enableAuto': 'Enable',
+    'backup.disableAuto': 'Disable',
+    'backup.autoEnabled': 'Auto-backup enabled',
+    'backup.autoDisabledMsg': 'Auto-backup disabled',
+    'backup.autoToggleFailed': 'Failed to toggle auto-backup',
+    'backup.lastBackup': 'Last backup',
+    'backup.downloadAll': 'Download All',
+    'backup.downloadAllDone': 'Downloaded {count} backups',
   },
   ar: {
     // Dashboard
@@ -2126,6 +2138,18 @@ export const translations = {
     'backup.restoreFailed': 'فشل استعادة النسخة الاحتياطية',
     'backup.deleteFailed': 'فشل حذف النسخة الاحتياطية',
     'backup.downloadFailed': 'فشل تنزيل النسخة الاحتياطية',
+    // Auto-backup
+    'backup.autoBackup': 'النسخ الاحتياطي التلقائي',
+    'backup.autoRunsDaily': 'يعمل يومياً في',
+    'backup.autoDisabled': 'النسخ الاحتياطي التلقائي معطل',
+    'backup.enableAuto': 'تفعيل',
+    'backup.disableAuto': 'تعطيل',
+    'backup.autoEnabled': 'تم تفعيل النسخ الاحتياطي التلقائي',
+    'backup.autoDisabledMsg': 'تم تعطيل النسخ الاحتياطي التلقائي',
+    'backup.autoToggleFailed': 'فشل تغيير حالة النسخ الاحتياطي التلقائي',
+    'backup.lastBackup': 'آخر نسخة احتياطية',
+    'backup.downloadAll': 'تنزيل الكل',
+    'backup.downloadAllDone': 'تم تنزيل {count} نسخ احتياطية',
   },
 }
 
