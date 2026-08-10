@@ -135,8 +135,8 @@ export default function POSPage() {
     return null
   }
 
-  const handleQuickSale = async (product) => {
-    addItem(product)
+  const handleQuickSale = async (product, quantity = 1) => {
+    addItem(product, quantity)
   }
 
   const filteredProducts = useMemo(() => products.filter(p => {
