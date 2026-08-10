@@ -1,5 +1,5 @@
 ﻿import cron from 'node-cron'
-import { backupToJson, cleanupOldBackups } from './backupService.js'
+import { backupToJson, cleanupOldBackups, listCloudBackups, deleteCloudBackup } from './backupService.js'
 
 const BACKUP_SCHEDULE = process.env.BACKUP_SCHEDULE || '0 2 * * *'
 const BACKUP_RETENTION_DAYS = parseInt(process.env.BACKUP_RETENTION_DAYS) || 30
@@ -36,8 +36,19 @@ export function enableAutoBackup() {
     cleanupJob = cron.schedule('0 3 * * 0', async () => {
       console.log(`[CRON] Running weekly cleanup at ${new Date().toISOString()}`)
       try {
-        const result = await cleanupOldBackups(BACKUP_RETENTION_DAYS)
-        console.log(`[CRON] Cleanup completed: ${result.deleted} old backups removed`)
+        const localResult = await cleanupOldBackups(BACKUP_RETENTION_DAYS)
+        console.log(`[CRON] Local cleanup: ${localResult.deleted} old backups removed`)
+
+        const cloudBackups = await listCloudBackups()
+        const cutoff = new Date(Date.now() - BACKUP_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+        let cloudDeleted = 0
+        for (const b of cloudBackups) {
+          if (new Date(b.created) < cutoff) {
+            await deleteCloudBackup(b.name).catch(() => {})
+            cloudDeleted++
+          }
+        }
+        if (cloudDeleted > 0) console.log(`[CRON] Cloud cleanup: ${cloudDeleted} old backups removed`)
       } catch (err) {
         console.error('[CRON] Cleanup failed:', err)
       }
