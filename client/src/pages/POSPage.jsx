@@ -44,15 +44,16 @@ export default function POSPage() {
     searchInputRef.current?.focus()
   }, [])
 
-  // Keep barcode input focused (unless clicking on another input/textarea)
+  // Keep barcode input focused (unless clicking on another input/textarea or modal is open)
   useEffect(() => {
     const focusBarcode = (e) => {
+      if (showPayment || showReceipt) return
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return
       barcodeInputRef.current?.focus()
     }
     document.addEventListener('click', focusBarcode)
     return () => document.removeEventListener('click', focusBarcode)
-  }, [])
+  }, [showPayment, showReceipt])
 
   // Handle barcode scanner input (USB scanner types fast, collects then submits)
   const handleBarcodeInput = (e) => {
