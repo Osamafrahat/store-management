@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import api from '../lib/api'
+import ConfirmModal from '../components/ConfirmModal'
 import {
   Download,
   Upload,
@@ -35,6 +36,7 @@ export default function BackupPage() {
   const [uploadingCloud, setUploadingCloud] = useState(false)
   const [cloudLoading, setCloudLoading] = useState(false)
   const [deletingCloud, setDeletingCloud] = useState(null)
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', type: 'danger', onConfirm: null })
 
   const loadBackups = async () => {
     try {
@@ -138,30 +140,52 @@ export default function BackupPage() {
   }
 
   const restoreBackup = async (filename) => {
-    if (!confirm(t('backup.restoreConfirm').replace('{file}', filename))) return
-    try {
-      setRestoring(filename)
-      const res = await api.post('/backup/restore', { filename })
-      showMessage('success', t('backup.restored').replace('{rows}', res.data.restoredRows))
-    } catch (err) {
-      showMessage('error', t('backup.restoreFailed'))
-    } finally {
-      setRestoring(null)
-    }
+    setConfirmModal({
+      open: true,
+      title: t('backup.restore'),
+      message: t('backup.restoreConfirm').replace('{file}', filename),
+      type: 'warning',
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(m => ({ ...m, loading: true }))
+        try {
+          setRestoring(filename)
+          const res = await api.post('/backup/restore', { filename })
+          showMessage('success', t('backup.restored').replace('{rows}', res.data.restoredRows))
+          setConfirmModal({ open: false, title: '', message: '', type: 'danger', onConfirm: null })
+        } catch (err) {
+          showMessage('error', t('backup.restoreFailed'))
+          setConfirmModal(m => ({ ...m, loading: false }))
+        } finally {
+          setRestoring(null)
+        }
+      }
+    })
   }
 
   const deleteBackupFile = async (filename) => {
-    if (!confirm(t('backup.deleteConfirm').replace('{file}', filename))) return
-    try {
-      setDeleting(filename)
-      await api.delete(`/backup/${filename}`)
-      showMessage('success', t('backup.deleted'))
-      loadBackups()
-    } catch (err) {
-      showMessage('error', t('backup.deleteFailed'))
-    } finally {
-      setDeleting(null)
-    }
+    setConfirmModal({
+      open: true,
+      title: t('backup.delete'),
+      message: t('backup.deleteConfirm').replace('{file}', filename),
+      type: 'danger',
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(m => ({ ...m, loading: true }))
+        try {
+          setDeleting(filename)
+          await api.delete(`/backup/${filename}`)
+          showMessage('success', t('backup.deleted'))
+          loadBackups()
+          setConfirmModal({ open: false, title: '', message: '', type: 'danger', onConfirm: null })
+        } catch (err) {
+          showMessage('error', t('backup.deleteFailed'))
+          setConfirmModal(m => ({ ...m, loading: false }))
+        } finally {
+          setDeleting(null)
+        }
+      }
+    })
   }
 
   const uploadToCloud = async (format) => {
@@ -195,17 +219,28 @@ export default function BackupPage() {
   }
 
   const deleteCloudBackupFile = async (filename) => {
-    if (!confirm(t('backup.deleteConfirm').replace('{file}', filename))) return
-    try {
-      setDeletingCloud(filename)
-      await api.delete(`/backup/cloud/${filename}`)
-      showMessage('success', t('backup.deleted'))
-      loadCloudBackups()
-    } catch (err) {
-      showMessage('error', t('backup.deleteFailed'))
-    } finally {
-      setDeletingCloud(null)
-    }
+    setConfirmModal({
+      open: true,
+      title: t('backup.delete'),
+      message: t('backup.deleteConfirm').replace('{file}', filename),
+      type: 'danger',
+      loading: false,
+      onConfirm: async () => {
+        setConfirmModal(m => ({ ...m, loading: true }))
+        try {
+          setDeletingCloud(filename)
+          await api.delete(`/backup/cloud/${filename}`)
+          showMessage('success', t('backup.deleted'))
+          loadCloudBackups()
+          setConfirmModal({ open: false, title: '', message: '', type: 'danger', onConfirm: null })
+        } catch (err) {
+          showMessage('error', t('backup.deleteFailed'))
+          setConfirmModal(m => ({ ...m, loading: false }))
+        } finally {
+          setDeletingCloud(null)
+        }
+      }
+    })
   }
 
   const formatSize = (bytes) => {
@@ -452,6 +487,18 @@ export default function BackupPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, title: '', message: '', type: 'danger', onConfirm: null })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        loading={confirmModal.loading}
+        confirmText={confirmModal.type === 'warning' ? t('backup.restore') : t('backup.delete')}
+        cancelText={t('common.cancel') || 'Cancel'}
+      />
     </div>
   )
 }
