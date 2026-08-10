@@ -196,7 +196,7 @@ export default function BackupPage() {
               <h3 className="font-bold text-gray-900 dark:text-white">{t('backup.autoBackup')}</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {autoStatus?.enabled
-                  ? `${t('backup.autoRunsDaily')} ${autoStatus.schedule}`
+                  ? t('backup.autoRunsDaily')
                   : t('backup.autoDisabled')}
               </p>
               {autoStatus?.lastBackupTime && (

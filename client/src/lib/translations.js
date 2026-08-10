@@ -1058,7 +1058,7 @@ export const translations = {
     'backup.downloadFailed': 'Failed to download backup',
     // Auto-backup
     'backup.autoBackup': 'Automatic Backup',
-    'backup.autoRunsDaily': 'Runs daily at',
+    'backup.autoRunsDaily': 'Runs daily at 2:00 AM',
     'backup.autoDisabled': 'Auto-backup is off',
     'backup.enableAuto': 'Enable',
     'backup.disableAuto': 'Disable',
@@ -2140,7 +2140,7 @@ export const translations = {
     'backup.downloadFailed': 'فشل تنزيل النسخة الاحتياطية',
     // Auto-backup
     'backup.autoBackup': 'النسخ الاحتياطي التلقائي',
-    'backup.autoRunsDaily': 'يعمل يومياً في',
+    'backup.autoRunsDaily': 'يعمل يومياً الساعة 2:00 صباحاً',
     'backup.autoDisabled': 'النسخ الاحتياطي التلقائي معطل',
     'backup.enableAuto': 'تفعيل',
     'backup.disableAuto': 'تعطيل',
