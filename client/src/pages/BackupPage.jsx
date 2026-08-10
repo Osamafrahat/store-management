@@ -171,7 +171,8 @@ export default function BackupPage() {
       showMessage('success', t('backup.cloudUploaded'))
       loadCloudBackups()
     } catch (err) {
-      showMessage('error', t('backup.cloudUploadFailed'))
+      const msg = err.response?.data?.error || t('backup.cloudUploadFailed')
+      showMessage('error', msg)
     } finally {
       setUploadingCloud(null)
     }

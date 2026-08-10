@@ -173,8 +173,8 @@ router.post('/cloud/upload', async (req, res) => {
     const result = await backupToCloud(format)
     res.json({ message: 'Cloud backup uploaded', ...result })
   } catch (err) {
-    console.error('Cloud upload error:', err)
-    res.status(500).json({ error: 'Failed to upload to cloud' })
+    console.error('Cloud upload error:', err.message || err)
+    res.status(500).json({ error: err.message || 'Failed to upload to cloud' })
   }
 })
 
