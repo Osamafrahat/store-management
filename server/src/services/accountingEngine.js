@@ -347,13 +347,13 @@ export async function postRefundJournal(refund, refundItems = null) {
       const originalMethod = orderPayments[0].method
       creditAccount = originalMethod === 'cash' ? cashAccount : bankAccount
     } else {
-      creditAccount = arAccount
+      creditAccount = cashAccount
     }
   }
 
   const lines = []
 
-  // Debit Sales Returns (4020) — accumulates total returns, does not touch Sales (4010)
+  // Debit Sales Returns (4020)
   if (returnsAccount) {
     lines.push({
       accountId: returnsAccount.id,
@@ -363,13 +363,13 @@ export async function postRefundJournal(refund, refundItems = null) {
     })
   }
 
-  // Credit cash/bank/AR (reduces asset)
+  // Credit cash/bank (always cash-based refund, never AR)
   if (creditAccount) {
     lines.push({
       accountId: creditAccount.id,
       debit: 0,
       credit: parseFloat(refund.amount),
-      description: creditAccount.id === arAccount?.id ? 'Refund - AR reduction' : 'Refund payment',
+      description: 'Refund payment',
     })
   }
 
