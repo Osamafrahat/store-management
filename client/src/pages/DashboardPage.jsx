@@ -132,8 +132,8 @@ export default function DashboardPage() {
         const payments = results[resultIndex + 1]?.data?.data || []
         const trialBalance = results[resultIndex + 2]?.data || { accounts: [] }
         const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0)
-        const totalInbound = payments.filter(p => p.type === 'inbound').reduce((sum, p) => sum + (p.amount || 0), 0)
-        const totalOutbound = payments.filter(p => p.type === 'outbound').reduce((sum, p) => sum + (p.amount || 0), 0)
+        const totalInbound = payments.filter(p => p.payment_type === 'inbound').reduce((sum, p) => sum + (p.amount || 0), 0)
+        const totalOutbound = payments.filter(p => p.payment_type === 'outbound').reduce((sum, p) => sum + (p.amount || 0), 0)
         setStats(prev => ({
           ...prev,
           totalExpenses,
