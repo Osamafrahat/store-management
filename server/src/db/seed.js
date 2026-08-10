@@ -168,12 +168,28 @@ ALTER TABLE expenses ADD COLUMN IF NOT EXISTS method TEXT DEFAULT 'cash';
 
 -- Default admin user
 `)
+
     process.exit(1)
   }
 
   if (checkError) {
     console.error('Error checking tables:', checkError)
     process.exit(1)
+  }
+
+  // Ensure new columns exist on existing databases
+  const { data: hasMethod } = await supabase.from('expenses').select('method').limit(1).catch(() => ({ data: null, error: true }))
+  const { data: hasAccountCode } = await supabase.from('customers').select('account_code').limit(1).catch(() => ({ data: null, error: true }))
+
+  if (!hasMethod || !hasAccountCode) {
+    console.log('')
+    console.log('╔══════════════════════════════════════════════════════════════════╗')
+    console.log('║  Missing columns detected. Run this SQL in Supabase SQL Editor: ║')
+    console.log('╚══════════════════════════════════════════════════════════════════╝')
+    console.log('')
+    console.log('ALTER TABLE customers ADD COLUMN IF NOT EXISTS account_code TEXT;')
+    console.log('ALTER TABLE expenses ADD COLUMN IF NOT EXISTS method TEXT DEFAULT \'cash\';')
+    console.log('')
   }
 
   // Tables exist - check for admin user

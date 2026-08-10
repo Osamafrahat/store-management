@@ -222,6 +222,7 @@ export default function ExpensesPage() {
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.date')}</th>
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.category')}</th>
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.description')}</th>
+                <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('accounting.method')}</th>
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('expenses.amount')}</th>
                 <th className="px-4 py-3 text-start text-sm font-medium text-gray-500 dark:text-gray-400">{t('common.actions')}</th>
               </tr>
@@ -236,6 +237,11 @@ export default function ExpensesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{expense.description || '-'}</td>
+                  <td className="px-4 py-3 text-sm capitalize">
+                    <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700">
+                      {t('accounting.method' + (expense.method || 'cash').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-sm font-semibold text-red-600">${expense.amount.toFixed(2)}</td>
                   <td className="px-4 py-3 text-sm">
                     <div className="flex gap-1">
@@ -283,6 +289,7 @@ function ExpenseForm({ expense, onSave, onClose }) {
     amount: expense?.amount || '',
     description: expense?.description || '',
     expense_date: expense?.expense_date || new Date().toISOString().split('T')[0],
+    method: expense?.method || 'cash',
   })
 
   const handleChange = (e) => {
@@ -348,17 +355,35 @@ function ExpenseForm({ expense, onSave, onClose }) {
             </div>
           </div>
 
-          <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('expenses.date')}
               </label>
-            <input
-              type="date"
-              name="expense_date"
-              value={formData.expense_date}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-            />
+              <input
+                type="date"
+                name="expense_date"
+                value={formData.expense_date}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('accounting.method')}
+              </label>
+              <select
+                name="method"
+                value={formData.method}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              >
+                <option value="cash">{t('pos.cash') || 'Cash'}</option>
+                <option value="bank_transfer">{t('pos.bankTransfer') || 'Bank Transfer'}</option>
+                <option value="card">{t('pos.card') || 'Card'}</option>
+                <option value="check">{t('pos.check') || 'Check'}</option>
+              </select>
+            </div>
           </div>
 
           <div>
