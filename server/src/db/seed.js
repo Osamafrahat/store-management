@@ -148,7 +148,7 @@ CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(produc
 CREATE INDEX IF NOT EXISTS idx_promotions_code ON promotions(code);
 
 -- Default store settings
-INSERT INTO store_settings (key, value) VALUES
+INSERT INTO store_settings ("key", value) VALUES
   ('store_name', 'My Store'),
   ('store_address', ''),
   ('store_phone', ''),
@@ -158,7 +158,7 @@ INSERT INTO store_settings (key, value) VALUES
   ('low_stock_threshold', '10'),
   ('receipt_header', 'Thank you for your purchase!'),
   ('receipt_footer', 'Come again!')
-ON CONFLICT (key) DO NOTHING;
+ON CONFLICT ("key") DO NOTHING;
 
 -- Ensure customers has account_code column
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS account_code TEXT;

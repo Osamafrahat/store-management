@@ -33,7 +33,7 @@ TRUNCATE TABLE
 CASCADE;
 
 -- Re-seed store settings
-INSERT INTO store_settings (key, value) VALUES
+INSERT INTO store_settings ("key", value) VALUES
   ('storeName', 'My Store'),
   ('storeAddress', ''),
   ('storePhone', ''),
@@ -44,7 +44,7 @@ INSERT INTO store_settings (key, value) VALUES
   ('receiptFooter', 'Thank you for your purchase!'),
   ('lowStockThreshold', '10'),
   ('loyaltyPointsPerCurrency', '1')
-ON CONFLICT (key) DO NOTHING;
+ON CONFLICT ("key") DO NOTHING;
 
 -- Re-seed chart of accounts
 INSERT INTO accounts (code, name, account_type, description) VALUES

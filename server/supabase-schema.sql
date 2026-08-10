@@ -489,7 +489,7 @@ VALUES (
 -- 9. SEED: Default Store Settings
 -- ============================================================
 
-INSERT INTO store_settings (key, value) VALUES
+INSERT INTO store_settings ("key", value) VALUES
   ('storeName', 'My Store'),
   ('storeAddress', ''),
   ('storePhone', ''),
@@ -500,7 +500,7 @@ INSERT INTO store_settings (key, value) VALUES
   ('receiptFooter', 'Thank you for your purchase!'),
   ('lowStockThreshold', '10'),
   ('loyaltyPointsPerCurrency', '1')
-ON CONFLICT (key) DO NOTHING;
+ON CONFLICT ("key") DO NOTHING;
 
 -- ============================================================
 -- 10. SEED: Chart of Accounts (15 accounts)
