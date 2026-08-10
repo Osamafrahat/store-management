@@ -329,7 +329,7 @@ export async function postOrderJournal(order, orderItems, customer = null) {
 
 // Auto-post refund to journal
 export async function postRefundJournal(refund, refundItems = null) {
-  const { data: refundAccount } = await supabase.from('accounts').select('id').eq('code', '4020').single()
+  const { data: salesAccount } = await supabase.from('accounts').select('id').eq('code', '4010').single()
   const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
   const { data: bankAccount } = await supabase.from('accounts').select('id').eq('code', '1020').single()
   const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
@@ -337,8 +337,7 @@ export async function postRefundJournal(refund, refundItems = null) {
   const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
 
   // Determine the correct credit account for refund
-  // Look up original order's payment method to decide
-  let creditAccount = cashAccount // default: cash refund
+  let creditAccount = cashAccount
   if (refund.order_id) {
     const { data: orderPayments } = await supabase
       .from('payments')
@@ -349,29 +348,28 @@ export async function postRefundJournal(refund, refundItems = null) {
       const originalMethod = orderPayments[0].method
       creditAccount = originalMethod === 'cash' ? cashAccount : bankAccount
     } else {
-      // No payment record found - order was on credit, credit AR instead
       creditAccount = arAccount
     }
   }
 
   const lines = []
 
-  // Debit sales returns (reduces revenue)
-  if (refundAccount) {
+  // Credit sales (reduces revenue directly — no separate refund account)
+  if (salesAccount) {
     lines.push({
-      accountId: refundAccount.id,
-      debit: parseFloat(refund.amount),
-      credit: 0,
+      accountId: salesAccount.id,
+      debit: 0,
+      credit: parseFloat(refund.amount),
       description: refundItems ? 'Refund - partial' : 'Refund - full order',
     })
   }
 
-  // Credit the correct account (cash/bank/AR)
+  // Debit cash/bank/AR (reduces asset)
   if (creditAccount) {
     lines.push({
       accountId: creditAccount.id,
-      debit: 0,
-      credit: parseFloat(refund.amount),
+      debit: parseFloat(refund.amount),
+      credit: 0,
       description: creditAccount.id === arAccount?.id ? 'Refund - AR reduction' : 'Refund payment',
     })
   }
