@@ -32,6 +32,7 @@ import {
   ChevronDown,
   WifiOff,
   RefreshCw,
+  HardDrive,
 } from 'lucide-react'
 
 export default function Layout({ children }) {
@@ -158,6 +159,7 @@ export default function Layout({ children }) {
   if (currentUser?.role === 'MANAGER') {
     settingsItems.push({ name: t('nav.users') || 'Users', href: '/users', icon: Users })
     settingsItems.push({ name: t('nav.activities') || 'Activity Log', href: '/activities', icon: Activity })
+    settingsItems.push({ name: t('nav.backup') || 'Backup', href: '/backup', icon: HardDrive })
     settingsItems.push({ name: t('nav.settings'), href: '/settings', icon: Settings })
   }
   if (settingsItems.length > 0) {
