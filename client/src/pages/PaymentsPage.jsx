@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
-import { paymentsApi } from '../lib/api'
+import { paymentsApi, suppliersApi, customersApi } from '../lib/api'
 import { DollarSign, Plus, Search, Trash2, Save, X, ArrowUpRight, ArrowDownRight, Pencil } from 'lucide-react'
 
 export default function PaymentsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
   const [payments, setPayments] = useState([])
+  const [suppliers, setSuppliers] = useState([])
+  const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
@@ -18,9 +20,15 @@ export default function PaymentsPage() {
     reference: '',
     notes: '',
     payment_date: new Date().toISOString().split('T')[0],
+    partner_type: '',
+    partner_id: '',
   })
 
-  useEffect(() => { fetchPayments() }, [search, filterType])
+  useEffect(() => {
+    fetchPayments()
+    suppliersApi.getAll().then(res => setSuppliers(res.data || [])).catch(() => {})
+    customersApi.getAll().then(res => setCustomers(res.data || [])).catch(() => {})
+  }, [search, filterType])
 
   const fetchPayments = async () => {
     try {
@@ -39,6 +47,8 @@ export default function PaymentsPage() {
       reference: payment.reference || '',
       notes: payment.notes || '',
       payment_date: payment.payment_date,
+      partner_type: payment.partner_type || '',
+      partner_id: payment.partner_id || '',
     })
     setShowForm(true)
   }
@@ -55,7 +65,7 @@ export default function PaymentsPage() {
       }
       setShowForm(false)
       setEditingId(null)
-      setFormData({ payment_type: 'inbound', method: 'cash', amount: '', reference: '', notes: '', payment_date: new Date().toISOString().split('T')[0] })
+      setFormData({ payment_type: 'inbound', method: 'cash', amount: '', reference: '', notes: '', payment_date: new Date().toISOString().split('T')[0], partner_type: '', partner_id: '' })
       fetchPayments()
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
@@ -125,7 +135,7 @@ export default function PaymentsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <h3 className="text-lg font-bold">{editingId ? (t('accounting.editPayment') || 'Edit Payment') : (t('accounting.newPayment') || 'New Payment')}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <select value={formData.payment_type} onChange={e => setFormData({ ...formData, payment_type: e.target.value })} className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500">
+              <select value={formData.payment_type} onChange={e => setFormData({ ...formData, payment_type: e.target.value, partner_type: '', partner_id: '' })} className="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500">
                 <option value="inbound">{t('accounting.inbound')} ({t('accounting.received')})</option>
                 <option value="outbound">{t('accounting.outbound')} ({t('accounting.paid')})</option>
               </select>
@@ -136,6 +146,38 @@ export default function PaymentsPage() {
                 <option value="check">{t('accounting.check')}</option>
               </select>
             </div>
+
+            {/* Partner Selection */}
+            {formData.payment_type === 'outbound' && (
+              <select
+                value={`${formData.partner_type}:${formData.partner_id}`}
+                onChange={e => {
+                  const [type, id] = e.target.value.split(':')
+                  setFormData({ ...formData, partner_type: type, partner_id: id })
+                }}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value=":">{t('accounting.selectSupplier') || 'Select supplier...'}</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={`supplier:${s.id}`}>{s.name}</option>
+                ))}
+              </select>
+            )}
+            {formData.payment_type === 'inbound' && (
+              <select
+                value={`${formData.partner_type}:${formData.partner_id}`}
+                onChange={e => {
+                  const [type, id] = e.target.value.split(':')
+                  setFormData({ ...formData, partner_type: type, partner_id: id })
+                }}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value=":">{t('accounting.selectCustomer') || 'Select customer...'}</option>
+                {customers.map(c => (
+                  <option key={c.id} value={`customer:${c.id}`}>{c.name}</option>
+                ))}
+              </select>
+            )}
             <input type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} placeholder={`${t('accounting.amount')} (EGP)`} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500 text-lg font-bold" />
             <input type="date" value={formData.payment_date} onChange={e => setFormData({ ...formData, payment_date: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500" />
             <input value={formData.reference} onChange={e => setFormData({ ...formData, reference: e.target.value })} placeholder={`${t('accounting.reference')} (${t('accounting.optional')})`} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500" />
@@ -144,7 +186,7 @@ export default function PaymentsPage() {
               <button onClick={handleSubmit} className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
                 <Save className="w-4 h-4" /> {t('common.save') || 'Save'}
               </button>
-              <button onClick={() => { setShowForm(false); setEditingId(null); setFormData({ payment_type: 'inbound', method: 'cash', amount: '', reference: '', notes: '', payment_date: new Date().toISOString().split('T')[0] }) }} className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2">
+              <button onClick={() => { setShowForm(false); setEditingId(null); setFormData({ payment_type: 'inbound', method: 'cash', amount: '', reference: '', notes: '', payment_date: new Date().toISOString().split('T')[0], partner_type: '', partner_id: '' }) }} className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl font-medium flex items-center gap-2">
                 <X className="w-4 h-4" /> {t('common.cancel') || 'Cancel'}
               </button>
             </div>
