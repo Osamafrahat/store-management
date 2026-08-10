@@ -1,4 +1,4 @@
-import { useState, memo } from 'react'
+import { useState, useEffect, memo, useCallback } from 'react'
 import { useCartStore } from '../../stores/cartStore'
 import { useAppStore } from '../../stores/appStore'
 import { promotionsApi } from '../../lib/api'
@@ -11,6 +11,17 @@ export default memo(function Cart({ onCheckout }) {
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' && items.length > 0 && !e.target.closest('input, textarea, select')) {
+        e.preventDefault()
+        onCheckout()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [items.length, onCheckout])
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return

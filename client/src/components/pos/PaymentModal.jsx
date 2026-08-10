@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCartStore } from '../../stores/cartStore'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency, calculateChange } from '../../lib/utils'
@@ -22,6 +22,21 @@ export default function PaymentModal({ onClose, onComplete, isSubmitting }) {
 
   const total = getTotal(settings.taxRate)
   const remaining = Math.round((total - payments.reduce((sum, p) => sum + p.amount, 0)) * 100) / 100
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' && !e.target.closest('.no-enter-shortcut')) {
+        e.preventDefault()
+        if (remaining <= 0.01 && payments.length > 0) {
+          handleComplete()
+        } else {
+          handleAddPayment()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [remaining, payments.length])
 
   const handleAddPayment = () => {
     let amount = 0
