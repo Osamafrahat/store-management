@@ -57,6 +57,7 @@ router.post('/', async (req, res) => {
       if (error.code === '23505') return res.status(400).json({ error: 'Account code already exists' })
       throw error
     }
+    req.logActivity({ action: 'created', entity_type: 'account', entity_id: data.id, entity_name: `${code} - ${name}` })
     res.status(201).json(data)
   } catch (err) {
     console.error('Create account error:', err)
@@ -84,6 +85,7 @@ router.put('/:id', async (req, res) => {
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'updated', entity_type: 'account', entity_id: req.params.id, entity_name: data.name })
     res.json(data)
   } catch (err) {
     console.error('Update account error:', err)
@@ -106,6 +108,7 @@ router.delete('/:id', async (req, res) => {
 
     const { error } = await supabase.from('accounts').delete().eq('id', req.params.id)
     if (error) throw error
+    req.logActivity({ action: 'deleted', entity_type: 'account', entity_id: req.params.id })
     res.json({ message: 'Account deleted' })
   } catch (err) {
     console.error('Delete account error:', err)
@@ -117,6 +120,7 @@ router.delete('/:id', async (req, res) => {
 router.post('/seed', async (req, res) => {
   try {
     await seedChartOfAccounts()
+    req.logActivity({ action: 'seeded', entity_type: 'account', entity_name: 'Chart of Accounts' })
     res.json({ message: 'Chart of accounts seeded successfully' })
   } catch (err) {
     console.error('Seed accounts error:', err)
@@ -153,6 +157,7 @@ router.post('/initial-capital', async (req, res) => {
     })
 
     res.json({ message: 'Initial capital recorded', entryId: entry.id })
+    req.logActivity({ action: 'created', entity_type: 'initial_capital', entity_name: `Initial Capital - ${parseFloat(amount).toFixed(2)} EGP`, details: { amount: parseFloat(amount), entry_id: entry.id } })
   } catch (err) {
     console.error('Set initial capital error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -184,6 +189,7 @@ router.post('/recalculate-balances', async (req, res) => {
     }
 
     res.json({ message: 'All account balances recalculated' })
+    req.logActivity({ action: 'recalculated', entity_type: 'account', entity_name: 'All account balances' })
   } catch (err) {
     console.error('Recalculate balances error:', err)
     res.status(500).json({ error: 'Internal server error' })

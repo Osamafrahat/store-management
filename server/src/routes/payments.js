@@ -143,6 +143,7 @@ router.post('/', async (req, res) => {
     }
 
     res.status(201).json(payment)
+    req.logActivity({ action: 'created', entity_type: 'payment', entity_id: payment.id, entity_name: payment.payment_number, details: { payment_type, method, amount: parseFloat(amount) } })
   } catch (err) {
     console.error('Create payment error:', err)
     res.status(500).json({ error: 'Internal server error' })
@@ -178,6 +179,7 @@ router.put('/:id', async (req, res) => {
       .single()
 
     if (error) throw error
+    req.logActivity({ action: 'updated', entity_type: 'payment', entity_id: req.params.id, entity_name: payment.payment_number, details: { payment_type, method, amount: parseFloat(amount) } })
     res.json(payment)
   } catch (err) {
     console.error('Update payment error:', err)
@@ -207,6 +209,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     res.json({ message: 'Payment deleted' })
+    req.logActivity({ action: 'deleted', entity_type: 'payment', entity_id: req.params.id, entity_name: payment.payment_number, details: { payment_type: payment.payment_type, method: payment.method, amount: payment.amount } })
   } catch (err) {
     console.error('Delete payment error:', err)
     res.status(500).json({ error: 'Internal server error' })

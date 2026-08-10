@@ -68,6 +68,7 @@ router.post('/', async (req, res) => {
     })
 
     res.status(201).json(entry)
+    req.logActivity({ action: 'created', entity_type: 'journal_entry', entity_id: entry.id, entity_name: entry.entry_number, details: { description, source_type: 'manual' } })
   } catch (err) {
     console.error('Create journal entry error:', err)
     res.status(400).json({ error: err.message || 'Internal server error' })
@@ -111,6 +112,7 @@ router.post('/:id/reverse', async (req, res) => {
       .eq('id', original.id)
 
     res.json(reverseEntry)
+    req.logActivity({ action: 'reversed', entity_type: 'journal_entry', entity_id: original.id, entity_name: original.entry_number, details: { reversed_by: reverseEntry.entry_number } })
   } catch (err) {
     console.error('Reverse journal entry error:', err)
     res.status(400).json({ error: err.message || 'Internal server error' })
@@ -132,6 +134,7 @@ router.delete('/:id', async (req, res) => {
 
     const { error } = await supabase.from('journal_entries').delete().eq('id', req.params.id)
     if (error) throw error
+    req.logActivity({ action: 'deleted', entity_type: 'journal_entry', entity_id: req.params.id })
     res.json({ message: 'Entry deleted' })
   } catch (err) {
     console.error('Delete journal entry error:', err)
