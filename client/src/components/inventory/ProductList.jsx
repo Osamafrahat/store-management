@@ -63,13 +63,16 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
     )
   }
 
+  const isSplittable = receiveStockProduct?.unit_of_measure && receiveStockProduct.unit_of_measure !== 'quantity'
+
   const handleReceiveStock = async () => {
-    if (!receiveQty || parseInt(receiveQty) <= 0) return
+    const qty = isSplittable ? parseFloat(receiveQty) : parseInt(receiveQty)
+    if (!receiveQty || qty <= 0) return
     setReceiveLoading(true)
     try {
       const body = {
         product_id: receiveStockProduct.id,
-        quantity: parseInt(receiveQty),
+        quantity: qty,
       }
       if (receiveSupplierId) body.supplier_id = parseInt(receiveSupplierId)
       if (receiveCostPrice !== '') body.cost_price = parseFloat(receiveCostPrice)
@@ -306,7 +309,8 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('inventory.quantity') || 'Quantity'}</label>
               <input
                 type="number"
-                min="1"
+                min={isSplittable ? "0.01" : "1"}
+                step={isSplittable ? "0.01" : "1"}
                 value={receiveQty}
                 onChange={e => setReceiveQty(e.target.value)}
                 placeholder={t('inventory.quantity') || 'Quantity'}
@@ -316,11 +320,11 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
             </div>
 
             {/* Total Cost */}
-            {receiveQty && parseInt(receiveQty) > 0 && (
+            {receiveQty && parseFloat(receiveQty) > 0 && (
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('inventory.totalCost') || 'Total Cost'}</span>
                 <span className="text-lg font-bold text-primary-600">
-                  {((parseFloat(receiveCostPrice) || receiveStockProduct.cost_price || 0) * parseInt(receiveQty)).toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP
+                  {((parseFloat(receiveCostPrice) || receiveStockProduct.cost_price || 0) * parseFloat(receiveQty)).toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP
                 </span>
               </div>
             )}
@@ -328,7 +332,7 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
             <div className="flex gap-3">
               <button
                 onClick={handleReceiveStock}
-                disabled={receiveLoading || !receiveQty || parseInt(receiveQty) <= 0}
+                disabled={receiveLoading || !receiveQty || parseFloat(receiveQty) <= 0}
                 className="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-medium"
               >
                 {receiveLoading ? '...' : (t('common.save') || 'Save')}

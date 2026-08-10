@@ -39,11 +39,12 @@ router.get('/movements', async (req, res, next) => {
 // Receive stock
 router.post('/receive', [
   body('product_id').notEmpty().withMessage('Product ID is required'),
-  body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),
+  body('quantity').isFloat({ min: 0.01 }).withMessage('Quantity must be at least 0.01'),
 ], validate, async (req, res, next) => {
   try {
     const { product_id, quantity, notes, supplier_id, cost_price } = req.body
     const pid = parseInt(product_id)
+    const qty = parseFloat(quantity)
     const newSupplierId = supplier_id ? parseInt(supplier_id) : null
     const newCostPrice = cost_price !== undefined ? parseFloat(cost_price) : null
 
@@ -111,7 +112,7 @@ router.post('/receive', [
     const { error: updateError } = await supabase
       .from('products')
       .update({
-        stock_quantity: (targetProduct.stock_quantity || 0) + quantity,
+        stock_quantity: (targetProduct.stock_quantity || 0) + qty,
         cost_price: newCostPrice !== null ? newCostPrice : targetProduct.cost_price,
         updated_at: new Date().toISOString()
       })
@@ -125,7 +126,7 @@ router.post('/receive', [
       .insert({
         product_id: targetProductId,
         type: 'receive',
-        quantity,
+        quantity: qty,
         notes: notes || 'Stock received'
       })
       .select()
