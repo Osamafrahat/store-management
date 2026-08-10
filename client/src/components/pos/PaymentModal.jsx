@@ -138,6 +138,8 @@ export default function PaymentModal({ onClose, onComplete }) {
               </label>
               <input
                 type="number"
+                step="0.01"
+                min="0"
                 value={cashTendered}
                 onChange={(e) => setCashTendered(e.target.value)}
                 placeholder={t('payment.enterAmount')}
