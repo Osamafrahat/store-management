@@ -129,7 +129,7 @@ export default function DashboardPage() {
 
       if (hasPermission(PERMISSIONS.ACCOUNTING_VIEW)) {
         const expenses = results[resultIndex]?.data || []
-        const payments = results[resultIndex + 1]?.data || []
+        const payments = results[resultIndex + 1]?.data?.data || []
         const trialBalance = results[resultIndex + 2]?.data || { accounts: [] }
         const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0)
         const totalInbound = payments.filter(p => p.type === 'inbound').reduce((sum, p) => sum + (p.amount || 0), 0)
