@@ -332,11 +332,14 @@ export async function postRefundJournal(refund, refundItems = null) {
   const { data: returnsAccount } = await supabase.from('accounts').select('id').eq('code', '4020').single()
   const { data: cashAccount } = await supabase.from('accounts').select('id').eq('code', '1010').single()
   const { data: bankAccount } = await supabase.from('accounts').select('id').eq('code', '1020').single()
-  const { data: arAccount } = await supabase.from('accounts').select('id').eq('code', '1030').single()
+  const { data: vatAccount } = await supabase.from('accounts').select('id').eq('code', '2030').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
   const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
 
   let creditAccount = cashAccount
+  let orderTaxAmount = 0
+  let orderTotal = 0
+
   if (refund.order_id) {
     const { data: orderPayments } = await supabase
       .from('payments')
@@ -349,21 +352,51 @@ export async function postRefundJournal(refund, refundItems = null) {
     } else {
       creditAccount = cashAccount
     }
+
+    // Get order VAT info for proportional calculation
+    const { data: order } = await supabase
+      .from('orders')
+      .select('tax_amount, total')
+      .eq('id', refund.order_id)
+      .single()
+    if (order) {
+      orderTaxAmount = parseFloat(order.tax_amount || 0)
+      orderTotal = parseFloat(order.total || 0)
+    }
   }
+
+  // Calculate VAT portion of this refund
+  let refundVat = 0
+  if (orderTaxAmount > 0 && orderTotal > 0) {
+    refundVat = (orderTaxAmount * parseFloat(refund.amount)) / orderTotal
+    refundVat = Math.round(refundVat * 100) / 100
+  }
+
+  const preVatAmount = parseFloat(refund.amount) - refundVat
 
   const lines = []
 
-  // Debit Sales Returns (4020)
-  if (returnsAccount) {
+  // Debit Sales Returns (4020) — pre-VAT amount
+  if (returnsAccount && preVatAmount > 0) {
     lines.push({
       accountId: returnsAccount.id,
-      debit: parseFloat(refund.amount),
+      debit: preVatAmount,
       credit: 0,
       description: refundItems ? 'Refund - partial' : 'Refund - full order',
     })
   }
 
-  // Credit cash/bank (always cash-based refund, never AR)
+  // Debit VAT Payable (2030) — reverse VAT
+  if (vatAccount && refundVat > 0) {
+    lines.push({
+      accountId: vatAccount.id,
+      debit: refundVat,
+      credit: 0,
+      description: `VAT reversed - refund`,
+    })
+  }
+
+  // Credit cash/bank — total refund amount
   if (creditAccount) {
     lines.push({
       accountId: creditAccount.id,
