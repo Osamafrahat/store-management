@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
-import { paymentsApi, suppliersApi, customersApi } from '../lib/api'
+import { paymentsApi, suppliersApi } from '../lib/api'
 import { DollarSign, Plus, Search, Trash2, Save, X, ArrowUpRight, ArrowDownRight, Pencil } from 'lucide-react'
 
 export default function PaymentsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
   const [payments, setPayments] = useState([])
   const [suppliers, setSuppliers] = useState([])
-  const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
@@ -27,7 +26,6 @@ export default function PaymentsPage() {
   useEffect(() => {
     fetchPayments()
     suppliersApi.getAll().then(res => setSuppliers(res.data || [])).catch(() => {})
-    customersApi.getAll().then(res => setCustomers(res.data || [])).catch(() => {})
   }, [search, filterType])
 
   const fetchPayments = async () => {
@@ -160,21 +158,6 @@ export default function PaymentsPage() {
                 <option value=":">{t('accounting.selectSupplier') || 'Select supplier...'}</option>
                 {suppliers.map(s => (
                   <option key={s.id} value={`supplier:${s.id}`}>{s.name}</option>
-                ))}
-              </select>
-            )}
-            {formData.payment_type === 'inbound' && (
-              <select
-                value={`${formData.partner_type}:${formData.partner_id}`}
-                onChange={e => {
-                  const [type, id] = e.target.value.split(':')
-                  setFormData({ ...formData, partner_type: type, partner_id: id })
-                }}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value=":">{t('accounting.selectCustomer') || 'Select customer...'}</option>
-                {customers.map(c => (
-                  <option key={c.id} value={`customer:${c.id}`}>{c.name}</option>
                 ))}
               </select>
             )}
