@@ -122,19 +122,34 @@ router.post('/cleanup', async (req, res) => {
 })
 
 router.get('/auto-status', (req, res) => {
-  res.json(getAutoBackupStatus())
+  try {
+    res.json(getAutoBackupStatus())
+  } catch (err) {
+    console.error('Auto-status error:', err)
+    res.status(500).json({ error: 'Failed to get status' })
+  }
 })
 
 router.post('/auto-enable', (req, res) => {
-  enableAutoBackup()
-  log(req, { action: 'updated', entity_type: 'backup', entity_name: 'Auto-backup enabled' })
-  res.json({ message: 'Auto-backup enabled', ...getAutoBackupStatus() })
+  try {
+    enableAutoBackup()
+    log(req, { action: 'updated', entity_type: 'backup', entity_name: 'Auto-backup enabled' })
+    res.json({ message: 'Auto-backup enabled', ...getAutoBackupStatus() })
+  } catch (err) {
+    console.error('Auto-enable error:', err)
+    res.status(500).json({ error: 'Failed to enable auto-backup' })
+  }
 })
 
 router.post('/auto-disable', (req, res) => {
-  disableAutoBackup()
-  log(req, { action: 'updated', entity_type: 'backup', entity_name: 'Auto-backup disabled' })
-  res.json({ message: 'Auto-backup disabled', ...getAutoBackupStatus() })
+  try {
+    disableAutoBackup()
+    log(req, { action: 'updated', entity_type: 'backup', entity_name: 'Auto-backup disabled' })
+    res.json({ message: 'Auto-backup disabled', ...getAutoBackupStatus() })
+  } catch (err) {
+    console.error('Auto-disable error:', err)
+    res.status(500).json({ error: 'Failed to disable auto-backup' })
+  }
 })
 
 export { router as backupRouter }

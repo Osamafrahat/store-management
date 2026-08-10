@@ -8,7 +8,6 @@ let backupJob = null
 let cleanupJob = null
 let autoBackupEnabled = process.env.BACKUP_ENABLED !== 'false'
 let lastBackupTime = null
-let nextBackupTime = null
 
 export function startBackupScheduler() {
   if (!autoBackupEnabled) {
@@ -19,41 +18,49 @@ export function startBackupScheduler() {
 }
 
 export function enableAutoBackup() {
-  if (backupJob) backupJob.stop()
+  try {
+    if (backupJob) { backupJob.stop(); backupJob = null }
+    if (cleanupJob) { cleanupJob.stop(); cleanupJob = null }
 
-  backupJob = cron.schedule(BACKUP_SCHEDULE, async () => {
-    console.log(`[CRON] Running scheduled backup at ${new Date().toISOString()}`)
-    try {
-      const result = await backupToJson()
-      lastBackupTime = new Date().toISOString()
-      console.log(`[CRON] Backup completed: ${result.totalRows} rows`)
-    } catch (err) {
-      console.error('[CRON] Backup failed:', err)
-    }
-  })
+    backupJob = cron.schedule(BACKUP_SCHEDULE, async () => {
+      console.log(`[CRON] Running scheduled backup at ${new Date().toISOString()}`)
+      try {
+        const result = await backupToJson()
+        lastBackupTime = new Date().toISOString()
+        console.log(`[CRON] Backup completed: ${result.totalRows} rows`)
+      } catch (err) {
+        console.error('[CRON] Backup failed:', err)
+      }
+    })
 
-  if (cleanupJob) cleanupJob.stop()
-  cleanupJob = cron.schedule('0 3 * * 0', async () => {
-    console.log(`[CRON] Running weekly cleanup at ${new Date().toISOString()}`)
-    try {
-      const result = await cleanupOldBackups(BACKUP_RETENTION_DAYS)
-      console.log(`[CRON] Cleanup completed: ${result.deleted} old backups removed`)
-    } catch (err) {
-      console.error('[CRON] Cleanup failed:', err)
-    }
-  })
+    cleanupJob = cron.schedule('0 3 * * 0', async () => {
+      console.log(`[CRON] Running weekly cleanup at ${new Date().toISOString()}`)
+      try {
+        const result = await cleanupOldBackups(BACKUP_RETENTION_DAYS)
+        console.log(`[CRON] Cleanup completed: ${result.deleted} old backups removed`)
+      } catch (err) {
+        console.error('[CRON] Cleanup failed:', err)
+      }
+    })
 
-  autoBackupEnabled = true
-  nextBackupTime = getNextRunTime(BACKUP_SCHEDULE)
-  console.log(`[CRON] Auto-backup ENABLED: ${BACKUP_SCHEDULE} (retention: ${BACKUP_RETENTION_DAYS} days)`)
+    autoBackupEnabled = true
+    console.log(`[CRON] Auto-backup ENABLED: ${BACKUP_SCHEDULE}`)
+  } catch (err) {
+    console.error('[CRON] Failed to enable auto-backup:', err)
+    throw err
+  }
 }
 
 export function disableAutoBackup() {
-  if (backupJob) { backupJob.stop(); backupJob = null }
-  if (cleanupJob) { cleanupJob.stop(); cleanupJob = null }
-  autoBackupEnabled = false
-  nextBackupTime = null
-  console.log('[CRON] Auto-backup DISABLED')
+  try {
+    if (backupJob) { backupJob.stop(); backupJob = null }
+    if (cleanupJob) { cleanupJob.stop(); cleanupJob = null }
+    autoBackupEnabled = false
+    console.log('[CRON] Auto-backup DISABLED')
+  } catch (err) {
+    console.error('[CRON] Failed to disable auto-backup:', err)
+    throw err
+  }
 }
 
 export function getAutoBackupStatus() {
@@ -62,16 +69,5 @@ export function getAutoBackupStatus() {
     schedule: BACKUP_SCHEDULE,
     retentionDays: BACKUP_RETENTION_DAYS,
     lastBackupTime,
-    nextBackupTime,
   }
-}
-
-function getNextRunTime(schedule) {
-  try {
-    const interval = cron.getTimeout(schedule)
-    if (interval > 0) {
-      return new Date(Date.now() + interval).toISOString()
-    }
-  } catch {}
-  return null
 }
