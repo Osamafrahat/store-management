@@ -29,7 +29,7 @@ export default function BackupPage() {
       const res = await api.get('/backup')
       setBackups(res.data)
     } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to load backups' })
+      setMessage({ type: 'error', text: t('backup.loadFailed') })
     } finally {
       setLoading(false)
     }
@@ -46,10 +46,10 @@ export default function BackupPage() {
     try {
       setCreating(format)
       const res = await api.post(`/backup/${format}`)
-      showMessage('success', `Backup created: ${res.data.totalRows} rows`)
+      showMessage('success', t('backup.created').replace('{rows}', res.data.totalRows))
       loadBackups()
     } catch (err) {
-      showMessage('error', 'Failed to create backup')
+      showMessage('error', t('backup.createFailed'))
     } finally {
       setCreating(null)
     }
@@ -67,32 +67,32 @@ export default function BackupPage() {
       link.remove()
       window.URL.revokeObjectURL(url)
     } catch (err) {
-      showMessage('error', 'Failed to download backup')
+      showMessage('error', t('backup.downloadFailed'))
     }
   }
 
   const restoreBackup = async (filename) => {
-    if (!confirm(`Restore from ${filename}? This will overwrite current data.`)) return
+    if (!confirm(t('backup.restoreConfirm').replace('{file}', filename))) return
     try {
       setRestoring(filename)
       const res = await api.post('/backup/restore', { filename })
-      showMessage('success', `Restored ${res.data.restoredRows} rows`)
+      showMessage('success', t('backup.restored').replace('{rows}', res.data.restoredRows))
     } catch (err) {
-      showMessage('error', 'Failed to restore backup')
+      showMessage('error', t('backup.restoreFailed'))
     } finally {
       setRestoring(null)
     }
   }
 
-  const deleteBackup = async (filename) => {
-    if (!confirm(`Delete ${filename}?`)) return
+  const deleteBackupFile = async (filename) => {
+    if (!confirm(t('backup.deleteConfirm').replace('{file}', filename))) return
     try {
       setDeleting(filename)
       await api.delete(`/backup/${filename}`)
-      showMessage('success', 'Backup deleted')
+      showMessage('success', t('backup.deleted'))
       loadBackups()
     } catch (err) {
-      showMessage('error', 'Failed to delete backup')
+      showMessage('error', t('backup.deleteFailed'))
     } finally {
       setDeleting(null)
     }
@@ -110,7 +110,6 @@ export default function BackupPage() {
 
   return (
     <div className="space-y-6">
-      {/* Message Toast */}
       {message && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all duration-300 ${
           message.type === 'success'
@@ -122,28 +121,25 @@ export default function BackupPage() {
         </div>
       )}
 
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <HardDrive className="w-7 h-7" />
-          {t('nav.backup') || 'Backup & Restore'}
+          {t('backup.title')}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Create, download, and restore database backups
+          {t('backup.subtitle')}
         </p>
       </div>
 
-      {/* Create Backup Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* JSON Backup */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <Database className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-white">JSON Backup</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Full data export, can be restored</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">{t('backup.jsonBackup')}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('backup.jsonDesc')}</p>
             </div>
           </div>
           <button
@@ -156,19 +152,18 @@ export default function BackupPage() {
             ) : (
               <Download className="w-4 h-4" />
             )}
-            {creating === 'json' ? 'Creating...' : 'Create JSON Backup'}
+            {creating === 'json' ? t('backup.creating') : t('backup.createJson')}
           </button>
         </div>
 
-        {/* SQL Backup */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <FileText className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-white">SQL Backup</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Human-readable SQL dump</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">{t('backup.sqlBackup')}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t('backup.sqlDesc')}</p>
             </div>
           </div>
           <button
@@ -181,17 +176,16 @@ export default function BackupPage() {
             ) : (
               <Download className="w-4 h-4" />
             )}
-            {creating === 'sql' ? 'Creating...' : 'Create SQL Backup'}
+            {creating === 'sql' ? t('backup.creating') : t('backup.createSql')}
           </button>
         </div>
       </div>
 
-      {/* Backup List */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Existing Backups ({backups.length})
+            {t('backup.existingBackups')} ({backups.length})
           </h3>
           <button
             onClick={loadBackups}
@@ -204,12 +198,12 @@ export default function BackupPage() {
         {loading ? (
           <div className="p-8 text-center text-gray-500">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-            Loading backups...
+            {t('backup.loading') || 'Loading...'}
           </div>
         ) : backups.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
             <Database className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No backups yet. Create your first backup above.</p>
+            <p>{t('backup.noBackups')}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -238,7 +232,7 @@ export default function BackupPage() {
                   <button
                     onClick={() => downloadBackup(backup.name)}
                     className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
-                    title="Download"
+                    title={t('backup.download')}
                   >
                     <Download className="w-4 h-4" />
                   </button>
@@ -246,7 +240,7 @@ export default function BackupPage() {
                     onClick={() => restoreBackup(backup.name)}
                     disabled={restoring === backup.name}
                     className="p-2 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors disabled:opacity-50"
-                    title="Restore"
+                    title={t('backup.restore')}
                   >
                     {restoring === backup.name ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -255,10 +249,10 @@ export default function BackupPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => deleteBackup(backup.name)}
+                    onClick={() => deleteBackupFile(backup.name)}
                     disabled={deleting === backup.name}
                     className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors disabled:opacity-50"
-                    title="Delete"
+                    title={t('backup.delete')}
                   >
                     {deleting === backup.name ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
