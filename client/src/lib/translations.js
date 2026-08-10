@@ -1068,6 +1068,12 @@ export const translations = {
     'backup.lastBackup': 'Last backup',
     'backup.downloadAll': 'Download All',
     'backup.downloadAllDone': 'Downloaded {count} backups',
+    // Cloud backup
+    'backup.cloudBackups': 'Cloud Backups',
+    'backup.noCloudBackups': 'No cloud backups yet',
+    'backup.uploadToCloud': 'Upload to Cloud',
+    'backup.cloudUploaded': 'Backup uploaded to cloud',
+    'backup.cloudUploadFailed': 'Failed to upload to cloud',
   },
   ar: {
     // Dashboard
@@ -2150,6 +2156,12 @@ export const translations = {
     'backup.lastBackup': 'آخر نسخة احتياطية',
     'backup.downloadAll': 'تنزيل الكل',
     'backup.downloadAllDone': 'تم تنزيل {count} نسخ احتياطية',
+    // Cloud backup
+    'backup.cloudBackups': 'النسخ الاحتياطية السحابية',
+    'backup.noCloudBackups': 'لا توجد نسخ احتياطية سحابية بعد',
+    'backup.uploadToCloud': 'رفع إلى السحابة',
+    'backup.cloudUploaded': 'تم رفع النسخة الاحتياطية إلى السحابة',
+    'backup.cloudUploadFailed': 'فشل الرفع إلى السحابة',
   },
 }
 

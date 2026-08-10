@@ -3,6 +3,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 
 const BACKUP_DIR = path.resolve(process.cwd(), 'backups')
+const CLOUD_BUCKET = 'backups'
 
 const TABLES = [
   'categories', 'suppliers', 'products', 'customers', 'employees', 'users',
@@ -202,4 +203,70 @@ export async function cleanupOldBackups(retentionDays = 30) {
 
   console.log(`[BACKUP] Cleaned up ${deleted} old backups (>${retentionDays} days)`)
   return { deleted }
+}
+
+export async function ensureCloudBucket() {
+  try {
+    const { error } = await supabase.storage.getBucket(CLOUD_BUCKET)
+    if (error && error.message.includes('not found')) {
+      await supabase.storage.createBucket(CLOUD_BUCKET, { public: false })
+      console.log(`[BACKUP] Created cloud bucket: ${CLOUD_BUCKET}`)
+    }
+  } catch (err) {
+    console.error('[BACKUP] Error ensuring cloud bucket:', err.message)
+  }
+}
+
+export async function backupToCloud(format = 'json') {
+  await ensureCloudBucket()
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const filename = `backup-${timestamp}.${format}`
+
+  let fileContent
+  if (format === 'sql') {
+    const result = await backupToSql()
+    fileContent = await fs.readFile(result.filePath)
+  } else {
+    const result = await backupToJson()
+    fileContent = await fs.readFile(result.filePath)
+  }
+
+  const { error } = await supabase.storage
+    .from(CLOUD_BUCKET)
+    .upload(filename, fileContent, {
+      contentType: format === 'json' ? 'application/json' : 'application/sql',
+    })
+
+  if (error) throw error
+
+  console.log(`[BACKUP] Cloud backup uploaded: ${filename}`)
+  return { filename, timestamp, size: fileContent.length }
+}
+
+export async function listCloudBackups() {
+  await ensureCloudBucket()
+  const { data, error } = await supabase.storage.from(CLOUD_BUCKET).list('', {
+    sortBy: { column: 'created_at', order: 'desc' },
+  })
+
+  if (error) throw error
+
+  return (data || []).map(f => ({
+    name: f.name,
+    type: f.name.endsWith('.sql') ? 'sql' : 'json',
+    size: f.metadata?.size || 0,
+    created: f.created_at,
+  }))
+}
+
+export async function downloadFromCloud(filename) {
+  const { data, error } = await supabase.storage.from(CLOUD_BUCKET).download(filename)
+  if (error) throw error
+  return data
+}
+
+export async function deleteCloudBackup(filename) {
+  const { error } = await supabase.storage.from(CLOUD_BUCKET).remove([filename])
+  if (error) throw error
+  return { deleted: true, filename }
 }

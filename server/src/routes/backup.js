@@ -7,7 +7,11 @@ import {
   restoreFromJson,
   listBackups,
   deleteBackup,
-  cleanupOldBackups
+  cleanupOldBackups,
+  backupToCloud,
+  listCloudBackups,
+  downloadFromCloud,
+  deleteCloudBackup
 } from '../services/backupService.js'
 import { logActivity } from '../middleware/activityLogger.js'
 import {
@@ -149,6 +153,52 @@ router.post('/auto-disable', (req, res) => {
   } catch (err) {
     console.error('Auto-disable error:', err)
     res.status(500).json({ error: 'Failed to disable auto-backup' })
+  }
+})
+
+router.get('/cloud', async (req, res) => {
+  try {
+    const backups = await listCloudBackups()
+    res.json(backups)
+  } catch (err) {
+    console.error('List cloud backups error:', err)
+    res.status(500).json({ error: 'Failed to list cloud backups' })
+  }
+})
+
+router.post('/cloud/upload', async (req, res) => {
+  try {
+    const format = req.body.format || 'json'
+    log(req, { action: 'created', entity_type: 'cloud_backup', entity_name: `${format.toUpperCase()} cloud backup` })
+    const result = await backupToCloud(format)
+    res.json({ message: 'Cloud backup uploaded', ...result })
+  } catch (err) {
+    console.error('Cloud upload error:', err)
+    res.status(500).json({ error: 'Failed to upload to cloud' })
+  }
+})
+
+router.get('/cloud/download/:filename', async (req, res) => {
+  try {
+    const data = await downloadFromCloud(req.params.filename)
+    res.setHeader('Content-Type', 'application/octet-stream')
+    res.setHeader('Content-Disposition', `attachment; filename="${req.params.filename}"`)
+    const buffer = Buffer.from(await data.arrayBuffer())
+    res.send(buffer)
+  } catch (err) {
+    console.error('Cloud download error:', err)
+    res.status(500).json({ error: 'Failed to download from cloud' })
+  }
+})
+
+router.delete('/cloud/:filename', async (req, res) => {
+  try {
+    await deleteCloudBackup(req.params.filename)
+    log(req, { action: 'deleted', entity_type: 'cloud_backup', entity_name: req.params.filename })
+    res.json({ message: 'Cloud backup deleted' })
+  } catch (err) {
+    console.error('Cloud delete error:', err)
+    res.status(500).json({ error: 'Failed to delete cloud backup' })
   }
 })
 
