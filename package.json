@@ -9,7 +9,10 @@
     "client": "cd client && npm run dev",
     "start": "concurrently \"npm run server:prod\" \"npm run client:build\"",
     "server:prod": "cd server && npm start",
-    "client:build": "cd client && npm run build"
+    "client:build": "cd client && npm run build",
+    "backup": "cd server && node -e \"import('./src/services/backupService.js').then(b => b.backupToJson())\"",
+    "backup:sql": "cd server && node -e \"import('./src/services/backupService.js').then(b => b.backupToSql())\"",
+    "backup:list": "cd server && node -e \"import('./src/services/backupService.js').then(b => b.listBackups().then(r => console.log(JSON.stringify(r, null, 2))))\""
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

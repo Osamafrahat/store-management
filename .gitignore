@@ -32,3 +32,6 @@ build/
 # Cache
 .cache/
 .npm/
+
+# Backups
+backups/

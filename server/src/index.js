@@ -31,6 +31,8 @@ import { accountingReportsRouter } from './routes/accountingReports.js'
 import { paymentsRouter } from './routes/payments.js'
 import syncRouter from './routes/sync.js'
 import etaRouter from './routes/eta.js'
+import { backupRouter } from './routes/backup.js'
+import { startBackupScheduler } from './services/backupScheduler.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -106,6 +108,7 @@ app.use('/api/accounting/reports', authenticateToken, requireManager, accounting
 app.use('/api/accounting/payments', authenticateToken, requireManager, activityLogger, paymentsRouter)
 app.use('/api/sync', authenticateToken, syncRouter)
 app.use('/api/eta', authenticateToken, etaRouter)
+app.use('/api/backup', authenticateToken, requireManager, backupRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)
@@ -139,6 +142,7 @@ async function initAccounting() {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
   initAccounting()
+  startBackupScheduler()
 })
 
 export default app
