@@ -1,5 +1,5 @@
 ﻿import cron from 'node-cron'
-import { backupToJson, cleanupOldBackups, listCloudBackups, deleteCloudBackup } from './backupService.js'
+import { backupToJson, backupToCloud, cleanupOldBackups, listCloudBackups, deleteCloudBackup } from './backupService.js'
 
 const BACKUP_SCHEDULE = process.env.BACKUP_SCHEDULE || '0 2 * * *'
 const BACKUP_RETENTION_DAYS = parseInt(process.env.BACKUP_RETENTION_DAYS) || 30
@@ -27,7 +27,14 @@ export function enableAutoBackup() {
       try {
         const result = await backupToJson()
         lastBackupTime = new Date().toISOString()
-        console.log(`[CRON] Backup completed: ${result.totalRows} rows`)
+        console.log(`[CRON] Local backup completed: ${result.totalRows} rows`)
+
+        try {
+          await backupToCloud('json')
+          console.log(`[CRON] Cloud backup uploaded`)
+        } catch (cloudErr) {
+          console.error('[CRON] Cloud upload failed:', cloudErr.message)
+        }
       } catch (err) {
         console.error('[CRON] Backup failed:', err)
       }
