@@ -31,7 +31,19 @@ api.interceptors.response.use(
     const isLoginPage = window.location.pathname === '/login'
     const skipRedirect = error.config?.skipAuthRedirect
 
-    if ((status === 401 || status === 403) && !isLoginPage && !skipRedirect) {
+    // Skip redirect if user must change password (ForcePasswordChange is shown)
+    let mustChangePw = false
+    try {
+      const raw = localStorage.getItem('user-storage')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const u = parsed?.state?.currentUser
+        const val = u?.must_change_password
+        mustChangePw = val === true || val === 1 || val === '1' || val === 'true'
+      }
+    } catch { /* ignore */ }
+
+    if ((status === 401 || status === 403) && !isLoginPage && !skipRedirect && !mustChangePw) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
       localStorage.removeItem('user-storage')
