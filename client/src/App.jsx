@@ -29,7 +29,6 @@ const AccountingReportsPage = lazy(() => import('./pages/AccountingReportsPage')
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'))
 const InvoicesPage = lazy(() => import('./pages/InvoicesPage'))
 const BackupPage = lazy(() => import('./pages/BackupPage'))
-const ChatPage = lazy(() => import('./pages/ChatPage'))
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useUserStore()
@@ -94,7 +93,6 @@ function App() {
                 <Route path="/accounting/payments" element={<ProtectedRoute><Layout><PaymentsPage /></Layout></ProtectedRoute>} />
                 <Route path="/invoices" element={<ProtectedRoute><Layout><InvoicesPage /></Layout></ProtectedRoute>} />
                 <Route path="/backup" element={<ProtectedRoute><Layout><BackupPage /></Layout></ProtectedRoute>} />
-                <Route path="/chat" element={<ProtectedRoute><Layout><ChatPage /></Layout></ProtectedRoute>} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

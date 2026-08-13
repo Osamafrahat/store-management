@@ -33,8 +33,8 @@ import {
   WifiOff,
   RefreshCw,
   HardDrive,
-  MessageCircle,
 } from 'lucide-react'
+import ChatWidget from '../ChatWidget'
 
 export default function Layout({ children }) {
   const location = useLocation()
@@ -161,7 +161,6 @@ export default function Layout({ children }) {
     settingsItems.push({ name: t('nav.users') || 'Users', href: '/users', icon: Users })
     settingsItems.push({ name: t('nav.activities') || 'Activity Log', href: '/activities', icon: Activity })
     settingsItems.push({ name: t('nav.backup') || 'Backup', href: '/backup', icon: HardDrive })
-    settingsItems.push({ name: t('nav.chat') || 'Team Chat', href: '/chat', icon: MessageCircle })
     settingsItems.push({ name: t('nav.settings'), href: '/settings', icon: Settings })
   }
   if (settingsItems.length > 0) {
@@ -689,6 +688,7 @@ export default function Layout({ children }) {
           {children}
         </main>
       </div>
+      <ChatWidget />
     </div>
   )
 }
