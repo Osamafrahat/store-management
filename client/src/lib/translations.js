@@ -79,6 +79,7 @@ export const translations = {
     'nav.groupReporting': 'Reporting',
     'nav.groupSettings': 'Settings',
     'nav.backup': 'Backup',
+    'nav.chat': 'Team Chat',
 
     // POS Page
     'pos.search': 'Search products by name, SKU, or scan barcode...',
@@ -1075,6 +1076,16 @@ export const translations = {
     'backup.uploadToCloud': 'Upload to Cloud',
     'backup.cloudUploaded': 'Backup uploaded to cloud',
     'backup.cloudUploadFailed': 'Failed to upload to cloud',
+    // Chat
+    'chat.title': 'Team Chat',
+    'chat.allMembers': 'All team members',
+    'chat.online': 'Online',
+    'chat.noMessages': 'No messages yet',
+    'chat.startConversation': 'Start a conversation with your team',
+    'chat.placeholder': 'Type a message...',
+    'chat.today': 'Today',
+    'chat.yesterday': 'Yesterday',
+    'chat.deleteConfirm': 'Delete this message?',
   },
   ar: {
     // Dashboard
@@ -1156,6 +1167,7 @@ export const translations = {
     'nav.groupReporting': 'التقارير',
     'nav.groupSettings': 'الإعدادات',
     'nav.backup': 'النسخ الاحتياطي',
+    'nav.chat': 'محادثة الفريق',
 
     // POS Page
     'pos.search': 'البحث عن المنتجات بالاسم أو الكود أو مسح الباركود...',
@@ -2164,6 +2176,16 @@ export const translations = {
     'backup.uploadToCloud': 'رفع إلى السحابة',
     'backup.cloudUploaded': 'تم رفع النسخة الاحتياطية إلى السحابة',
     'backup.cloudUploadFailed': 'فشل الرفع إلى السحابة',
+    // Chat
+    'chat.title': 'محادثة الفريق',
+    'chat.allMembers': 'جميع أعضاء الفريق',
+    'chat.online': 'متصل',
+    'chat.noMessages': 'لا توجد رسائل بعد',
+    'chat.startConversation': 'ابدأ محادثة مع فريقك',
+    'chat.placeholder': 'اكتب رسالة...',
+    'chat.today': 'اليوم',
+    'chat.yesterday': 'أمس',
+    'chat.deleteConfirm': 'حذف هذه الرسالة؟',
   },
 }
 

@@ -521,3 +521,20 @@ SELECT
 WHERE NOT EXISTS (
   SELECT 1 FROM fiscal_periods WHERE start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE
 );
+
+-- ============================================================
+-- 12. TEAM CHAT
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(id),
+  user_name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow all access to messages" ON messages
+  FOR ALL USING (true) WITH CHECK (true);

@@ -33,6 +33,7 @@ import syncRouter from './routes/sync.js'
 import etaRouter from './routes/eta.js'
 import { backupRouter } from './routes/backup.js'
 import { startBackupScheduler } from './services/backupScheduler.js'
+import chatRouter from './routes/chat.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -109,6 +110,7 @@ app.use('/api/accounting/payments', authenticateToken, requireManager, activityL
 app.use('/api/sync', authenticateToken, syncRouter)
 app.use('/api/eta', authenticateToken, etaRouter)
 app.use('/api/backup', authenticateToken, requireManager, activityLogger, backupRouter)
+app.use('/api/chat', authenticateToken, chatRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)
