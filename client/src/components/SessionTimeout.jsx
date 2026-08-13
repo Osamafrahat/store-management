@@ -8,7 +8,7 @@ const WARNING_TIME = 5 * 60 * 1000 // Show warning 5 minutes before timeout
 const CHECK_INTERVAL = 30 * 1000 // Check every 30 seconds
 
 export default function SessionTimeout() {
-  const { isAuthenticated, lastActivity, logout, updateActivity, checkSessionTimeout } = useUserStore()
+  const { isAuthenticated, lastActivity, logout, updateActivity, checkSessionTimeout, mustChangePassword } = useUserStore()
   const { t } = useAppStore()
   const navigate = useNavigate()
   const [showWarning, setShowWarning] = useState(false)
@@ -38,6 +38,7 @@ export default function SessionTimeout() {
   // Check for session timeout
   useEffect(() => {
     if (!isAuthenticated || !lastActivity) return
+    if (mustChangePassword()) return
 
     const interval = setInterval(() => {
       const timedOut = checkSessionTimeout()
@@ -61,7 +62,7 @@ export default function SessionTimeout() {
     }, CHECK_INTERVAL)
 
     return () => clearInterval(interval)
-  }, [isAuthenticated, lastActivity, checkSessionTimeout, navigate])
+  }, [isAuthenticated, lastActivity, checkSessionTimeout, navigate, mustChangePassword])
 
   const handleLogout = () => {
     if (loggingOut) return
