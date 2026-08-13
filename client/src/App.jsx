@@ -64,40 +64,42 @@ function App() {
         <Router>
           <Toast />
           <SessionTimeout />
-          {showForcePasswordChange && <ForcePasswordChange />}
+          {showForcePasswordChange ? (
+            <ForcePasswordChange />
+          ) : (
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/login" element={
+                    isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+                  } />
 
-          <ErrorBoundary>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/login" element={
-                  isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-                } />
+                  <Route path="/" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
+                  <Route path="/pos" element={<ProtectedRoute><Layout><POSPage /></Layout></ProtectedRoute>} />
+                  <Route path="/inventory" element={<ProtectedRoute><Layout><InventoryPage /></Layout></ProtectedRoute>} />
+                  <Route path="/reports" element={<ProtectedRoute><Layout><ReportsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
+                  <Route path="/promotions" element={<ProtectedRoute><Layout><PromotionsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/users" element={<ProtectedRoute><Layout><UsersPage /></Layout></ProtectedRoute>} />
+                  <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
+                  <Route path="/employees" element={<ProtectedRoute><Layout><EmployeesPage /></Layout></ProtectedRoute>} />
+                  <Route path="/expenses" element={<ProtectedRoute><Layout><ExpensesPage /></Layout></ProtectedRoute>} />
+                  <Route path="/refunds" element={<ProtectedRoute><Layout><RefundsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/activities" element={<ProtectedRoute><Layout><ActivitiesPage /></Layout></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
+                  <Route path="/accounting/accounts" element={<ProtectedRoute><Layout><ChartOfAccountsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/accounting/journals" element={<ProtectedRoute><Layout><JournalEntriesPage /></Layout></ProtectedRoute>} />
+                  <Route path="/accounting/reports" element={<ProtectedRoute><Layout><AccountingReportsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/accounting/payments" element={<ProtectedRoute><Layout><PaymentsPage /></Layout></ProtectedRoute>} />
+                  <Route path="/invoices" element={<ProtectedRoute><Layout><InvoicesPage /></Layout></ProtectedRoute>} />
+                  <Route path="/backup" element={<ProtectedRoute><Layout><BackupPage /></Layout></ProtectedRoute>} />
 
-                <Route path="/" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
-                <Route path="/pos" element={<ProtectedRoute><Layout><POSPage /></Layout></ProtectedRoute>} />
-                <Route path="/inventory" element={<ProtectedRoute><Layout><InventoryPage /></Layout></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute><Layout><ReportsPage /></Layout></ProtectedRoute>} />
-                <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
-                <Route path="/promotions" element={<ProtectedRoute><Layout><PromotionsPage /></Layout></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute><Layout><UsersPage /></Layout></ProtectedRoute>} />
-                <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
-                <Route path="/employees" element={<ProtectedRoute><Layout><EmployeesPage /></Layout></ProtectedRoute>} />
-                <Route path="/expenses" element={<ProtectedRoute><Layout><ExpensesPage /></Layout></ProtectedRoute>} />
-                <Route path="/refunds" element={<ProtectedRoute><Layout><RefundsPage /></Layout></ProtectedRoute>} />
-                <Route path="/activities" element={<ProtectedRoute><Layout><ActivitiesPage /></Layout></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
-                <Route path="/accounting/accounts" element={<ProtectedRoute><Layout><ChartOfAccountsPage /></Layout></ProtectedRoute>} />
-                <Route path="/accounting/journals" element={<ProtectedRoute><Layout><JournalEntriesPage /></Layout></ProtectedRoute>} />
-                <Route path="/accounting/reports" element={<ProtectedRoute><Layout><AccountingReportsPage /></Layout></ProtectedRoute>} />
-                <Route path="/accounting/payments" element={<ProtectedRoute><Layout><PaymentsPage /></Layout></ProtectedRoute>} />
-                <Route path="/invoices" element={<ProtectedRoute><Layout><InvoicesPage /></Layout></ProtectedRoute>} />
-                <Route path="/backup" element={<ProtectedRoute><Layout><BackupPage /></Layout></ProtectedRoute>} />
-
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          )}
         </Router>
       </div>
     </div>
