@@ -51,21 +51,6 @@ function App() {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated)
   const mustChangePassword = useUserStore((s) => s.mustChangePassword)
 
-  const [hydrated, setHydrated] = useState(() => {
-    try { return useUserStore.persist.hasHydrated() } catch { return false }
-  })
-
-  useEffect(() => {
-    if (useUserStore.persist.hasHydrated()) {
-      setHydrated(true)
-      return
-    }
-    const unsub = useUserStore.persist.onRehydrateStorage(() => {
-      setHydrated(true)
-    })
-    return unsub
-  }, [])
-
   useEffect(() => {
     if (isAuthenticated) loadSettings()
   }, [isAuthenticated, loadSettings])
@@ -73,14 +58,6 @@ function App() {
   useEffect(() => {
     document.title = settings.storeName || 'Store POS'
   }, [settings.storeName])
-
-  if (!hydrated) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    )
-  }
 
   const showForcePasswordChange = isAuthenticated && mustChangePassword()
 
@@ -90,42 +67,43 @@ function App() {
         <Router>
           <Toast />
           <SessionTimeout />
-          {showForcePasswordChange ? (
+
+          {showForcePasswordChange && (
             <ForcePasswordChange />
-          ) : (
-            <ErrorBoundary>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/login" element={
-                    isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-                  } />
-
-                  <Route path="/" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
-                  <Route path="/pos" element={<ProtectedRoute><Layout><POSPage /></Layout></ProtectedRoute>} />
-                  <Route path="/inventory" element={<ProtectedRoute><Layout><InventoryPage /></Layout></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute><Layout><ReportsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
-                  <Route path="/promotions" element={<ProtectedRoute><Layout><PromotionsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/users" element={<ProtectedRoute><Layout><UsersPage /></Layout></ProtectedRoute>} />
-                  <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
-                  <Route path="/employees" element={<ProtectedRoute><Layout><EmployeesPage /></Layout></ProtectedRoute>} />
-                  <Route path="/expenses" element={<ProtectedRoute><Layout><ExpensesPage /></Layout></ProtectedRoute>} />
-                  <Route path="/refunds" element={<ProtectedRoute><Layout><RefundsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/activities" element={<ProtectedRoute><Layout><ActivitiesPage /></Layout></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
-                  <Route path="/accounting/accounts" element={<ProtectedRoute><Layout><ChartOfAccountsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/accounting/journals" element={<ProtectedRoute><Layout><JournalEntriesPage /></Layout></ProtectedRoute>} />
-                  <Route path="/accounting/reports" element={<ProtectedRoute><Layout><AccountingReportsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/accounting/payments" element={<ProtectedRoute><Layout><PaymentsPage /></Layout></ProtectedRoute>} />
-                  <Route path="/invoices" element={<ProtectedRoute><Layout><InvoicesPage /></Layout></ProtectedRoute>} />
-                  <Route path="/backup" element={<ProtectedRoute><Layout><BackupPage /></Layout></ProtectedRoute>} />
-
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
           )}
+
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={
+                  isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+                } />
+
+                <Route path="/" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
+                <Route path="/pos" element={<ProtectedRoute><Layout><POSPage /></Layout></ProtectedRoute>} />
+                <Route path="/inventory" element={<ProtectedRoute><Layout><InventoryPage /></Layout></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><Layout><ReportsPage /></Layout></ProtectedRoute>} />
+                <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
+                <Route path="/promotions" element={<ProtectedRoute><Layout><PromotionsPage /></Layout></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute><Layout><UsersPage /></Layout></ProtectedRoute>} />
+                <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
+                <Route path="/employees" element={<ProtectedRoute><Layout><EmployeesPage /></Layout></ProtectedRoute>} />
+                <Route path="/expenses" element={<ProtectedRoute><Layout><ExpensesPage /></Layout></ProtectedRoute>} />
+                <Route path="/refunds" element={<ProtectedRoute><Layout><RefundsPage /></Layout></ProtectedRoute>} />
+                <Route path="/activities" element={<ProtectedRoute><Layout><ActivitiesPage /></Layout></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/accounts" element={<ProtectedRoute><Layout><ChartOfAccountsPage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/journals" element={<ProtectedRoute><Layout><JournalEntriesPage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/reports" element={<ProtectedRoute><Layout><AccountingReportsPage /></Layout></ProtectedRoute>} />
+                <Route path="/accounting/payments" element={<ProtectedRoute><Layout><PaymentsPage /></Layout></ProtectedRoute>} />
+                <Route path="/invoices" element={<ProtectedRoute><Layout><InvoicesPage /></Layout></ProtectedRoute>} />
+                <Route path="/backup" element={<ProtectedRoute><Layout><BackupPage /></Layout></ProtectedRoute>} />
+
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </Router>
       </div>
     </div>

@@ -1,15 +1,14 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
+import { authApi } from '../lib/api'
 import { Lock, AlertTriangle, Check } from 'lucide-react'
 
 export default function ForcePasswordChange() {
-  const logout = useUserStore((s) => s.logout)
-  const t = useAppStore((s) => s.t)
+  const { logout } = useUserStore()
+  const { t } = useAppStore()
   const navigate = useNavigate()
-  const mountedRef = useRef(true)
-  const guardRef = useRef(null)
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -17,36 +16,6 @@ export default function ForcePasswordChange() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-
-  useEffect(() => {
-    mountedRef.current = true
-    window.__forcePasswordChangeActive = true
-
-    const syncMustChangePassword = () => {
-      try {
-        const raw = localStorage.getItem('user-storage')
-        if (!raw) return
-        const parsed = JSON.parse(raw)
-        const u = parsed?.state?.currentUser
-        if (u && u.must_change_password !== true && u.must_change_password !== 1 && u.must_change_password !== '1' && u.must_change_password !== 'true') {
-          u.must_change_password = true
-          localStorage.setItem('user-storage', JSON.stringify(parsed))
-        }
-      } catch {}
-    }
-
-    syncMustChangePassword()
-    guardRef.current = setInterval(syncMustChangePassword, 150)
-
-    return () => {
-      window.__forcePasswordChangeActive = false
-      mountedRef.current = false
-      if (guardRef.current) {
-        clearInterval(guardRef.current)
-        guardRef.current = null
-      }
-    }
-  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -70,45 +39,22 @@ export default function ForcePasswordChange() {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('auth_token')
-      const base = import.meta.env.VITE_API_URL || '/api'
-      const res = await fetch(`${base}/auth/change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
+      await authApi.changePassword({
+        currentPassword,
+        newPassword
       })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || t('password.failedToChange'))
-      }
-
-      if (guardRef.current) {
-        clearInterval(guardRef.current)
-        guardRef.current = null
-      }
 
       setSuccess(true)
 
       setTimeout(() => {
-        if (!mountedRef.current) return
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('user')
-        localStorage.removeItem('user-storage')
-        localStorage.removeItem('cart-storage')
-        window.location.replace('/login')
+        logout()
+        navigate('/login')
       }, 2000)
     } catch (err) {
-      if (mountedRef.current) {
-        setError(err.message || t('password.failedToChange'))
-      }
+      const message = err.response?.data?.error || t('password.failedToChange')
+      setError(message)
     } finally {
-      if (mountedRef.current) {
-        setLoading(false)
-      }
+      setLoading(false)
     }
   }
 
@@ -169,7 +115,6 @@ export default function ForcePasswordChange() {
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                 placeholder={t('password.enterCurrent')}
                 required
-                autoFocus
               />
             </div>
           </div>
@@ -214,11 +159,8 @@ export default function ForcePasswordChange() {
             <button
               type="button"
               onClick={() => {
-                localStorage.removeItem('auth_token')
-                localStorage.removeItem('user')
-                localStorage.removeItem('user-storage')
-                localStorage.removeItem('cart-storage')
-                window.location.replace('/login')
+                logout()
+                navigate('/login')
               }}
               className="flex-1 py-2 px-4 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
