@@ -32,9 +32,7 @@ const BackupPage = lazy(() => import('./pages/BackupPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated)
-  const mustChangePassword = useUserStore((s) => s.mustChangePassword)
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (mustChangePassword()) return <ForcePasswordChange />
   return children
 }
 

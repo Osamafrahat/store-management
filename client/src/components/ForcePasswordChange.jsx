@@ -6,7 +6,6 @@ import { Lock, AlertTriangle, Check } from 'lucide-react'
 
 export default function ForcePasswordChange() {
   const logout = useUserStore((s) => s.logout)
-  const markPasswordChanged = useUserStore((s) => s.markPasswordChanged)
   const t = useAppStore((s) => s.t)
   const navigate = useNavigate()
   const mountedRef = useRef(true)
@@ -90,24 +89,14 @@ export default function ForcePasswordChange() {
         guardRef.current = null
       }
 
-      markPasswordChanged()
-
-      try {
-        const raw = localStorage.getItem('user-storage')
-        if (raw) {
-          const parsed = JSON.parse(raw)
-          if (parsed?.state?.currentUser) {
-            parsed.state.currentUser.must_change_password = false
-            localStorage.setItem('user-storage', JSON.stringify(parsed))
-          }
-        }
-      } catch {}
-
       setSuccess(true)
 
       setTimeout(() => {
         if (!mountedRef.current) return
-        logout()
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('user-storage')
+        localStorage.removeItem('cart-storage')
         window.location.replace('/login')
       }, 2000)
     } catch (err) {
@@ -223,7 +212,10 @@ export default function ForcePasswordChange() {
             <button
               type="button"
               onClick={() => {
-                logout()
+                localStorage.removeItem('auth_token')
+                localStorage.removeItem('user')
+                localStorage.removeItem('user-storage')
+                localStorage.removeItem('cart-storage')
                 window.location.replace('/login')
               }}
               className="flex-1 py-2 px-4 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
