@@ -5,6 +5,8 @@ import { useAppStore } from '../stores/appStore'
 import { Lock, AlertTriangle, Check } from 'lucide-react'
 
 export default function ForcePasswordChange() {
+  console.log('[ForcePasswordChange] RENDERED at', new Date().toISOString())
+
   const logout = useUserStore((s) => s.logout)
   const t = useAppStore((s) => s.t)
   const navigate = useNavigate()
@@ -19,6 +21,8 @@ export default function ForcePasswordChange() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
+    console.log('[ForcePasswordChange] MOUNTED at', new Date().toISOString())
+    console.log('[ForcePasswordChange] localStorage user-storage:', localStorage.getItem('user-storage'))
     mountedRef.current = true
 
     const syncMustChangePassword = () => {
@@ -38,6 +42,8 @@ export default function ForcePasswordChange() {
     guardRef.current = setInterval(syncMustChangePassword, 150)
 
     return () => {
+      console.log('[ForcePasswordChange] UNMOUNTED at', new Date().toISOString())
+      console.trace('[ForcePasswordChange] UNMOUNT STACK TRACE')
       mountedRef.current = false
       if (guardRef.current) {
         clearInterval(guardRef.current)
@@ -49,6 +55,7 @@ export default function ForcePasswordChange() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    console.log('[ForcePasswordChange] handleSubmit called at', new Date().toISOString())
 
     if (newPassword.length < 6) {
       setError(t('password.minLength'))
@@ -79,11 +86,14 @@ export default function ForcePasswordChange() {
         body: JSON.stringify({ currentPassword, newPassword }),
       })
 
+      console.log('[ForcePasswordChange] fetch response status:', res.status, 'ok:', res.ok)
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
+        console.log('[ForcePasswordChange] fetch error data:', data)
         throw new Error(data.error || t('password.failedToChange'))
       }
 
+      console.log('[ForcePasswordChange] fetch SUCCESS - setting success=true')
       if (guardRef.current) {
         clearInterval(guardRef.current)
         guardRef.current = null

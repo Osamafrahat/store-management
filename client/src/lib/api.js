@@ -30,6 +30,7 @@ api.interceptors.response.use(
     const sessionExpired = error.response?.data?.sessionExpired
     const isLoginPage = window.location.pathname === '/login'
     const skipRedirect = error.config?.skipAuthRedirect
+    const url = error.config?.url
 
     // Skip redirect if user must change password (ForcePasswordChange is shown)
     let mustChangePw = false
@@ -43,7 +44,19 @@ api.interceptors.response.use(
       }
     } catch { /* ignore */ }
 
+    console.log('[API INTERCEPTOR]', {
+      status,
+      url,
+      isLoginPage,
+      skipRedirect,
+      mustChangePw,
+      pathname: window.location.pathname,
+      timestamp: Date.now()
+    })
+
     if ((status === 401 || status === 403) && !isLoginPage && !skipRedirect && !mustChangePw) {
+      console.log('[API INTERCEPTOR] REDIRECTING TO /login!', { status, url, mustChangePw })
+      console.trace('[API INTERCEPTOR] REDIRECT STACK TRACE')
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
       localStorage.removeItem('user-storage')

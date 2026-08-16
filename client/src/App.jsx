@@ -32,7 +32,12 @@ const BackupPage = lazy(() => import('./pages/BackupPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated)
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  console.log('[ProtectedRoute] isAuthenticated:', isAuthenticated, 'url:', window.location.pathname)
+  if (!isAuthenticated) {
+    console.log('[ProtectedRoute] REDIRECTING to /login - not authenticated')
+    console.trace('[ProtectedRoute] REDIRECT STACK TRACE')
+    return <Navigate to="/login" replace />
+  }
   return children
 }
 
@@ -72,7 +77,16 @@ function App() {
     )
   }
 
-  const showForcePasswordChange = isAuthenticated && mustChangePassword()
+  const mcp = mustChangePassword()
+  const showForcePasswordChange = isAuthenticated && mcp
+
+  console.log('[APP RENDER]', {
+    isAuthenticated,
+    mustChangePassword: mcp,
+    showForcePasswordChange,
+    url: window.location.pathname,
+    timestamp: Date.now()
+  })
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
@@ -87,7 +101,7 @@ function App() {
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/login" element={
-                    isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+                    isAuthenticated ? (() => { console.log('[LoginRoute] REDIRECTING to / - already authenticated'); return <Navigate to="/" replace /> })() : <LoginPage />
                   } />
 
                   <Route path="/" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
