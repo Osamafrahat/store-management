@@ -21,9 +21,9 @@ export default function ForcePasswordChange() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    console.log('[ForcePasswordChange] MOUNTED at', new Date().toISOString())
-    console.log('[ForcePasswordChange] localStorage user-storage:', localStorage.getItem('user-storage'))
     mountedRef.current = true
+    window.__forcePasswordChangeActive = true
+    console.log('[ForcePasswordChange] MOUNTED - redirect protection ACTIVE')
 
     const syncMustChangePassword = () => {
       try {
@@ -42,8 +42,8 @@ export default function ForcePasswordChange() {
     guardRef.current = setInterval(syncMustChangePassword, 150)
 
     return () => {
-      console.log('[ForcePasswordChange] UNMOUNTED at', new Date().toISOString())
-      console.trace('[ForcePasswordChange] UNMOUNT STACK TRACE')
+      console.log('[ForcePasswordChange] UNMOUNTED - redirect protection REMOVED')
+      window.__forcePasswordChangeActive = false
       mountedRef.current = false
       if (guardRef.current) {
         clearInterval(guardRef.current)

@@ -26,6 +26,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // ABSOLUTE BLOCK: if ForcePasswordChange is mounted, NEVER redirect
+    if (window.__forcePasswordChangeActive) {
+      console.log('[API INTERCEPTOR] BLOCKED by ForcePasswordChange guard')
+      return Promise.reject(error)
+    }
+
     const status = error.response?.status
     const sessionExpired = error.response?.data?.sessionExpired
     const isLoginPage = window.location.pathname === '/login'
