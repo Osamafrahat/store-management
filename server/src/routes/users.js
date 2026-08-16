@@ -109,10 +109,7 @@ router.post('/', [
 
     if (error) throw error
 
-    // If employeeId provided, link employee back to this user
-    if (employeeId) {
-      await supabase.from('employees').update({ user_id: data.id }).eq('id', employeeId)
-    }
+    // Link is maintained via users.employee_id — no employees.user_id needed
 
     req.logActivity({ action: 'created', entity_type: 'user', entity_name: data.full_name })
     res.status(201).json(data)
@@ -178,17 +175,7 @@ router.put('/:id', [
 
     if (error) throw error
 
-    // Sync employee link if employeeId changed
-    if (employeeId !== undefined) {
-      // Remove old employee link if exists
-      if (existing.employee_id && existing.employee_id !== employeeId) {
-        await supabase.from('employees').update({ user_id: null }).eq('id', existing.employee_id)
-      }
-      // Set new employee link
-      if (employeeId) {
-        await supabase.from('employees').update({ user_id: data.id }).eq('id', employeeId)
-      }
-    }
+    // Link is maintained via users.employee_id — no employees.user_id needed
 
     req.logActivity({ action: 'updated', entity_type: 'user', entity_id: req.params.id })
     res.json(data)
@@ -257,10 +244,7 @@ router.delete('/:id', [
       return res.status(403).json({ error: 'Cannot delete the admin user' })
     }
 
-    // Deactivate linked employee before deleting user
-    if (existing.employee_id) {
-      await supabase.from('employees').update({ user_id: null, updated_at: new Date().toISOString() }).eq('id', existing.employee_id)
-    }
+    // Link is maintained via users.employee_id — no employees.user_id needed
 
     const { error } = await supabase
       .from('users')

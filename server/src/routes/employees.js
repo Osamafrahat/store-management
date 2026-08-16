@@ -36,13 +36,13 @@ router.get('/', async (req, res, next) => {
 
     if (error) throw error
 
-    // Enrich with user data
+    // Enrich with user data via users.employee_id
     const enriched = await Promise.all((data || []).map(async (emp) => {
       let user = null
-      if (emp.user_id) {
-        const { data: u } = await supabase.from('users').select('id, username, full_name, role').eq('id', emp.user_id).single()
+      try {
+        const { data: u } = await supabase.from('users').select('id, username, full_name, role').eq('employee_id', emp.id).maybeSingle()
         user = u || null
-      }
+      } catch { /* no linked user */ }
       return { ...emp, user }
     }))
 
@@ -129,8 +129,6 @@ router.post('/', requireManager, [
 
       if (userError) throw userError
 
-      // Link employee back to user
-      await supabase.from('employees').update({ user_id: newUser.id, updated_at: new Date().toISOString() }).eq('id', data.id)
       user = newUser
     }
 
@@ -150,7 +148,7 @@ router.put('/:id', requireManager, [
   try {
     const { data: existing } = await supabase
       .from('employees')
-      .select('id, user_id, is_active')
+      .select('id, is_active')
       .eq('id', req.params.id)
       .single()
 
@@ -158,7 +156,10 @@ router.put('/:id', requireManager, [
       return res.status(404).json({ error: 'Employee not found' })
     }
 
-    const { name, role, phone, email, salary, hire_date, notes, is_active, user_id } = req.body
+    // Find linked user via users.employee_id
+    const { data: linkedUser } = await supabase.from('users').select('id').eq('employee_id', existing.id).maybeSingle()
+
+    const { name, role, phone, email, salary, hire_date, notes, is_active } = req.body
 
     const { data, error } = await supabase
       .from('employees')
@@ -171,7 +172,6 @@ router.put('/:id', requireManager, [
         hire_date: hire_date || null,
         notes: notes || null,
         is_active: is_active ?? true,
-        user_id: user_id || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', req.params.id)
@@ -180,21 +180,9 @@ router.put('/:id', requireManager, [
 
     if (error) throw error
 
-    // Sync user link if user_id changed
-    if (user_id !== undefined) {
-      // Remove old user link if exists
-      if (existing.user_id && existing.user_id !== user_id) {
-        await supabase.from('users').update({ employee_id: null, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
-      }
-      // Set new user link
-      if (user_id) {
-        await supabase.from('users').update({ employee_id: data.id, updated_at: new Date().toISOString() }).eq('id', user_id)
-      }
-    }
-
     // Sync is_active status to linked user
-    if (is_active !== undefined && existing.user_id && existing.is_active !== is_active) {
-      await supabase.from('users').update({ is_active, updated_at: new Date().toISOString() }).eq('id', existing.user_id)
+    if (is_active !== undefined && linkedUser && existing.is_active !== is_active) {
+      await supabase.from('users').update({ is_active, updated_at: new Date().toISOString() }).eq('id', linkedUser.id)
     }
 
     req.logActivity({ action: 'updated', entity_type: 'employee', entity_id: req.params.id })
@@ -211,7 +199,7 @@ router.patch('/:id/toggle-active', requireManager, [
   try {
     const { data: existing } = await supabase
       .from('employees')
-      .select('id, user_id, is_active')
+      .select('id, is_active')
       .eq('id', req.params.id)
       .single()
 
@@ -230,14 +218,10 @@ router.patch('/:id/toggle-active', requireManager, [
 
     if (error) throw error
 
-    // Sync linked user's active status - try user_id first, then employee_id
-    let userId = existing.user_id
-    if (!userId) {
-      const { data: linkedUser } = await supabase.from('users').select('id').eq('employee_id', existing.id).single()
-      if (linkedUser) userId = linkedUser.id
-    }
-    if (userId) {
-      const { error: userUpdateError } = await supabase.from('users').update({ is_active: newActiveState, updated_at: new Date().toISOString() }).eq('id', userId)
+    // Sync linked user's active status via users.employee_id
+    const { data: linkedUser } = await supabase.from('users').select('id').eq('employee_id', existing.id).maybeSingle()
+    if (linkedUser) {
+      const { error: userUpdateError } = await supabase.from('users').update({ is_active: newActiveState, updated_at: new Date().toISOString() }).eq('id', linkedUser.id)
       if (userUpdateError) console.error('Failed to sync user active status:', userUpdateError)
     }
 
@@ -255,7 +239,7 @@ router.delete('/:id', requireManager, [
   try {
     const { data: existing } = await supabase
       .from('employees')
-      .select('id, user_id')
+      .select('id')
       .eq('id', req.params.id)
       .single()
 
@@ -263,14 +247,10 @@ router.delete('/:id', requireManager, [
       return res.status(404).json({ error: 'Employee not found' })
     }
 
-    // Delete linked user - try user_id first, then employee_id
-    let userId = existing.user_id
-    if (!userId) {
-      const { data: linkedUser } = await supabase.from('users').select('id').eq('employee_id', existing.id).single()
-      if (linkedUser) userId = linkedUser.id
-    }
-    if (userId) {
-      await supabase.from('users').delete().eq('id', userId)
+    // Delete linked user via users.employee_id
+    const { data: linkedUser } = await supabase.from('users').select('id').eq('employee_id', existing.id).maybeSingle()
+    if (linkedUser) {
+      await supabase.from('users').delete().eq('id', linkedUser.id)
     }
 
     const { error } = await supabase
