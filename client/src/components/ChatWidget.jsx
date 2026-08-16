@@ -17,6 +17,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sentIdsRef = useRef(new Set())
+  const pollRef = useRef(null)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -57,7 +58,10 @@ export default function ChatWidget() {
           sentIdsRef.current.delete(newMsg.id)
           return
         }
-        setMessages(prev => [...prev, newMsg])
+        setMessages(prev => {
+          if (prev.some(m => m.id === newMsg.id)) return prev
+          return [...prev, newMsg]
+        })
         if (!open && newMsg.user_id !== currentUser?.id) {
           setUnreadCount(prev => prev + 1)
         }
@@ -76,6 +80,35 @@ export default function ChatWidget() {
     return () => {
       supabase.removeChannel(channel)
     }
+  }, [open, currentUser?.id])
+
+  // Polling fallback — fetches new messages every 10s in case real-time misses them
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await api.get('/chat?limit=100')
+        const serverMsgs = res.data
+        setMessages(prev => {
+          const prevIds = new Set(prev.map(m => m.id))
+          const newMsgs = serverMsgs.filter(m => !prevIds.has(m.id))
+          if (newMsgs.length === 0) {
+            const serverIds = new Set(serverMsgs.map(m => m.id))
+            const removed = prev.filter(m => !serverIds.has(m.id))
+            if (removed.length === 0) return prev
+            return prev.filter(m => serverIds.has(m.id))
+          }
+          if (!open) {
+            const ownId = currentUser?.id
+            const freshUnread = newMsgs.filter(m => m.user_id !== ownId).length
+            if (freshUnread > 0) setUnreadCount(prev => prev + freshUnread)
+          }
+          return [...prev, ...newMsgs]
+        })
+      } catch { /* silent */ }
+    }
+
+    pollRef.current = setInterval(poll, 10000)
+    return () => clearInterval(pollRef.current)
   }, [open, currentUser?.id])
 
   const sendMessage = async (e) => {
