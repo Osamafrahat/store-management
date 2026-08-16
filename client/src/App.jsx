@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from './stores/appStore'
 import { useUserStore } from './stores/userStore'
@@ -31,8 +31,10 @@ const InvoicesPage = lazy(() => import('./pages/InvoicesPage'))
 const BackupPage = lazy(() => import('./pages/BackupPage'))
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useUserStore()
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated)
+  const mustChangePassword = useUserStore((s) => s.mustChangePassword)
   if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (mustChangePassword()) return <ForcePasswordChange />
   return children
 }
 
@@ -45,8 +47,16 @@ function PageLoader() {
 }
 
 function App() {
-  const { theme, settings, loadSettings } = useAppStore()
-  const { isAuthenticated, mustChangePassword } = useUserStore()
+  const theme = useAppStore((s) => s.theme)
+  const settings = useAppStore((s) => s.settings)
+  const loadSettings = useAppStore((s) => s.loadSettings)
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated)
+  const mustChangePassword = useUserStore((s) => s.mustChangePassword)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
     if (isAuthenticated) loadSettings()
@@ -55,6 +65,14 @@ function App() {
   useEffect(() => {
     document.title = settings.storeName || 'Store POS'
   }, [settings.storeName])
+
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
 
   const showForcePasswordChange = isAuthenticated && mustChangePassword()
 
