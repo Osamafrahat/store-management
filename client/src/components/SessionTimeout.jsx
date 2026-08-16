@@ -43,7 +43,6 @@ export default function SessionTimeout() {
     const interval = setInterval(() => {
       const timedOut = checkSessionTimeout()
       if (timedOut) {
-        console.log('[SessionTimeout] SESSION TIMED OUT - navigating to /login')
         navigate('/login')
         return
       }

@@ -28,10 +28,8 @@ export default function LoginPage() {
     setLoading(true)
 
     const result = await login(username, password)
-    console.log('[LoginPage] login result:', result.success, result.user?.must_change_password)
 
     if (result.success) {
-      console.log('[LoginPage] navigating to /')
       navigate('/')
     } else {
       setError(result.error)

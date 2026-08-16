@@ -50,10 +50,20 @@ function App() {
   const loadSettings = useAppStore((s) => s.loadSettings)
   const isAuthenticated = useUserStore((s) => s.isAuthenticated)
   const mustChangePassword = useUserStore((s) => s.mustChangePassword)
-  const [hydrated, setHydrated] = useState(false)
+
+  const [hydrated, setHydrated] = useState(() => {
+    try { return useUserStore.persist.hasHydrated() } catch { return false }
+  })
 
   useEffect(() => {
-    setHydrated(true)
+    if (useUserStore.persist.hasHydrated()) {
+      setHydrated(true)
+      return
+    }
+    const unsub = useUserStore.persist.onRehydrateStorage(() => {
+      setHydrated(true)
+    })
+    return unsub
   }, [])
 
   useEffect(() => {
