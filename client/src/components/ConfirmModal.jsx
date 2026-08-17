@@ -1,7 +1,12 @@
 import { AlertTriangle, Info, X } from 'lucide-react'
+import { useAppStore } from '../stores/appStore'
 
 export default function ConfirmModal({ open, onClose, onConfirm, title, message, type = 'danger', confirmText, cancelText, loading }) {
+  const { t } = useAppStore()
   if (!open) return null
+
+  const resolvedConfirmText = confirmText || t('common.confirm') || 'Confirm'
+  const resolvedCancelText = cancelText || t('common.cancel') || 'Cancel'
 
   const styles = {
     danger: {
@@ -51,7 +56,7 @@ export default function ConfirmModal({ open, onClose, onConfirm, title, message,
             disabled={loading}
             className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium text-sm transition-colors disabled:opacity-50"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             onClick={onConfirm}
@@ -59,7 +64,7 @@ export default function ConfirmModal({ open, onClose, onConfirm, title, message,
             className={`flex-1 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 ${s.confirmBtn}`}
           >
             {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-            {confirmText}
+            {resolvedConfirmText}
           </button>
         </div>
       </div>
