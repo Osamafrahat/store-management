@@ -238,7 +238,7 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
   }
 
   const getAssignmentForCell = (empId, date) => {
-    return assignments.find(a => a.employee_id === empId && a.date === date)
+    return assignments.find(a => Number(a.employee_id) === Number(empId) && String(a.date) === String(date))
   }
 
   const activeEmployees = employees.filter(e => e.is_active)
@@ -354,7 +354,7 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
                       >
                         {assignment ? (
                           <div
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${getShiftColor(assignment.shift_id)} ${getShiftBorder(assignment.shiftId)} border ${!readOnly ? 'cursor-pointer hover:opacity-80' : ''}`}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${getShiftColor(assignment.shift_id)} ${getShiftBorder(assignment.shift_id)} border ${!readOnly ? 'cursor-pointer hover:opacity-80' : ''}`}
                             onClick={!readOnly ? () => setDeleteAssignmentTarget(assignment) : undefined}
                             title={!readOnly ? (t('hr.shifts.clickToRemove') || 'Click to remove') : undefined}
                           >
