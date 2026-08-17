@@ -152,8 +152,8 @@ export default function LeavePage() {
   }
 
   const getTypeName = (typeId) => {
-    const type = leaveTypes.find(t => t.id === typeId)
-    return type?.name || `Type #${typeId}`
+    const found = leaveTypes.find(lt => lt.id === typeId)
+    return found?.name || `Type #${typeId}`
   }
 
   return (

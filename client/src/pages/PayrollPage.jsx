@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { payrollApi } from '../lib/api'
-import { DollarSign, Calendar, CheckCircle, Clock, FileText, Eye, Trash2 } from 'lucide-react'
+import { DollarSign, Calendar, CheckCircle, Clock, FileText, Eye, Trash2, X } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 
 const STATUS_COLORS = {

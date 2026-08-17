@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useUserStore } from '../stores/userStore'
 import { attendanceApi, employeesApi } from '../lib/api'
-import { Clock, Calendar, User, CheckCircle, XCircle, AlertCircle, MinusCircle, Search } from 'lucide-react'
+import { Clock, Calendar, User, CheckCircle, XCircle, AlertCircle, MinusCircle, Search, X } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 
 const STATUS_COLORS = {

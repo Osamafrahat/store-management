@@ -71,8 +71,8 @@ router.get('/summary/:employeeId', [
   }
 })
 
-// Create attendance record (clock in) - or clock in for current employee
-router.post('/', [
+// Create attendance record (clock in) - manager only
+router.post('/', requireManager, [
   body('employee_id').isNumeric().withMessage('Employee ID is required'),
 ], validate, async (req, res, next) => {
   try {
@@ -123,8 +123,8 @@ router.post('/', [
   }
 })
 
-// Clock out
-router.patch('/:id/clock-out', [
+// Clock out - manager only
+router.patch('/:id/clock-out', requireManager, [
   param('id').isNumeric().withMessage('Invalid attendance ID'),
 ], validate, async (req, res, next) => {
   try {

@@ -60,6 +60,10 @@ router.post('/', requireManager, [
   try {
     const { period_start, period_end, notes } = req.body
 
+    if (period_start > period_end) {
+      return res.status(400).json({ error: 'Period start must be before period end' })
+    }
+
     // Check for overlapping payroll
     const { data: existing } = await supabase
       .from('payroll')
