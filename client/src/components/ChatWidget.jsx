@@ -250,7 +250,7 @@ export default function ChatWidget() {
                                 {formatTime(msg.created_at)}
                               </p>
                             </div>
-                            {(isOwn || currentUser?.role === 'MANAGER') && (
+                            {currentUser?.role === 'MANAGER' && (
                               <button
                                 onClick={() => deleteMessage(msg.id)}
                                 className={`absolute top-0 ${isOwn ? '-left-5 sm:-left-6' : '-right-5 sm:-right-6'} opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}

@@ -59,6 +59,10 @@ router.post('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
+    const user = req.user || {}
+    if (user.role !== 'MANAGER') {
+      return res.status(403).json({ error: 'Only managers can delete messages' })
+    }
     const { id } = req.params
     const { error } = await supabase.from('messages').delete().eq('id', id)
     if (error) throw error

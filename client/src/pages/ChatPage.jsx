@@ -239,7 +239,7 @@ export default function ChatPage() {
                           <p className={`text-[9px] sm:text-[10px] mt-1 ${isOwn ? 'text-white/70' : 'text-gray-400'}`}>
                             {formatTime(msg.created_at)}
                           </p>
-                          {(isOwn || currentUser?.role === 'MANAGER') && (
+                          {currentUser?.role === 'MANAGER' && (
                             <button
                               onClick={() => deleteMessage(msg.id)}
                               className={`absolute top-1 ${isOwn ? '-left-7 sm:-left-8' : '-right-7 sm:-right-8'} opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
