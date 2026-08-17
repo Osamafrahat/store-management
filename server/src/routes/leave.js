@@ -129,7 +129,7 @@ router.patch('/requests/:id/approve', requireManager, [
     const { status, notes } = req.body
     const { data: existing } = await supabase
       .from('leave_requests')
-      .select('id, employee_id, leave_type_id, days, start_date')
+      .select('id, employee_id, leave_type_id, days, start_date, end_date')
       .eq('id', req.params.id)
       .single()
 
