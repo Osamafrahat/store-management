@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Search, X, ChevronDown } from 'lucide-react'
+import { useAppStore } from '../stores/appStore'
 
 export default function SearchableSelect({ options = [], value, onChange, placeholder, labelKey = 'label', valueKey = 'value', renderOption, disabled }) {
   const [open, setOpen] = useState(false)
@@ -7,6 +8,7 @@ export default function SearchableSelect({ options = [], value, onChange, placeh
   const [highlightIndex, setHighlightIndex] = useState(0)
   const containerRef = useRef(null)
   const inputRef = useRef(null)
+  const { t } = useAppStore()
 
   const selected = options.find(o => String(o[valueKey]) === String(value))
 
@@ -99,7 +101,7 @@ export default function SearchableSelect({ options = [], value, onChange, placeh
           </div>
           <div className="max-h-48 overflow-y-auto">
             {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">No results found</div>
+              <div className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">{t('common.noResults') || 'No results found'}</div>
             ) : (
               filtered.map((option, i) => (
                 <button

@@ -106,7 +106,7 @@ export default function AttendancePage() {
       toastSuccess(t('hr.attendance.clockedOut') || 'Clocked out')
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to clock out')
+      toastError(err.response?.data?.error || t('hr.attendance.clockOutFailed') || 'Failed to clock out')
     }
   }
 
@@ -119,7 +119,7 @@ export default function AttendancePage() {
       setDeleteTarget(null)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to delete')
+      toastError(err.response?.data?.error || t('hr.attendance.deleteFailed') || 'Failed to delete')
     } finally {
       setDeleting(false)
     }
@@ -141,8 +141,8 @@ export default function AttendancePage() {
   }, [records])
 
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    t('months.january'), t('months.february'), t('months.march'), t('months.april'), t('months.may'), t('months.june'),
+    t('months.july'), t('months.august'), t('months.september'), t('months.october'), t('months.november'), t('months.december')
   ]
 
   return (
@@ -233,7 +233,7 @@ export default function AttendancePage() {
                         {record ? (
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[record.status] || ''}`}>
                             <StatusIcon className="w-3 h-3" />
-                            {record.status}
+                            {t(`hr.attendance.status.${record.status}`) || record.status}
                           </span>
                         ) : (
                           <span className="text-gray-400 dark:text-gray-500 text-xs">{t('hr.attendance.noRecord') || 'No record'}</span>

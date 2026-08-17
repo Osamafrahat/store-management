@@ -100,7 +100,7 @@ export default function LeavePage() {
       setApproveTarget(null)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to update request')
+      toastError(err.response?.data?.error || t('hr.leave.updateFailed') || 'Failed to update request')
     } finally {
       setApproving(false)
     }
@@ -115,7 +115,7 @@ export default function LeavePage() {
       setDeleteTarget(null)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to delete')
+      toastError(err.response?.data?.error || t('hr.leave.deleteFailed') || 'Failed to delete')
     } finally {
       setDeleting(false)
     }
@@ -133,7 +133,7 @@ export default function LeavePage() {
       setTypePaid(true)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to create leave type')
+      toastError(err.response?.data?.error || t('hr.leave.createTypeFailed') || 'Failed to create leave type')
     } finally {
       setIsSubmitting(false)
     }
@@ -149,12 +149,12 @@ export default function LeavePage() {
 
   const getEmployeeName = (empId) => {
     const emp = employees.find(e => e.id === empId)
-    return emp?.name || `Employee #${empId}`
+    return emp?.name || (t('hr.leave.unknownEmployee') || 'Employee #{id}').replace('{id}', empId)
   }
 
   const getTypeName = (typeId) => {
     const found = leaveTypes.find(lt => lt.id === typeId)
-    return found?.name || `Type #${typeId}`
+    return found?.name || (t('hr.leave.unknownType') || 'Type #{id}').replace('{id}', typeId)
   }
 
   return (
@@ -191,10 +191,15 @@ export default function LeavePage() {
           {/* Filter */}
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
-            {['', 'pending', 'approved', 'rejected'].map(s => (
-              <button key={s} onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${filterStatus === s ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
-                {s || (t('hr.leave.all') || 'All')}
+            {[
+              { value: '', label: t('hr.leave.all') || 'All' },
+              { value: 'pending', label: t('hr.leave.status.pending') || 'Pending' },
+              { value: 'approved', label: t('hr.leave.status.approved') || 'Approved' },
+              { value: 'rejected', label: t('hr.leave.status.rejected') || 'Rejected' }
+            ].map(({ value, label }) => (
+              <button key={value} onClick={() => setFilterStatus(value)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${filterStatus === value ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
+                {label}
               </button>
             ))}
           </div>
@@ -220,7 +225,7 @@ export default function LeavePage() {
                       </div>
                     </div>
                     <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[req.status]}`}>
-                      {req.status}
+                      {t(`hr.leave.status.${req.status}`) || req.status}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300">

@@ -28,7 +28,7 @@ function getWeekDates(date) {
   return dates
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
 export default function ShiftSchedulingPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -102,7 +102,7 @@ export default function ShiftSchedulingPage() {
       setShiftEnd('17:00')
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to create shift')
+      toastError(err.response?.data?.error || t('hr.shifts.createFailed') || 'Failed to create shift')
     } finally {
       setIsSubmitting(false)
     }
@@ -124,7 +124,7 @@ export default function ShiftSchedulingPage() {
       setAssignDate('')
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to assign shift')
+      toastError(err.response?.data?.error || t('hr.shifts.assignFailed') || 'Failed to assign shift')
     } finally {
       setIsSubmitting(false)
     }
@@ -139,7 +139,7 @@ export default function ShiftSchedulingPage() {
       setDeleteTarget(null)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to delete')
+      toastError(err.response?.data?.error || t('hr.shifts.deleteFailed') || 'Failed to delete')
     } finally {
       setDeleting(false)
     }
@@ -154,7 +154,7 @@ export default function ShiftSchedulingPage() {
       setDeleteAssignmentTarget(null)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to remove')
+      toastError(err.response?.data?.error || t('hr.shifts.removeFailed') || 'Failed to remove')
     } finally {
       setDeleting(false)
     }
@@ -235,7 +235,7 @@ export default function ShiftSchedulingPage() {
                   const isToday = date === new Date().toISOString().split('T')[0]
                   return (
                     <th key={date} className={`text-center px-3 py-3 font-medium text-xs ${isToday ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/10' : 'text-gray-600 dark:text-gray-300'}`}>
-                      <div>{DAY_NAMES[i]}</div>
+                      <div>{t(`days.${DAY_KEYS[i]}`) || DAY_KEYS[i]}</div>
                       <div className="text-xs">{date.slice(5)}</div>
                     </th>
                   )
@@ -260,7 +260,7 @@ export default function ShiftSchedulingPage() {
                             title={t('hr.shifts.clickToRemove') || 'Click to remove'}
                           >
                             <Clock className="w-3 h-3" />
-                            {assignment.shifts?.name || 'Shift'}
+                            {assignment.shifts?.name || t('hr.shifts.shiftFallback') || 'Shift'}
                           </div>
                         ) : (
                           <span className="text-gray-300 dark:text-gray-600">—</span>

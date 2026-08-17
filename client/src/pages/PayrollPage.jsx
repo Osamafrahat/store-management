@@ -93,7 +93,7 @@ export default function PayrollPage() {
       const res = await payrollApi.getById(id)
       setShowDetail(res.data)
     } catch (err) {
-      toastError('Failed to load payroll details')
+      toastError(t('hr.payroll.fetchDetailFailed') || 'Failed to load payroll details')
     }
   }
 
@@ -139,7 +139,7 @@ export default function PayrollPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[payroll.status] || ''}`}>
-                    {payroll.status}
+                    {t(`hr.payroll.status.${payroll.status}`) || payroll.status}
                   </span>
                   <button onClick={() => fetchDetail(payroll.id)}
                     className="p-2 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition">
@@ -210,7 +210,7 @@ export default function PayrollPage() {
               <button onClick={() => setShowDetail(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
             </div>
             <div className="mb-4 flex items-center gap-4">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[showDetail.status]}`}>{showDetail.status}</span>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[showDetail.status]}`}>{t(`hr.payroll.status.${showDetail.status}`) || showDetail.status}</span>
               <span className="text-sm text-gray-600 dark:text-gray-300">{t('hr.payroll.total') || 'Total'}: <strong>{formatCurrency(showDetail.total_amount)}</strong></span>
             </div>
             {showDetail.items && showDetail.items.length > 0 ? (

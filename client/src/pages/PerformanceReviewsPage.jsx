@@ -11,13 +11,13 @@ const STATUS_COLORS = {
   completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
 }
 
-const DEFAULT_CRITERIA = [
-  'Communication Skills',
-  'Punctuality',
-  'Teamwork',
-  'Quality of Work',
-  'Initiative',
-  'Adaptability',
+const DEFAULT_CRITERIA_KEYS = [
+  'hr.performance.criteria.communication',
+  'hr.performance.criteria.punctuality',
+  'hr.performance.criteria.teamwork',
+  'hr.performance.criteria.qualityOfWork',
+  'hr.performance.criteria.initiative',
+  'hr.performance.criteria.adaptability',
 ]
 
 function StarRating({ value, onChange, readonly }) {
@@ -60,7 +60,7 @@ export default function PerformanceReviewsPage() {
   const [formGoals, setFormGoals] = useState('')
   const [formComments, setFormComments] = useState('')
   const [formCriteria, setFormCriteria] = useState(
-    DEFAULT_CRITERIA.map(c => ({ criterion: c, rating: 0, comments: '' }))
+    DEFAULT_CRITERIA_KEYS.map(k => ({ criterion: t(k) || k, rating: 0, comments: '' }))
   )
 
   const isManager = currentUser?.role === 'MANAGER'
@@ -92,7 +92,7 @@ export default function PerformanceReviewsPage() {
     setFormImprovements('')
     setFormGoals('')
     setFormComments('')
-    setFormCriteria(DEFAULT_CRITERIA.map(c => ({ criterion: c, rating: 0, comments: '' })))
+    setFormCriteria(DEFAULT_CRITERIA_KEYS.map(k => ({ criterion: t(k) || k, rating: 0, comments: '' })))
   }
 
   const handleCreate = async () => {
@@ -134,7 +134,7 @@ export default function PerformanceReviewsPage() {
       toastSuccess(t('hr.performance.completed') || 'Review marked as completed')
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to complete review')
+      toastError(err.response?.data?.error || t('hr.performance.completeFailed') || 'Failed to complete review')
     }
   }
 
@@ -147,7 +147,7 @@ export default function PerformanceReviewsPage() {
       setDeleteTarget(null)
       fetchData()
     } catch (err) {
-      toastError(err.response?.data?.error || 'Failed to delete')
+      toastError(err.response?.data?.error || t('hr.performance.deleteFailed') || 'Failed to delete')
     } finally {
       setDeleting(false)
     }
@@ -171,13 +171,13 @@ export default function PerformanceReviewsPage() {
       }
       setShowForm(true)
     } catch (err) {
-      toastError('Failed to load review details')
+      toastError(t('hr.performance.fetchDetailFailed') || 'Failed to load review details')
     }
   }
 
   const getEmployeeName = (empId) => {
     const emp = employees.find(e => e.id === empId)
-    return emp?.name || `Employee #${empId}`
+    return emp?.name || (t('hr.performance.unknownEmployee') || 'Employee #{id}').replace('{id}', empId)
   }
 
   const renderStars = (rating) => {
@@ -228,14 +228,14 @@ export default function PerformanceReviewsPage() {
                       {review.review_period_start} → {review.review_period_end}
                     </div>
                     <div className="text-xs text-gray-400 dark:text-gray-500">
-                      {t('hr.performance.reviewer') || 'Reviewer'}: {review.users?.full_name || 'N/A'}
+                      {t('hr.performance.reviewer') || 'Reviewer'}: {review.users?.full_name || t('common.notAvailable') || 'N/A'}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {review.overall_rating && renderStars(review.overall_rating)}
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[review.status]}`}>
-                    {review.status}
+                    {t(`hr.performance.status.${review.status}`) || review.status}
                   </span>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default function PerformanceReviewsPage() {
                 </div>
                 <div className="text-right">
                   {renderStars(showDetail.overall_rating)}
-                  <span className={`block mt-1 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[showDetail.status]}`}>{showDetail.status}</span>
+                  <span className={`block mt-1 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[showDetail.status]}`}>{t(`hr.performance.status.${showDetail.status}`) || showDetail.status}</span>
                 </div>
               </div>
               {showDetail.criteria && showDetail.criteria.length > 0 && (
