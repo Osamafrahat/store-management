@@ -1298,6 +1298,10 @@ export const translations = {
     'hr.shifts.deleteFailed': 'Failed to delete',
     'hr.shifts.removeFailed': 'Failed to remove',
     'hr.shifts.shiftFallback': 'Shift',
+    'hr.shifts.startDate': 'Start Date',
+    'hr.shifts.endDate': 'End Date',
+    'hr.shifts.dragHint': 'Drag a shift onto the schedule below',
+    'hr.shifts.dropHere': 'Drop',
 
     // HR: Performance
     'hr.performance.title': 'Performance Reviews',
@@ -2652,6 +2656,10 @@ export const translations = {
     'hr.shifts.deleteFailed': 'فشل الحذف',
     'hr.shifts.removeFailed': 'فشل الإزالة',
     'hr.shifts.shiftFallback': 'وردية',
+    'hr.shifts.startDate': 'تاريخ البدء',
+    'hr.shifts.endDate': 'تاريخ الانتهاء',
+    'hr.shifts.dragHint': 'اسحب وردية إلى الجدول أدناه',
+    'hr.shifts.dropHere': 'أفلت',
 
     // HR: Performance (Arabic)
     'hr.performance.title': 'تقييمات الأداء',

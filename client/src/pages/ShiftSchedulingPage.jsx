@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { shiftsApi, employeesApi } from '../lib/api'
-import { Clock, Plus, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Clock, Plus, Trash2, ChevronLeft, ChevronRight, X, GripVertical } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 import SearchableSelect from '../components/SearchableSelect'
 
@@ -11,6 +11,14 @@ const SHIFT_COLORS = [
   'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
   'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
+]
+
+const SHIFT_COLORS_BORDER = [
+  'border-blue-300 dark:border-blue-700',
+  'border-green-300 dark:border-green-700',
+  'border-purple-300 dark:border-purple-700',
+  'border-orange-300 dark:border-orange-700',
+  'border-pink-300 dark:border-pink-700',
 ]
 
 function getWeekDates(date) {
@@ -48,11 +56,15 @@ export default function ShiftSchedulingPage() {
   const [shiftEnd, setShiftEnd] = useState('17:00')
   const [assignEmployee, setAssignEmployee] = useState('')
   const [assignShift, setAssignShift] = useState('')
-  const [assignDate, setAssignDate] = useState('')
+  const [assignStartDate, setAssignStartDate] = useState('')
+  const [assignEndDate, setAssignEndDate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteAssignmentTarget, setDeleteAssignmentTarget] = useState(null)
+  const [dragShiftId, setDragShiftId] = useState(null)
+  const [dragOverCell, setDragOverCell] = useState(null)
+  const [dropLoading, setDropLoading] = useState(false)
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart])
 
@@ -109,19 +121,21 @@ export default function ShiftSchedulingPage() {
   }
 
   const handleAssign = async () => {
-    if (!assignEmployee || !assignShift || !assignDate) return
+    if (!assignEmployee || !assignShift || !assignStartDate || !assignEndDate) return
     setIsSubmitting(true)
     try {
       await shiftsApi.assignShift({
         employee_id: parseInt(assignEmployee),
         shift_id: parseInt(assignShift),
-        date: assignDate,
+        start_date: assignStartDate,
+        end_date: assignEndDate,
       })
       toastSuccess(t('hr.shifts.assigned') || 'Shift assigned')
       setShowAssignForm(false)
       setAssignEmployee('')
       setAssignShift('')
-      setAssignDate('')
+      setAssignStartDate('')
+      setAssignEndDate('')
       fetchData()
     } catch (err) {
       toastError(err.response?.data?.error || t('hr.shifts.assignFailed') || 'Failed to assign shift')
@@ -160,9 +174,67 @@ export default function ShiftSchedulingPage() {
     }
   }
 
+  const handleDragStart = useCallback((e, shiftId) => {
+    setDragShiftId(shiftId)
+    e.dataTransfer.effectAllowed = 'copy'
+    e.dataTransfer.setData('text/plain', shiftId.toString())
+  }, [])
+
+  const handleDragEnd = useCallback(() => {
+    setDragShiftId(null)
+    setDragOverCell(null)
+  }, [])
+
+  const handleDragOver = useCallback((e, empId, date) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+    setDragOverCell(`${empId}-${date}`)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverCell(null)
+  }, [])
+
+  const handleDrop = useCallback(async (e, empId, date) => {
+    e.preventDefault()
+    setDragOverCell(null)
+    const shiftId = parseInt(e.dataTransfer.getData('text/plain'))
+    if (!shiftId) return
+
+    setDropLoading(true)
+    try {
+      await shiftsApi.assignShift({
+        employee_id: empId,
+        shift_id: shiftId,
+        start_date: date,
+        end_date: date,
+      })
+      fetchData()
+    } catch (err) {
+      toastError(err.response?.data?.error || t('hr.shifts.assignFailed') || 'Failed to assign shift')
+    } finally {
+      setDropLoading(false)
+      setDragShiftId(null)
+    }
+  }, [fetchData, toastError, t])
+
+  const handleRemoveAssignment = useCallback(async (assignmentId) => {
+    try {
+      await shiftsApi.deleteAssignment(assignmentId)
+      fetchData()
+    } catch (err) {
+      toastError(err.response?.data?.error || t('hr.shifts.removeFailed') || 'Failed to remove')
+    }
+  }, [fetchData, toastError, t])
+
   const getShiftColor = (shiftId) => {
     const idx = shifts.findIndex(s => s.id === shiftId)
     return SHIFT_COLORS[idx % SHIFT_COLORS.length]
+  }
+
+  const getShiftBorder = (shiftId) => {
+    const idx = shifts.findIndex(s => s.id === shiftId)
+    return SHIFT_COLORS_BORDER[idx % SHIFT_COLORS_BORDER.length]
   }
 
   const getAssignmentForCell = (empId, date) => {
@@ -188,20 +260,33 @@ export default function ShiftSchedulingPage() {
         </div>
       </div>
 
-      {/* Shift Definitions */}
-      <div className="flex flex-wrap gap-2">
-        {shifts.map((shift, i) => (
-          <div key={shift.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${SHIFT_COLORS[i % SHIFT_COLORS.length]}`}>
-            <Clock className="w-3 h-3" />
-            {shift.name} ({shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)})
-            <button onClick={() => setDeleteTarget(shift)} className="ml-1 hover:opacity-70">
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </div>
-        ))}
-        {shifts.length === 0 && (
-          <span className="text-sm text-gray-400">{t('hr.shifts.noShifts') || 'No shifts defined. Create one to get started.'}</span>
-        )}
+      {/* Shift Definitions - Draggable */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <GripVertical className="w-3.5 h-3.5 text-gray-400" />
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('hr.shifts.dragHint') || 'Drag a shift onto the schedule below'}</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {shifts.map((shift, i) => (
+            <div
+              key={shift.id}
+              draggable="true"
+              onDragStart={(e) => handleDragStart(e, shift.id)}
+              onDragEnd={handleDragEnd}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-grab active:cursor-grabbing select-none transition-all ${SHIFT_COLORS[i % SHIFT_COLORS.length]} ${dragShiftId === shift.id ? 'opacity-50 scale-95 ring-2 ring-primary-400' : 'hover:shadow-md'}`}
+            >
+              <GripVertical className="w-3 h-3 opacity-50" />
+              <Clock className="w-3 h-3" />
+              {shift.name} ({shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)})
+              <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(shift) }} className="ml-1 hover:opacity-70">
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          {shifts.length === 0 && (
+            <span className="text-sm text-gray-400">{t('hr.shifts.noShifts') || 'No shifts defined. Create one to get started.'}</span>
+          )}
+        </div>
       </div>
 
       {/* Week Navigation */}
@@ -251,16 +336,29 @@ export default function ShiftSchedulingPage() {
                   </td>
                   {weekDates.map(date => {
                     const assignment = getAssignmentForCell(emp.id, date)
+                    const cellKey = `${emp.id}-${date}`
+                    const isDragOver = dragOverCell === cellKey
                     return (
-                      <td key={date} className="px-2 py-2 text-center">
+                      <td
+                        key={date}
+                        className={`px-2 py-2 text-center transition-all duration-150 ${isDragOver ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-inset ring-primary-400 dark:ring-primary-500' : ''} ${dropLoading && isDragOver ? 'opacity-60' : ''}`}
+                        onDragOver={(e) => handleDragOver(e, emp.id, date)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, emp.id, date)}
+                      >
                         {assignment ? (
                           <div
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium cursor-pointer hover:opacity-80 ${getShiftColor(assignment.shift_id)}`}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium cursor-pointer hover:opacity-80 transition-all ${getShiftColor(assignment.shift_id)} ${getShiftBorder(assignment.shiftId)} border`}
                             onClick={() => setDeleteAssignmentTarget(assignment)}
                             title={t('hr.shifts.clickToRemove') || 'Click to remove'}
                           >
                             <Clock className="w-3 h-3" />
                             {assignment.shifts?.name || t('hr.shifts.shiftFallback') || 'Shift'}
+                          </div>
+                        ) : isDragOver ? (
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border-2 border-dashed border-primary-400 dark:border-primary-500 text-primary-500 dark:text-primary-400">
+                            <Plus className="w-3 h-3" />
+                            {t('hr.shifts.dropHere') || 'Drop'}
                           </div>
                         ) : (
                           <span className="text-gray-300 dark:text-gray-600">—</span>
@@ -341,14 +439,21 @@ export default function ShiftSchedulingPage() {
                   placeholder={t('hr.shifts.selectShift') || 'Search shift...'}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.shifts.date') || 'Date'}</label>
-                <input type="date" value={assignDate} onChange={e => setAssignDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.shifts.startDate') || 'Start Date'}</label>
+                  <input type="date" value={assignStartDate} onChange={e => setAssignStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.shifts.endDate') || 'End Date'}</label>
+                  <input type="date" value={assignEndDate} onChange={e => setAssignEndDate(e.target.value)} min={assignStartDate}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm" />
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setShowAssignForm(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">{t('common.cancel') || 'Cancel'}</button>
-                <button onClick={handleAssign} disabled={!assignEmployee || !assignShift || !assignDate || isSubmitting}
+                <button onClick={handleAssign} disabled={!assignEmployee || !assignShift || !assignStartDate || !assignEndDate || isSubmitting}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm font-medium">
                   {isSubmitting ? t('common.saving') || 'Saving...' : t('hr.shifts.assign') || 'Assign'}
                 </button>

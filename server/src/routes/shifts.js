@@ -105,42 +105,55 @@ router.get('/assignments', async (req, res, next) => {
   }
 })
 
-// Assign shift to employee (bulk or single)
+// Assign shift to employee (supports date range)
 router.post('/assignments', requireManager, [
   body('employee_id').isNumeric().withMessage('Employee ID is required'),
   body('shift_id').isNumeric().withMessage('Shift ID is required'),
-  body('date').isISO8601().withMessage('Date is required'),
+  body('start_date').isISO8601().withMessage('Start date is required'),
+  body('end_date').isISO8601().withMessage('End date is required'),
 ], validate, async (req, res, next) => {
   try {
-    const { employee_id, shift_id, date } = req.body
+    const { employee_id, shift_id, start_date, end_date } = req.body
 
-    // Check if already assigned
-    const { data: existing } = await supabase
-      .from('employee_shifts')
-      .select('id')
-      .eq('employee_id', employee_id)
-      .eq('date', date)
-      .maybeSingle()
-
-    if (existing) {
-      // Update existing assignment
-      const { data, error } = await supabase
-        .from('employee_shifts')
-        .update({ shift_id })
-        .eq('id', existing.id)
-        .select('*, employees(name, role), shifts(name, start_time, end_time)')
-        .single()
-      if (error) throw error
-      return res.json(data)
+    const start = new Date(start_date)
+    const end = new Date(end_date)
+    if (end < start) {
+      return res.status(400).json({ error: 'End date must be after start date' })
     }
 
-    const { data, error } = await supabase
-      .from('employee_shifts')
-      .insert({ employee_id, shift_id, date })
-      .select('*, employees(name, role), shifts(name, start_time, end_time)')
-      .single()
-    if (error) throw error
-    res.status(201).json(data)
+    const results = []
+    const current = new Date(start)
+    while (current <= end) {
+      const date = current.toISOString().split('T')[0]
+
+      const { data: existing } = await supabase
+        .from('employee_shifts')
+        .select('id')
+        .eq('employee_id', employee_id)
+        .eq('date', date)
+        .maybeSingle()
+
+      if (existing) {
+        const { data } = await supabase
+          .from('employee_shifts')
+          .update({ shift_id })
+          .eq('id', existing.id)
+          .select('*, employees(name, role), shifts(name, start_time, end_time)')
+          .single()
+        if (data) results.push(data)
+      } else {
+        const { data } = await supabase
+          .from('employee_shifts')
+          .insert({ employee_id, shift_id, date })
+          .select('*, employees(name, role), shifts(name, start_time, end_time)')
+          .single()
+        if (data) results.push(data)
+      }
+
+      current.setDate(current.getDate() + 1)
+    }
+
+    res.status(201).json(results)
   } catch (err) {
     next(err)
   }
