@@ -149,9 +149,11 @@ export default function Layout({ children }) {
     hrItems.push({ name: t('nav.payroll') || 'Payroll', href: '/hr/payroll', icon: DollarSign })
     hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts', icon: Briefcase })
     hrItems.push({ name: t('nav.performance') || 'Performance', href: '/hr/performance', icon: Award })
+  } else {
+    // Non-managers: shifts view (read-only) + leave request
+    hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts/view', icon: Briefcase })
+    hrItems.push({ name: t('nav.leave') || 'Leave', href: '/hr/leave/request', icon: Calendar })
   }
-  // Shifts view is accessible to all employees (read-only)
-  hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts/view', icon: Briefcase })
   if (hrItems.length > 0) {
     groups.push({ key: 'hr', label: t('nav.groupHR') || 'HR', items: hrItems })
   }
