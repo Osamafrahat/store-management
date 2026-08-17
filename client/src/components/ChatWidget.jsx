@@ -175,7 +175,7 @@ export default function ChatWidget() {
       {/* Floating Button */}
       <button
         onClick={() => setOpen(!open)}
-        className={`fixed bottom-5 start-5 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-5 end-5 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
           open
             ? 'bg-gray-600 hover:bg-gray-700'
             : 'bg-gradient-to-r from-primary-500 to-primary-600 hover:shadow-primary-500/40'
@@ -197,7 +197,7 @@ export default function ChatWidget() {
 
       {/* Chat Panel */}
       {open && (
-        <div className="fixed bottom-20 start-3 end-3 sm:end-auto sm:w-80 z-50 h-[60vh] sm:h-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="fixed bottom-20 end-3 start-3 sm:start-auto sm:w-80 z-50 h-[60vh] sm:h-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
