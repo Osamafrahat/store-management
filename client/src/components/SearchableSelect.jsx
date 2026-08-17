@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Search, X, ChevronDown } from 'lucide-react'
 
-export default function SearchableSelect({ options, value, onChange, placeholder, labelKey = 'label', valueKey = 'value', renderOption, disabled }) {
+export default function SearchableSelect({ options = [], value, onChange, placeholder, labelKey = 'label', valueKey = 'value', renderOption, disabled }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [highlightIndex, setHighlightIndex] = useState(0)
@@ -13,7 +13,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
   const filtered = useMemo(() => {
     if (!search) return options
     const q = search.toLowerCase()
-    return options.filter(o => String(o[labelKey]).toLowerCase().includes(q))
+    return options.filter(o => String(o[labelKey] ?? '').toLowerCase().includes(q))
   }, [options, search, labelKey])
 
   useEffect(() => {
@@ -30,6 +30,12 @@ export default function SearchableSelect({ options, value, onChange, placeholder
   useEffect(() => {
     setHighlightIndex(0)
   }, [search])
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [open])
 
   const handleSelect = (option) => {
     onChange(option[valueKey])
@@ -55,10 +61,10 @@ export default function SearchableSelect({ options, value, onChange, placeholder
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0) }}
+      <div
+        role="combobox"
+        aria-expanded={open}
+        onClick={() => { if (!disabled) setOpen(!open) }}
         className={`w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-left transition
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-gray-400 dark:hover:border-gray-500'}
           ${open ? 'border-primary-500 ring-1 ring-primary-500' : ''}
@@ -68,7 +74,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
           {selected ? (renderOption ? renderOption(selected) : selected[labelKey]) : placeholder}
         </span>
         <ChevronDown className={`w-4 h-4 shrink-0 ml-2 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
+      </div>
 
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
@@ -82,10 +88,10 @@ export default function SearchableSelect({ options, value, onChange, placeholder
                 onChange={e => setSearch(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                className="w-full pl-8 pr-7 py-1.5 border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-750 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full pl-8 pr-7 py-1.5 border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button type="button" onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -105,7 +111,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
                       ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                       : i === highlightIndex
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'}`}
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                 >
                   {renderOption ? renderOption(option) : option[labelKey]}
                 </button>
