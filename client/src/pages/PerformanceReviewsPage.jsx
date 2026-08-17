@@ -385,7 +385,7 @@ export default function PerformanceReviewsPage() {
                   ))}
                   <button type="button" onClick={() => setFormCriteria([...formCriteria, { criterion: '', rating: 0, comments: '' }])}
                     className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400">
-                    + {t('hr.performance addCriterion') || 'Add Criterion'}
+                    + {t('hr.performance.addCriterion') || 'Add Criterion'}
                   </button>
                 </div>
               </div>

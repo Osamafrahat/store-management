@@ -113,6 +113,7 @@ export const translations = {
     'cart.promoCode': 'Promo code',
     'cart.apply': 'Apply',
     'cart.remove': 'Clear',
+    'cart.add': 'Add',
     'cart.clear': 'Clear',
 
     // Payment
@@ -198,6 +199,7 @@ export const translations = {
     'inventory.failedToUpdateCategory': 'Failed to update category',
     'inventory.failedToDeleteCategory': 'Failed to delete category',
     'inventory.printReport': 'Print Report',
+    'inventory.inventoryReport': 'Inventory Report',
 
     // Reports
     'reports.title': 'Reports & Analytics',
@@ -461,6 +463,7 @@ export const translations = {
     'employees.deleteEmployee': 'Delete Employee',
     'employees.failedToSave': 'Failed to save employee',
     'employees.failedToDelete': 'Failed to delete employee',
+    'employees.failedToToggle': 'Failed to toggle employee status',
     'employees.deleteConfirm': 'Are you sure you want to delete this employee?',
     'employees.userAccount': 'Create User Account',
     'employees.createUser': 'Create login account for this employee',
@@ -807,6 +810,7 @@ export const translations = {
     'accounting.entryReversed': 'Entry reversed',
     'accounting.reverseEntry': 'Reverse Journal Entry',
     'accounting.reverseConfirm': 'Are you sure you want to reverse this journal entry?',
+    'accounting.reverse': 'Reverse',
     'accounting.descRequired': 'Description is required',
     'accounting.entryNotBalanced': 'Entry must be balanced (debits = credits)',
     'accounting.periodClosed': 'Fiscal period closed',
@@ -963,6 +967,7 @@ export const translations = {
     'promotions.whatsappLinks': 'WhatsApp',
     'promotions.emailResults': 'Email',
     'promotions.sent': 'sent',
+    'promotions.emailsSent': 'Emails sent successfully! You can close this dialog.',
     'promotions.noCustomersWithPhone': 'No customers with phone numbers found.',
     'promotions.smtpNotConfigured': 'SMTP is not configured. Emails were not sent.',
 
@@ -1092,10 +1097,12 @@ export const translations = {
     'backup.uploadToCloud': 'Upload to Cloud',
     'backup.cloudUploaded': 'Backup uploaded to cloud',
     'backup.cloudUploadFailed': 'Failed to upload to cloud',
+    'backup.loading': 'Loading...',
     // Chat
     'chat.title': 'Team Chat',
     'chat.allMembers': 'All team members',
     'chat.online': 'Online',
+    'chat.offline': 'Offline',
     'chat.noMessages': 'No messages yet',
     'chat.startConversation': 'Start a conversation with your team',
     'chat.placeholder': 'Type a message...',
@@ -1118,6 +1125,7 @@ export const translations = {
     'common.actionCannotBeUndone': 'This action cannot be undone.',
     'common.notes': 'Notes',
     'common.view': 'View',
+    'common.updated': 'Updated successfully',
 
     // HR: Attendance
     'hr.attendance.title': 'Attendance',
@@ -1213,6 +1221,7 @@ export const translations = {
     'hr.payroll.markPaidConfirm': 'Mark this salary payment as paid?',
     'hr.payroll.fetchFailed': 'Failed to load payroll',
     'hr.payroll.processFailed': 'Failed to process payroll',
+    'hr.payroll.deleted': 'Payroll deleted',
 
     // HR: Shifts
     'hr.shifts.title': 'Shift Scheduling',
@@ -1385,6 +1394,7 @@ export const translations = {
     'cart.promoCode': 'كود الخصم',
     'cart.apply': 'تطبيق',
     'cart.remove': 'مسح',
+    'cart.add': 'إضافة',
     'cart.clear': 'مسح',
 
     // Payment
@@ -1470,6 +1480,7 @@ export const translations = {
     'inventory.failedToUpdateCategory': 'فشل تحديث الفئة',
     'inventory.failedToDeleteCategory': 'فشل حذف الفئة',
     'inventory.printReport': 'جرد المخزون',
+    'inventory.inventoryReport': 'تقرير الجرد',
 
     // Reports
     'reports.title': 'التقارير والتحليلات',
@@ -1744,6 +1755,7 @@ export const translations = {
     'employees.deleteEmployee': 'حذف الموظف',
     'employees.failedToSave': 'فشل حفظ الموظف',
     'employees.failedToDelete': 'فشل حذف الموظف',
+    'employees.failedToToggle': 'فشل تغيير حالة الموظف',
     'employees.deleteConfirm': 'هل أنت متأكد من حذف هذا الموظف؟',
     'employees.userAccount': 'إنشاء حساب مستخدم',
     'employees.createUser': 'إنشاء حساب دخول لهذا الموظف',
@@ -2092,6 +2104,7 @@ export const translations = {
     'accounting.entryReversed': 'تم عكس القيد',
     'accounting.reverseEntry': 'عكس القيد المحاسبي',
     'accounting.reverseConfirm': 'هل أنت متأكد من عكس هذا القيد؟',
+    'accounting.reverse': 'عكس',
     'accounting.descRequired': 'الوصف مطلوب',
     'accounting.entryNotBalanced': 'القيد يجب أن يكون متوازناً (مدين = دائن)',
     'accounting.periodClosed': 'تم إغلاق الدورة المالية',
@@ -2247,6 +2260,7 @@ export const translations = {
     'promotions.whatsappLinks': 'واتساب',
     'promotions.emailResults': 'البريد الإلكتروني',
     'promotions.sent': 'تم الإرسال',
+    'promotions.emailsSent': 'تم إرسال رسائل البريد الإلكتروني بنجاح! يمكنك إغلاق هذا الحوار.',
     'promotions.noCustomersWithPhone': 'لم يتم العثور على عملاء بأرقام هواتف.',
     'promotions.smtpNotConfigured': 'لم يتم تكوين SMTP. لم يتم إرسال رسائل البريد الإلكتروني.',
 
@@ -2376,10 +2390,12 @@ export const translations = {
     'backup.uploadToCloud': 'رفع إلى السحابة',
     'backup.cloudUploaded': 'تم رفع النسخة الاحتياطية إلى السحابة',
     'backup.cloudUploadFailed': 'فشل الرفع إلى السحابة',
+    'backup.loading': 'جاري التحميل...',
     // Chat
     'chat.title': 'محادثة الفريق',
     'chat.allMembers': 'جميع أعضاء الفريق',
     'chat.online': 'متصل',
+    'chat.offline': 'غير متصل',
     'chat.noMessages': 'لا توجد رسائل بعد',
     'chat.startConversation': 'ابدأ محادثة مع فريقك',
     'chat.placeholder': 'اكتب رسالة...',
@@ -2402,6 +2418,7 @@ export const translations = {
     'common.actionCannotBeUndone': 'لا يمكن التراجع عن هذا الإجراء.',
     'common.notes': 'ملاحظات',
     'common.view': 'عرض',
+    'common.updated': 'تم التحديث بنجاح',
 
     // HR: Attendance (Arabic)
     'hr.attendance.title': 'الحضور',
@@ -2497,6 +2514,7 @@ export const translations = {
     'hr.payroll.markPaidConfirm': 'تحديد هذا الراتب كمدفوع؟',
     'hr.payroll.fetchFailed': 'فشل تحميل بيانات الرواتب',
     'hr.payroll.processFailed': 'فشل معالجة الرواتب',
+    'hr.payroll.deleted': 'تم حذف دورة الرواتب',
 
     // HR: Shifts (Arabic)
     'hr.shifts.title': 'جدولة الورديات',
