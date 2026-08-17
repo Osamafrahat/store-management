@@ -249,4 +249,56 @@ export const etaApi = {
   getQR: (orderId) => api.post('/eta/qr', { order_id: orderId }),
 }
 
+// HR: Attendance API
+export const attendanceApi = {
+  getAll: (params) => api.get('/attendance', { params }),
+  getSummary: (employeeId, params) => api.get(`/attendance/summary/${employeeId}`, { params }),
+  create: (data) => api.post('/attendance', data),
+  clockOut: (id, data) => api.patch(`/attendance/${id}/clock-out`, data),
+  update: (id, data) => api.patch(`/attendance/${id}`, data),
+  delete: (id) => api.delete(`/attendance/${id}`),
+}
+
+// HR: Leave API
+export const leaveApi = {
+  getTypes: () => api.get('/leave/types'),
+  createType: (data) => api.post('/leave/types', data),
+  updateType: (id, data) => api.put(`/leave/types/${id}`, data),
+  getRequests: (params) => api.get('/leave/requests', { params }),
+  createRequest: (data) => api.post('/leave/requests', data),
+  approveRequest: (id, data) => api.patch(`/leave/requests/${id}/approve`, data),
+  deleteRequest: (id) => api.delete(`/leave/requests/${id}`),
+  getBalances: (employeeId, params) => api.get(`/leave/balances/${employeeId}`, { params }),
+}
+
+// HR: Payroll API
+export const payrollApi = {
+  getAll: () => api.get('/payroll'),
+  getById: (id) => api.get(`/payroll/${id}`),
+  process: (data) => api.post('/payroll', data),
+  payItem: (id) => api.patch(`/payroll/${id}/pay`),
+  delete: (id) => api.delete(`/payroll/${id}`),
+}
+
+// HR: Shifts API
+export const shiftsApi = {
+  getAll: () => api.get('/shifts'),
+  create: (data) => api.post('/shifts', data),
+  update: (id, data) => api.put(`/shifts/${id}`, data),
+  delete: (id) => api.delete(`/shifts/${id}`),
+  getAssignments: (params) => api.get('/shifts/assignments', { params }),
+  assignShift: (data) => api.post('/shifts/assignments', data),
+  bulkAssign: (assignments) => api.post('/shifts/assignments/bulk', { assignments }),
+  deleteAssignment: (id) => api.delete(`/shifts/assignments/${id}`),
+}
+
+// HR: Performance Reviews API
+export const performanceApi = {
+  getAll: (params) => api.get('/performance', { params }),
+  getById: (id) => api.get(`/performance/${id}`),
+  create: (data) => api.post('/performance', data),
+  update: (id, data) => api.put(`/performance/${id}`, data),
+  delete: (id) => api.delete(`/performance/${id}`),
+}
+
 export default api

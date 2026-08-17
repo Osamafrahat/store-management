@@ -34,6 +34,11 @@ import etaRouter from './routes/eta.js'
 import { backupRouter } from './routes/backup.js'
 import { startBackupScheduler } from './services/backupScheduler.js'
 import chatRouter from './routes/chat.js'
+import attendanceRouter from './routes/attendance.js'
+import leaveRouter from './routes/leave.js'
+import payrollRouter from './routes/payroll.js'
+import shiftsRouter from './routes/shifts.js'
+import performanceRouter from './routes/performance.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -111,6 +116,11 @@ app.use('/api/sync', authenticateToken, syncRouter)
 app.use('/api/eta', authenticateToken, etaRouter)
 app.use('/api/backup', authenticateToken, requireManager, activityLogger, backupRouter)
 app.use('/api/chat', authenticateToken, chatRouter)
+app.use('/api/attendance', authenticateToken, activityLogger, attendanceRouter)
+app.use('/api/leave', authenticateToken, activityLogger, leaveRouter)
+app.use('/api/payroll', authenticateToken, activityLogger, payrollRouter)
+app.use('/api/shifts', authenticateToken, activityLogger, shiftsRouter)
+app.use('/api/performance', authenticateToken, activityLogger, performanceRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)

@@ -33,6 +33,10 @@ import {
   WifiOff,
   RefreshCw,
   HardDrive,
+  Clock,
+  Calendar,
+  Briefcase,
+  Award,
 } from 'lucide-react'
 import ChatWidget from '../ChatWidget'
 
@@ -139,6 +143,11 @@ export default function Layout({ children }) {
   const hrItems = []
   if (currentUser?.role === 'MANAGER') {
     hrItems.push({ name: t('nav.employees') || 'Employees', href: '/employees', icon: Users })
+    hrItems.push({ name: t('nav.attendance') || 'Attendance', href: '/hr/attendance', icon: Clock })
+    hrItems.push({ name: t('nav.leave') || 'Leave', href: '/hr/leave', icon: Calendar })
+    hrItems.push({ name: t('nav.payroll') || 'Payroll', href: '/hr/payroll', icon: DollarSign })
+    hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts', icon: Briefcase })
+    hrItems.push({ name: t('nav.performance') || 'Performance', href: '/hr/performance', icon: Award })
   }
   if (hrItems.length > 0) {
     groups.push({ key: 'hr', label: t('nav.groupHR') || 'HR', items: hrItems })
