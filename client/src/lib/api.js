@@ -262,6 +262,7 @@ export const attendanceApi = {
   breakStart: () => api.post('/attendance/break-start'),
   breakEnd: () => api.post('/attendance/break-end'),
   getDashboard: (params) => api.get('/attendance/dashboard', { params }),
+  getMe: () => api.get('/attendance/me'),
 }
 
 // HR: Leave API

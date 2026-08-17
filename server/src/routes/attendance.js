@@ -237,17 +237,58 @@ router.delete('/:id', requireManager, [
   }
 })
 
-// Helper: get employee_id from user
+// Helper: get employee_id from user, auto-link if possible
 async function getEmployeeId(userId) {
-  const { data } = await supabase
+  // First check if already linked
+  const { data: user } = await supabase
     .from('users')
-    .select('employee_id')
+    .select('employee_id, full_name')
     .eq('id', userId)
     .maybeSingle()
-  return data?.employee_id || null
+
+  if (user?.employee_id) return user.employee_id
+
+  // Try auto-link: find employee with matching name
+  if (user?.full_name) {
+    const { data: emp } = await supabase
+      .from('employees')
+      .select('id')
+      .ilike('name', user.full_name)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (emp) {
+      // Link them
+      await supabase
+        .from('users')
+        .update({ employee_id: emp.id })
+        .eq('id', userId)
+      return emp.id
+    }
+  }
+
+  return null
 }
 
 // ==================== SELF-SERVICE ENDPOINTS ====================
+
+// Get my employee linkage status
+router.get('/me', async (req, res, next) => {
+  try {
+    const employeeId = await getEmployeeId(req.user.id)
+    if (!employeeId) {
+      return res.json({ linked: false, employee_id: null })
+    }
+    const { data: emp } = await supabase
+      .from('employees')
+      .select('id, name, role')
+      .eq('id', employeeId)
+      .maybeSingle()
+    res.json({ linked: true, employee_id: employeeId, employee: emp })
+  } catch (err) {
+    next(err)
+  }
+})
 
 // Clock in (self-service)
 router.post('/clock-in', [

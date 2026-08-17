@@ -12,15 +12,27 @@ export default function ClockWidget() {
   const [todayShift, setTodayShift] = useState(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
-  const [location, setLocation] = useState(null)
+  const [myEmployee, setMyEmployee] = useState(null)
+  const [linked, setLinked] = useState(false)
 
   const today = currentTime.toISOString().split('T')[0]
 
   const fetchTodayData = useCallback(async () => {
     try {
+      // Check employee linkage first
+      const meRes = await attendanceApi.getMe()
+      setLinked(meRes.data.linked)
+      setMyEmployee(meRes.data.employee)
+
+      if (!meRes.data.linked) {
+        setLoading(false)
+        return
+      }
+
+      const empId = meRes.data.employee_id
       const [attRes, shiftRes] = await Promise.all([
-        attendanceApi.getAll({ start_date: today, end_date: today, employee_id: currentUser?.employee_id }),
-        shiftsApi.getAssignments({ start_date: today, end_date: today, employee_id: currentUser?.employee_id }),
+        attendanceApi.getAll({ start_date: today, end_date: today, employee_id: empId }),
+        shiftsApi.getAssignments({ start_date: today, end_date: today, employee_id: empId }),
       ])
       setTodayRecord(attRes.data?.[0] || null)
       setTodayShift(shiftRes.data?.[0] || null)
@@ -29,7 +41,7 @@ export default function ClockWidget() {
     } finally {
       setLoading(false)
     }
-  }, [today, currentUser?.employee_id])
+  }, [today])
 
   useEffect(() => { fetchTodayData() }, [fetchTodayData])
 
@@ -117,12 +129,12 @@ export default function ClockWidget() {
     ? ((Date.now() - new Date(todayRecord.clock_in).getTime()) / 3600000).toFixed(1)
     : '0.0'
 
-  if (!currentUser?.employee_id) {
+  if (!loading && !linked) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
         <div className="text-center text-gray-500 dark:text-gray-400">
           <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">{t('hr.attendance.noEmployeeProfile') || 'No employee profile linked to your account'}</p>
+          <p className="text-sm">{t('hr.attendance.noEmployeeProfile') || 'No employee profile linked to your account. Contact your manager.'}</p>
         </div>
       </div>
     )
@@ -134,8 +146,8 @@ export default function ClockWidget() {
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold">{currentUser?.fullName || currentUser?.username}</h3>
-            <p className="text-primary-100 text-sm">{currentUser?.role}</p>
+            <h3 className="text-lg font-bold">{myEmployee?.name || currentUser?.fullName || currentUser?.username}</h3>
+            <p className="text-primary-100 text-sm">{myEmployee?.role || currentUser?.role}</p>
           </div>
           <div className="text-end">
             <div className="text-3xl font-mono font-bold">{formatTime(currentTime)}</div>
