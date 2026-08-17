@@ -112,6 +112,7 @@ function App() {
                 <Route path="/hr/leave" element={<ProtectedRoute><Layout><LeavePage /></Layout></ProtectedRoute>} />
                 <Route path="/hr/payroll" element={<ProtectedRoute><Layout><PayrollPage /></Layout></ProtectedRoute>} />
                 <Route path="/hr/shifts" element={<ProtectedRoute><Layout><ShiftSchedulingPage /></Layout></ProtectedRoute>} />
+                <Route path="/hr/shifts/view" element={<ProtectedRoute><Layout><ShiftSchedulingPage readOnly /></Layout></ProtectedRoute>} />
                 <Route path="/hr/performance" element={<ProtectedRoute><Layout><PerformanceReviewsPage /></Layout></ProtectedRoute>} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />

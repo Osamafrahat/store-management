@@ -38,7 +38,7 @@ function getWeekDates(date) {
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
-export default function ShiftSchedulingPage() {
+export default function ShiftSchedulingPage({ readOnly = false }) {
   const { t, toastSuccess, toastError } = useAppStore()
   const [shifts, setShifts] = useState([])
   const [employees, setEmployees] = useState([])
@@ -247,44 +247,50 @@ export default function ShiftSchedulingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('hr.shifts.title') || 'Shift Scheduling'}</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">{t('hr.shifts.subtitle') || 'Manage shifts and weekly schedules'}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{readOnly ? (t('hr.shifts.viewTitle') || 'Shift Schedule') : (t('hr.shifts.title') || 'Shift Scheduling')}</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{readOnly ? (t('hr.shifts.viewSubtitle') || 'View shifts and weekly schedules') : (t('hr.shifts.subtitle') || 'Manage shifts and weekly schedules')}</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowShiftForm(true)} className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm">
-            <Plus className="w-4 h-4" /> {t('hr.shifts.addShift') || 'Add Shift'}
-          </button>
-          <button onClick={() => setShowAssignForm(true)} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
-            <Clock className="w-4 h-4" /> {t('hr.shifts.assign') || 'Assign Shift'}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="flex gap-2">
+            <button onClick={() => setShowShiftForm(true)} className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm">
+              <Plus className="w-4 h-4" /> {t('hr.shifts.addShift') || 'Add Shift'}
+            </button>
+            <button onClick={() => setShowAssignForm(true)} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm">
+              <Clock className="w-4 h-4" /> {t('hr.shifts.assign') || 'Assign Shift'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Shift Definitions - Draggable */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <GripVertical className="w-3.5 h-3.5 text-gray-400" />
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('hr.shifts.dragHint') || 'Drag a shift onto the schedule below'}</span>
-        </div>
+        {!readOnly && (
+          <div className="flex items-center gap-2 mb-2">
+            <GripVertical className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('hr.shifts.dragHint') || 'Drag a shift onto the schedule below'}</span>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {shifts.map((shift, i) => (
             <div
               key={shift.id}
-              draggable="true"
-              onDragStart={(e) => handleDragStart(e, shift.id)}
-              onDragEnd={handleDragEnd}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-grab active:cursor-grabbing select-none transition-all ${SHIFT_COLORS[i % SHIFT_COLORS.length]} ${dragShiftId === shift.id ? 'opacity-50 scale-95 ring-2 ring-primary-400' : 'hover:shadow-md'}`}
+              draggable={!readOnly}
+              onDragStart={!readOnly ? (e) => handleDragStart(e, shift.id) : undefined}
+              onDragEnd={!readOnly ? handleDragEnd : undefined}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium select-none transition-all ${SHIFT_COLORS[i % SHIFT_COLORS.length]} ${!readOnly ? 'cursor-grab active:cursor-grabbing' : ''} ${dragShiftId === shift.id ? 'opacity-50 scale-95 ring-2 ring-primary-400' : 'hover:shadow-md'}`}
             >
-              <GripVertical className="w-3 h-3 opacity-50" />
+              {!readOnly && <GripVertical className="w-3 h-3 opacity-50" />}
               <Clock className="w-3 h-3" />
               {shift.name} ({shift.start_time?.slice(0, 5)} - {shift.end_time?.slice(0, 5)})
-              <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(shift) }} className="ml-1 hover:opacity-70">
-                <Trash2 className="w-3 h-3" />
-              </button>
+              {!readOnly && (
+                <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(shift) }} className="ml-1 hover:opacity-70">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
             </div>
           ))}
           {shifts.length === 0 && (
-            <span className="text-sm text-gray-400">{t('hr.shifts.noShifts') || 'No shifts defined. Create one to get started.'}</span>
+            <span className="text-sm text-gray-400">{t('hr.shifts.noShifts') || 'No shifts defined.'}</span>
           )}
         </div>
       </div>
@@ -342,15 +348,15 @@ export default function ShiftSchedulingPage() {
                       <td
                         key={date}
                         className={`px-2 py-2 text-center transition-all duration-150 ${isDragOver ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-inset ring-primary-400 dark:ring-primary-500' : ''} ${dropLoading && isDragOver ? 'opacity-60' : ''}`}
-                        onDragOver={(e) => handleDragOver(e, emp.id, date)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, emp.id, date)}
+                        onDragOver={!readOnly ? (e) => handleDragOver(e, emp.id, date) : undefined}
+                        onDragLeave={!readOnly ? handleDragLeave : undefined}
+                        onDrop={!readOnly ? (e) => handleDrop(e, emp.id, date) : undefined}
                       >
                         {assignment ? (
                           <div
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium cursor-pointer hover:opacity-80 transition-all ${getShiftColor(assignment.shift_id)} ${getShiftBorder(assignment.shiftId)} border`}
-                            onClick={() => setDeleteAssignmentTarget(assignment)}
-                            title={t('hr.shifts.clickToRemove') || 'Click to remove'}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${getShiftColor(assignment.shift_id)} ${getShiftBorder(assignment.shiftId)} border ${!readOnly ? 'cursor-pointer hover:opacity-80' : ''}`}
+                            onClick={!readOnly ? () => setDeleteAssignmentTarget(assignment) : undefined}
+                            title={!readOnly ? (t('hr.shifts.clickToRemove') || 'Click to remove') : undefined}
                           >
                             <Clock className="w-3 h-3" />
                             {assignment.shifts?.name || t('hr.shifts.shiftFallback') || 'Shift'}
@@ -374,7 +380,7 @@ export default function ShiftSchedulingPage() {
       )}
 
       {/* Add Shift Modal */}
-      {showShiftForm && (
+      {!readOnly && showShiftForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -413,7 +419,8 @@ export default function ShiftSchedulingPage() {
       )}
 
       {/* Assign Shift Modal */}
-      {showAssignForm && (
+      {/* Assign Shift Modal */}
+      {!readOnly && showAssignForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -463,25 +470,29 @@ export default function ShiftSchedulingPage() {
         </div>
       )}
 
-      <ConfirmModal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteShift}
-        title={t('hr.shifts.deleteShift') || 'Delete Shift'}
-        message={t('hr.shifts.deleteConfirm') || 'Are you sure you want to delete this shift?'}
-        type="danger"
-        loading={deleting}
-      />
+      {!readOnly && (
+        <>
+          <ConfirmModal
+            open={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={handleDeleteShift}
+            title={t('hr.shifts.deleteShift') || 'Delete Shift'}
+            message={t('hr.shifts.deleteConfirm') || 'Are you sure you want to delete this shift?'}
+            type="danger"
+            loading={deleting}
+          />
 
-      <ConfirmModal
-        open={!!deleteAssignmentTarget}
-        onClose={() => setDeleteAssignmentTarget(null)}
-        onConfirm={handleDeleteAssignment}
-        title={t('hr.shifts.removeAssignment') || 'Remove Assignment'}
-        message={t('hr.shifts.removeConfirm') || 'Remove this shift assignment?'}
-        type="danger"
-        loading={deleting}
-      />
+          <ConfirmModal
+            open={!!deleteAssignmentTarget}
+            onClose={() => setDeleteAssignmentTarget(null)}
+            onConfirm={handleDeleteAssignment}
+            title={t('hr.shifts.removeAssignment') || 'Remove Assignment'}
+            message={t('hr.shifts.removeConfirm') || 'Remove this shift assignment?'}
+            type="danger"
+            loading={deleting}
+          />
+        </>
+      )}
     </div>
   )
 }
