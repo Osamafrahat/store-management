@@ -3,6 +3,7 @@ import { useAppStore } from '../stores/appStore'
 import { shiftsApi, employeesApi } from '../lib/api'
 import { Clock, Plus, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
+import SearchableSelect from '../components/SearchableSelect'
 
 const SHIFT_COLORS = [
   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
@@ -324,19 +325,21 @@ export default function ShiftSchedulingPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.shifts.employee') || 'Employee'}</label>
-                <select value={assignEmployee} onChange={e => setAssignEmployee(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-                  <option value="">{t('hr.shifts.selectEmployee') || 'Select employee'}</option>
-                  {activeEmployees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-                </select>
+                <SearchableSelect
+                  options={activeEmployees.map(e => ({ value: e.id, label: e.name }))}
+                  value={assignEmployee}
+                  onChange={setAssignEmployee}
+                  placeholder={t('hr.shifts.selectEmployee') || 'Search employee...'}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.shifts.shift') || 'Shift'}</label>
-                <select value={assignShift} onChange={e => setAssignShift(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-                  <option value="">{t('hr.shifts.selectShift') || 'Select shift'}</option>
-                  {shifts.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)})</option>)}
-                </select>
+                <SearchableSelect
+                  options={shifts.map(s => ({ value: s.id, label: `${s.name} (${s.start_time?.slice(0, 5)} - ${s.end_time?.slice(0, 5)})` }))}
+                  value={assignShift}
+                  onChange={setAssignShift}
+                  placeholder={t('hr.shifts.selectShift') || 'Search shift...'}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.shifts.date') || 'Date'}</label>

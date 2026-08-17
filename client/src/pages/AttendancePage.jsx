@@ -4,6 +4,7 @@ import { useUserStore } from '../stores/userStore'
 import { attendanceApi, employeesApi } from '../lib/api'
 import { Clock, Calendar, User, CheckCircle, XCircle, AlertCircle, MinusCircle, Search, X } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
+import SearchableSelect from '../components/SearchableSelect'
 
 const STATUS_COLORS = {
   present: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -278,13 +279,12 @@ export default function AttendancePage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.attendance.employee') || 'Employee'}</label>
-                <select value={formEmployeeId} onChange={e => setFormEmployeeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-                  <option value="">{t('hr.attendance.selectEmployee') || 'Select employee'}</option>
-                  {employees.filter(e => e.is_active).map(e => (
-                    <option key={e.id} value={e.id}>{e.name}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  options={employees.filter(e => e.is_active).map(e => ({ value: e.id, label: e.name }))}
+                  value={formEmployeeId}
+                  onChange={setFormEmployeeId}
+                  placeholder={t('hr.attendance.selectEmployee') || 'Search employee...'}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.attendance.status') || 'Status'}</label>

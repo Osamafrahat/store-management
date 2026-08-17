@@ -4,6 +4,7 @@ import { useUserStore } from '../stores/userStore'
 import { performanceApi, employeesApi } from '../lib/api'
 import { Star, Plus, Eye, Edit2, Trash2, User, X } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
+import SearchableSelect from '../components/SearchableSelect'
 
 const STATUS_COLORS = {
   draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
@@ -341,13 +342,12 @@ export default function PerformanceReviewsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('hr.performance.employee') || 'Employee'}</label>
-                <select value={formEmployeeId} onChange={e => setFormEmployeeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-                  <option value="">{t('hr.performance.selectEmployee') || 'Select employee'}</option>
-                  {employees.filter(e => e.is_active).map(e => (
-                    <option key={e.id} value={e.id}>{e.name}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  options={employees.filter(e => e.is_active).map(e => ({ value: e.id, label: e.name }))}
+                  value={formEmployeeId}
+                  onChange={setFormEmployeeId}
+                  placeholder={t('hr.performance.selectEmployee') || 'Search employee...'}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
