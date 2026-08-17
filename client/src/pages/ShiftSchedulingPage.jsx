@@ -21,8 +21,15 @@ const SHIFT_COLORS_BORDER = [
   'border-pink-300 dark:border-pink-700',
 ]
 
+function toLocalDateStr(d) {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function getWeekDates(date) {
-  const d = new Date(date)
+  const d = new Date(date + 'T00:00:00')
   const day = d.getDay()
   const diff = d.getDate() - day
   const start = new Date(d)
@@ -31,7 +38,7 @@ function getWeekDates(date) {
   for (let i = 0; i < 7; i++) {
     const dt = new Date(start)
     dt.setDate(start.getDate() + i)
-    dates.push(dt.toISOString().split('T')[0])
+    dates.push(toLocalDateStr(dt))
   }
   return dates
 }
@@ -47,7 +54,7 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - d.getDay())
-    return d.toISOString().split('T')[0]
+    return toLocalDateStr(d)
   })
   const [showShiftForm, setShowShiftForm] = useState(false)
   const [showAssignForm, setShowAssignForm] = useState(false)
@@ -73,12 +80,12 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const endDate = new Date(weekStart)
+      const endDate = new Date(weekStart + 'T00:00:00')
       endDate.setDate(endDate.getDate() + 6)
       const [shiftsRes, empRes, assignRes] = await Promise.all([
         shiftsApi.getAll(),
         employeesApi.getAll(),
-        shiftsApi.getAssignments({ start_date: weekStart, end_date: endDate.toISOString().split('T')[0] }),
+        shiftsApi.getAssignments({ start_date: weekStart, end_date: toLocalDateStr(endDate) }),
       ])
       setShifts(shiftsRes.data)
       setEmployees(empRes.data)
@@ -91,15 +98,15 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
   }
 
   const prevWeek = () => {
-    const d = new Date(weekStart)
+    const d = new Date(weekStart + 'T00:00:00')
     d.setDate(d.getDate() - 7)
-    setWeekStart(d.toISOString().split('T')[0])
+    setWeekStart(toLocalDateStr(d))
   }
 
   const nextWeek = () => {
-    const d = new Date(weekStart)
+    const d = new Date(weekStart + 'T00:00:00')
     d.setDate(d.getDate() + 7)
-    setWeekStart(d.toISOString().split('T')[0])
+    setWeekStart(toLocalDateStr(d))
   }
 
   const handleCreateShift = async () => {

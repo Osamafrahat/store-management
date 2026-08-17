@@ -33,7 +33,10 @@ export default function AttendancePage() {
   const startDate = useMemo(() => `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`, [selectedYear, selectedMonth])
   const endDate = useMemo(() => {
     const d = new Date(selectedYear, selectedMonth, 0)
-    return d.toISOString().split('T')[0]
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }, [selectedYear, selectedMonth])
 
   useEffect(() => { fetchData() }, [startDate, endDate])

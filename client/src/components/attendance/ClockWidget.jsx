@@ -15,7 +15,7 @@ export default function ClockWidget() {
   const [myEmployee, setMyEmployee] = useState(null)
   const [linked, setLinked] = useState(false)
 
-  const today = currentTime.toISOString().split('T')[0]
+  const today = `${currentTime.getFullYear()}-${String(currentTime.getMonth() + 1).padStart(2, '0')}-${String(currentTime.getDate()).padStart(2, '0')}`
 
   const fetchTodayData = useCallback(async () => {
     try {
