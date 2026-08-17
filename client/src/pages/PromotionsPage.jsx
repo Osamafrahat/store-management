@@ -4,6 +4,7 @@ import { promotionsApi } from '../lib/api'
 import { formatCurrency, formatDate } from '../lib/utils'
 import { X, Plus, Edit2, Trash2, Tag, Percent, DollarSign, CheckCircle, XCircle, Send } from 'lucide-react'
 import SendPromotionModal from '../components/notifications/SendPromotionModal'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function PromotionsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -13,6 +14,8 @@ export default function PromotionsPage() {
   const [editingPromo, setEditingPromo] = useState(null)
   const [sendPromo, setSendPromo] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchPromotions()
@@ -36,18 +39,17 @@ export default function PromotionsPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('promotions.deleteConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await promotionsApi.delete(id)
       toastSuccess(t('promotions.deleted') || 'Promotion deleted successfully')
       fetchPromotions()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete promotion:', err)
       toastError(t('promotions.failedToDelete'))
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -177,7 +179,7 @@ export default function PromotionsPage() {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(promo.id)}
+                      onClick={() => setDeleteTarget(promo.id)}
                       className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -271,6 +273,17 @@ export default function PromotionsPage() {
           onSent={fetchPromotions}
         />
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('promotions.deletePromotion') || 'Delete Promotion'}
+        message={t('promotions.deleteConfirm') || 'Are you sure you want to delete this promotion?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

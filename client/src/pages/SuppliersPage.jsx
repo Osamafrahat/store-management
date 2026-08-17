@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { suppliersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, Truck, Phone, Mail, MapPin, DollarSign } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function SuppliersPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -10,6 +11,8 @@ export default function SuppliersPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchSuppliers()
@@ -33,18 +36,17 @@ export default function SuppliersPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('suppliers.deleteConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await suppliersApi.delete(id)
       toastSuccess(t('suppliers.deleted') || 'Supplier deleted successfully')
       fetchSuppliers()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete supplier:', err)
       toastError(t('suppliers.failedToDelete'))
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -136,7 +138,7 @@ export default function SuppliersPage() {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(supplier.id)}
+                    onClick={() => setDeleteTarget(supplier.id)}
                     className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -201,6 +203,17 @@ export default function SuppliersPage() {
           }}
         />
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('suppliers.deleteSupplier') || 'Delete Supplier'}
+        message={t('suppliers.deleteConfirm') || 'Are you sure you want to delete this supplier?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { expensesApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, Receipt, DollarSign, TrendingDown, Filter } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 const EXPENSE_CATEGORIES = [
   'Rent',
@@ -25,6 +26,8 @@ export default function ExpensesPage() {
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
   const [categoryFilter, setCategoryFilter] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchExpenses()
@@ -67,19 +70,18 @@ export default function ExpensesPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('expenses.deleteConfirm') || 'Are you sure you want to delete this expense?')) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await expensesApi.delete(id)
       toastSuccess(t('expenses.deleted') || 'Expense deleted successfully')
       fetchExpenses()
       fetchSummary()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete expense:', err)
       toastError(t('expenses.failedToDelete') || 'Failed to delete expense')
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -261,7 +263,7 @@ export default function ExpensesPage() {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(expense.id)}
+                        onClick={() => setDeleteTarget(expense.id)}
                         className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -287,6 +289,17 @@ export default function ExpensesPage() {
           }}
         />
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('expenses.deleteExpense') || 'Delete Expense'}
+        message={t('expenses.deleteConfirm') || 'Are you sure you want to delete this expense?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

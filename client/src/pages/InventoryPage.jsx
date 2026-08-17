@@ -9,6 +9,7 @@ import CategoryManager from '../components/inventory/CategoryManager'
 import BarcodePrinter from '../components/BarcodePrinter'
 import InventoryPrintSheet from '../components/inventory/InventoryPrintSheet'
 import { Plus, Package, Tag, Printer, X } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function InventoryPage() {
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
@@ -21,6 +22,8 @@ export default function InventoryPage() {
   const [barcodeProduct, setBarcodeProduct] = useState(null)
   const [showPrintSheet, setShowPrintSheet] = useState(false)
   const [suppliers, setSuppliers] = useState([])
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -72,13 +75,16 @@ export default function InventoryPage() {
   }
 
   const handleDeleteProduct = async (productId) => {
-    if (!confirm(t('inventory.deleteConfirm'))) return
+    setDeleting(true)
     try {
       await productsApi.delete(productId)
       fetchData()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete product:', err)
       alert(t('inventory.failedToDelete'))
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -147,7 +153,7 @@ export default function InventoryPage() {
           : products
         }
         onEdit={handleEditProduct}
-        onDelete={handleDeleteProduct}
+        onDelete={(id) => setDeleteTarget(id)}
         onPrintBarcode={(product) => setBarcodeProduct(product)}
         onRefresh={fetchData}
       />
@@ -207,6 +213,17 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDeleteProduct(deleteTarget)}
+        title={t('inventory.deleteProduct') || 'Delete Product'}
+        message={t('inventory.deleteConfirm') || 'Are you sure you want to delete this product?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

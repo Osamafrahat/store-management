@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import api, { accountsApi } from '../lib/api'
 import { Plus, Search, Edit2, Trash2, Save, X, RefreshCw, Landmark } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function ChartOfAccountsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -17,6 +18,8 @@ export default function ChartOfAccountsPage() {
   const [capitalDesc, setCapitalDesc] = useState('')
   const [capitalLoading, setCapitalLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const getAccountName = (account) => {
     const key = `accounting.account.${account.code}`
@@ -112,15 +115,14 @@ export default function ChartOfAccountsPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('accounting.deleteConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await accountsApi.delete(id)
       toastSuccess(t('accounting.accountDeleted'))
       fetchAccounts()
+      setDeleteTarget(null)
     } catch (err) { toastError(err.response?.data?.error || t('common.error')) }
-    finally { setIsSubmitting(false) }
+    finally { setDeleting(false) }
   }
 
   const filteredAccounts = accounts.filter(a => {
@@ -263,7 +265,7 @@ export default function ChartOfAccountsPage() {
                         <td className="px-6 py-3 text-end">
                           <div className="flex items-center justify-end gap-1">
                             <button onClick={() => handleEdit(account)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete(account.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => setDeleteTarget(account.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -276,6 +278,17 @@ export default function ChartOfAccountsPage() {
           ))}
         </div>
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('accounting.deleteAccount') || 'Delete Account'}
+        message={t('accounting.deleteConfirm') || 'Are you sure you want to delete this account?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

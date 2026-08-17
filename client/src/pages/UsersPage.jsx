@@ -4,6 +4,7 @@ import { useUserStore, ROLES, PERMISSIONS } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
 import { usersApi, employeesApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, User, UserCheck, Shield } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 const permissionLabelsEn = {
   [PERMISSIONS.POS_ACCESS]: 'POS Access',
@@ -58,6 +59,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState(null)
   const [employees, setEmployees] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadUsers = async () => {
     try {
@@ -123,16 +126,15 @@ export default function UsersPage() {
   }
 
   const handleDelete = async (userId) => {
-    if (!confirm(t('inventory.deleteConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       const result = await deleteUser(userId)
       if (!result.success) {
         alert(result.error)
       }
+      setDeleteTarget(null)
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -249,7 +251,7 @@ export default function UsersPage() {
                       )}
                       {user.id !== 1 && user.id !== currentUser?.id && (
                         <button
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => setDeleteTarget(user.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -294,6 +296,17 @@ export default function UsersPage() {
           }}
         />
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('users.deleteUser') || 'Delete User'}
+        message={t('users.deleteConfirm') || 'Are you sure you want to delete this user?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { paymentsApi, suppliersApi } from '../lib/api'
 import { DollarSign, Plus, Search, Trash2, Save, X, ArrowUpRight, ArrowDownRight, Pencil } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function PaymentsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -23,6 +24,8 @@ export default function PaymentsPage() {
     partner_id: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchPayments()
@@ -76,17 +79,16 @@ export default function PaymentsPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('accounting.deletePaymentConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await paymentsApi.delete(id)
       toastSuccess(t('accounting.paymentDeleted'))
       fetchPayments()
+      setDeleteTarget(null)
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -222,7 +224,7 @@ export default function PaymentsPage() {
                     {!payment.journal_entry_id && (
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => handleEdit(payment)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(payment.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => setDeleteTarget(payment.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     )}
                   </td>
@@ -234,6 +236,17 @@ export default function PaymentsPage() {
           {payments.length === 0 && <p className="text-center py-8 text-gray-400">{t('accounting.noPayments')}</p>}
         </div>
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('accounting.deletePayment') || 'Delete Payment'}
+        message={t('accounting.deletePaymentConfirm') || 'Are you sure you want to delete this payment?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

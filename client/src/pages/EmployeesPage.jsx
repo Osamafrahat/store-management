@@ -3,6 +3,7 @@ import { useAppStore } from '../stores/appStore'
 import { useUserStore } from '../stores/userStore'
 import { employeesApi, usersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign, Shield } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 const USER_ROLES = (t) => [
   { value: 'MANAGER', label: t('role.manager') },
@@ -22,6 +23,8 @@ export default function EmployeesPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchEmployees()
@@ -68,19 +71,18 @@ export default function EmployeesPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('employees.deleteConfirm') || 'Are you sure you want to delete this employee?')) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await employeesApi.delete(id)
       toastSuccess(t('employees.deleted') || 'Employee deleted successfully')
       await fetchEmployees()
       await refreshUsers()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete employee:', err)
       toastError(t('employees.failedToDelete') || 'Failed to delete employee')
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -196,7 +198,7 @@ export default function EmployeesPage() {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(employee.id)}
+                    onClick={() => setDeleteTarget(employee.id)}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -267,6 +269,17 @@ export default function EmployeesPage() {
           }}
         />
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('employees.deleteEmployee') || 'Delete Employee'}
+        message={t('employees.deleteConfirm') || 'Are you sure you want to delete this employee?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

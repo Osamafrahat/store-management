@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { customersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, User, Phone, Mail, MapPin, Star } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function CustomersPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -11,6 +12,8 @@ export default function CustomersPage() {
   const [editingCustomer, setEditingCustomer] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchCustomers()
@@ -39,18 +42,17 @@ export default function CustomersPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('customers.deleteConfirm') || 'Are you sure you want to delete this customer?')) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setDeleting(true)
     try {
       await customersApi.delete(id)
       toastSuccess(t('customers.deleted') || 'Customer deleted successfully')
       fetchCustomers()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete customer:', err)
       toastError(t('customers.failedToDelete') || 'Failed to delete customer')
     } finally {
-      setIsSubmitting(false)
+      setDeleting(false)
     }
   }
 
@@ -153,7 +155,7 @@ export default function CustomersPage() {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(customer.id)}
+                    onClick={() => setDeleteTarget(customer.id)}
                     className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -207,6 +209,17 @@ export default function CustomersPage() {
           }}
         />
       )}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('customers.deleteCustomer') || 'Delete Customer'}
+        message={t('customers.deleteConfirm') || 'Are you sure you want to delete this customer?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { categoriesApi } from '../../lib/api'
 import { X, Plus, Edit2, Trash2, Tag, Check } from 'lucide-react'
+import ConfirmModal from '../ConfirmModal'
 
 export default function CategoryManager({ categories, onClose, onRefresh }) {
   const { t } = useAppStore()
   const [newCategory, setNewCategory] = useState({ name: '', description: '' })
   const [editingCategory, setEditingCategory] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -43,17 +46,16 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm(t('inventory.deleteCategoryConfirm'))) return
-
-    setLoading(true)
+    setDeleting(true)
     try {
       await categoriesApi.delete(id)
       onRefresh()
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete category:', err)
       alert(t('inventory.failedToDeleteCategory'))
     } finally {
-      setLoading(false)
+      setDeleting(false)
     }
   }
 
@@ -145,7 +147,7 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => setDeleteTarget(category.id)}
                         disabled={loading}
                         className="p-1 text-gray-400 hover:text-red-600"
                       >
@@ -169,6 +171,17 @@ export default function CategoryManager({ categories, onClose, onRefresh }) {
           </button>
         </div>
       </div>
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => handleDelete(deleteTarget)}
+        title={t('inventory.deleteCategory') || 'Delete Category'}
+        message={t('inventory.deleteCategoryConfirm') || 'Are you sure you want to delete this category?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }

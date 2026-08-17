@@ -2,6 +2,7 @@ import { useState, useEffect, Fragment } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { accountingReportsApi } from '../lib/api'
 import { BarChart3, FileText, Scale, TrendingUp, TrendingDown, Download } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function AccountingReportsPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -12,6 +13,8 @@ export default function AccountingReportsPage() {
   const [fiscalPeriods, setFiscalPeriods] = useState([])
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [closeTarget, setCloseTarget] = useState(null)
+  const [closing, setClosing] = useState(false)
 
   useEffect(() => {
     loadReport()
@@ -44,17 +47,16 @@ export default function AccountingReportsPage() {
   }
 
   const handleClosePeriod = async (id) => {
-    if (!confirm(t('accounting.periodCloseConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setClosing(true)
     try {
       await accountingReportsApi.closeFiscalPeriod(id)
       toastSuccess(t('accounting.periodClosed'))
       loadFiscalPeriods()
+      setCloseTarget(null)
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
     } finally {
-      setIsSubmitting(false)
+      setClosing(false)
     }
   }
 
@@ -339,7 +341,7 @@ export default function AccountingReportsPage() {
                       </td>
                       <td className="px-6 py-3 text-end">
                         {!period.is_closed && (
-                          <button onClick={() => handleClosePeriod(period.id)} className="px-3 py-2 min-h-[44px] text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                          <button onClick={() => setCloseTarget(period.id)} className="px-3 py-2 min-h-[44px] text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
                             {t('accounting.closePeriod')}
                           </button>
                         )}
@@ -354,6 +356,17 @@ export default function AccountingReportsPage() {
           )}
         </div>
       )}
+      <ConfirmModal
+        open={!!closeTarget}
+        onClose={() => setCloseTarget(null)}
+        onConfirm={() => handleClosePeriod(closeTarget)}
+        title={t('accounting.closePeriod') || 'Close Fiscal Period'}
+        message={t('accounting.periodCloseConfirm') || 'Are you sure you want to close this fiscal period? This action cannot be undone.'}
+        type="warning"
+        confirmText={t('accounting.closePeriod') || 'Close Period'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={closing}
+      />
     </div>
   )
 }

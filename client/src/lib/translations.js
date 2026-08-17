@@ -1092,6 +1092,14 @@ export const translations = {
     'chat.deleteAllTitle': 'Delete All Messages',
     'common.cancel': 'Cancel',
     'common.delete': 'Delete',
+    'common.confirm': 'Confirm',
+    'common.close': 'Close',
+    'common.yes': 'Yes',
+    'common.no': 'No',
+    'common.areYouSure': 'Are you sure?',
+    'common.deleteConfirm': 'Are you sure you want to delete this item?',
+    'common.deleteAllConfirm': 'Are you sure you want to delete all items? This action cannot be undone.',
+    'common.actionCannotBeUndone': 'This action cannot be undone.',
   },
   ar: {
     // Dashboard
@@ -2198,6 +2206,14 @@ export const translations = {
     'chat.deleteAllTitle': 'حذف جميع الرسائل',
     'common.cancel': 'إلغاء',
     'common.delete': 'حذف',
+    'common.confirm': 'تأكيد',
+    'common.close': 'إغلاق',
+    'common.yes': 'نعم',
+    'common.no': 'لا',
+    'common.areYouSure': 'هل أنت متأكد؟',
+    'common.deleteConfirm': 'هل أنت متأكد من حذف هذا العنصر؟',
+    'common.deleteAllConfirm': 'هل أنت متأكد من حذف جميع العناصر؟ لا يمكن التراجع عن هذا الإجراء.',
+    'common.actionCannotBeUndone': 'لا يمكن التراجع عن هذا الإجراء.',
   },
 }
 

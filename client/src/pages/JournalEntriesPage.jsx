@@ -3,6 +3,7 @@ import { useAppStore } from '../stores/appStore'
 import { journalsApi, accountsApi } from '../lib/api'
 import { translateDescription } from '../lib/translateDescription'
 import { Plus, Search, Eye, RotateCcw, Save, X } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function JournalEntriesPage() {
   const { t, toastSuccess, toastError } = useAppStore()
@@ -15,6 +16,8 @@ export default function JournalEntriesPage() {
   const [showForm, setShowForm] = useState(false)
   const [showDetail, setShowDetail] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [reverseTarget, setReverseTarget] = useState(null)
+  const [reversing, setReversing] = useState(false)
 
   const getAccountName = (account) => {
     if (!account) return ''
@@ -93,17 +96,16 @@ export default function JournalEntriesPage() {
   }
 
   const handleReverse = async (id) => {
-    if (!confirm(t('accounting.reverseConfirm'))) return
-    if (isSubmitting) return
-    setIsSubmitting(true)
+    setReversing(true)
     try {
       await journalsApi.reverse(id)
       toastSuccess(t('accounting.entryReversed'))
       fetchEntries()
+      setReverseTarget(null)
     } catch (err) {
       toastError(err.response?.data?.error || 'Failed')
     } finally {
-      setIsSubmitting(false)
+      setReversing(false)
     }
   }
 
@@ -261,7 +263,7 @@ export default function JournalEntriesPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => setShowDetail(entry)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary-600"><Eye className="w-4 h-4" /></button>
                         {!entry.is_reversed && entry.is_posted && (
-                          <button onClick={() => handleReverse(entry.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-orange-600" title="Reverse"><RotateCcw className="w-4 h-4" /></button>
+                          <button onClick={() => setReverseTarget(entry.id)} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-orange-600" title="Reverse"><RotateCcw className="w-4 h-4" /></button>
                         )}
                       </div>
                     </td>
@@ -281,6 +283,17 @@ export default function JournalEntriesPage() {
           )}
         </div>
       )}
+      <ConfirmModal
+        open={!!reverseTarget}
+        onClose={() => setReverseTarget(null)}
+        onConfirm={() => handleReverse(reverseTarget)}
+        title={t('accounting.reverseEntry') || 'Reverse Journal Entry'}
+        message={t('accounting.reverseConfirm') || 'Are you sure you want to reverse this journal entry?'}
+        type="warning"
+        confirmText={t('accounting.reverse') || 'Reverse'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={reversing}
+      />
     </div>
   )
 }
