@@ -123,6 +123,16 @@ export default function ChatPage() {
     }
   }
 
+  const deleteAllMessages = async () => {
+    if (!confirm(t('chat.deleteAllConfirm') || 'Delete ALL messages? This cannot be undone.')) return
+    try {
+      await api.delete('/chat/all')
+      setMessages([])
+    } catch (err) {
+      console.error('Failed to delete all messages:', err)
+    }
+  }
+
   const deleteMessage = async (id) => {
     if (!confirm(t('chat.deleteConfirm') || 'Delete this message?')) return
     try {
@@ -182,6 +192,15 @@ export default function ChatPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {currentUser?.role === 'MANAGER' && messages.length > 0 && (
+            <button
+              onClick={deleteAllMessages}
+              className="p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
+              title={t('chat.deleteAll') || 'Delete all messages'}
+            >
+              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          )}
           {connected ? (
             <span className="text-[10px] sm:text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-1 rounded-full flex items-center gap-1">
               <Wifi className="w-3 h-3" />

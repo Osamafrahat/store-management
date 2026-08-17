@@ -133,6 +133,16 @@ export default function ChatWidget() {
     }
   }
 
+  const deleteAllMessages = async () => {
+    if (!confirm(t('chat.deleteAllConfirm') || 'Delete ALL messages? This cannot be undone.')) return
+    try {
+      await api.delete('/chat/all')
+      setMessages([])
+    } catch (err) {
+      console.error('Failed to delete all messages:', err)
+    }
+  }
+
   const deleteMessage = async (id) => {
     if (!confirm(t('chat.deleteConfirm') || 'Delete this message?')) return
     try {
@@ -210,9 +220,16 @@ export default function ChatWidget() {
                 <WifiOff className="w-3 h-3 text-red-200" />
               )}
             </div>
-            <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-white/20 transition-colors">
-              <X className="w-4 h-4 text-white" />
-            </button>
+            <div className="flex items-center gap-1">
+              {currentUser?.role === 'MANAGER' && messages.length > 0 && (
+                <button onClick={deleteAllMessages} className="p-1 rounded-lg hover:bg-white/20 transition-colors" title={t('chat.deleteAll') || 'Delete all messages'}>
+                  <Trash2 className="w-3.5 h-3.5 text-white" />
+                </button>
+              )}
+              <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-white/20 transition-colors">
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}

@@ -57,6 +57,21 @@ router.post('/', async (req, res) => {
   }
 })
 
+router.delete('/all', async (req, res) => {
+  try {
+    const user = req.user || {}
+    if (user.role !== 'MANAGER') {
+      return res.status(403).json({ error: 'Only managers can delete all messages' })
+    }
+    const { error } = await supabase.from('messages').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    if (error) throw error
+    res.json({ message: 'All messages deleted' })
+  } catch (err) {
+    console.error('Delete all messages error:', err)
+    res.status(500).json({ error: 'Failed to delete all messages' })
+  }
+})
+
 router.delete('/:id', async (req, res) => {
   try {
     const user = req.user || {}
