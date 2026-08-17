@@ -134,6 +134,7 @@ export default function ChatWidget() {
   }
 
   const deleteMessage = async (id) => {
+    if (!confirm(t('chat.deleteConfirm') || 'Delete this message?')) return
     try {
       await api.delete(`/chat/${id}`)
       setMessages(prev => prev.filter(m => m.id !== id))
@@ -215,7 +216,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2.5 sm:space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5 sm:space-y-3">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 mb-2 opacity-30" />
@@ -253,7 +254,7 @@ export default function ChatWidget() {
                             {currentUser?.role === 'MANAGER' && (
                               <button
                                 onClick={() => deleteMessage(msg.id)}
-                                className={`absolute top-0 ${isOwn ? '-left-5 sm:-left-6' : '-right-5 sm:-right-6'} opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
+                                className={`absolute top-0 ${isOwn ? '-left-5 sm:-left-6' : '-right-5 sm:-right-6'} opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
                               >
                                 <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
                               </button>

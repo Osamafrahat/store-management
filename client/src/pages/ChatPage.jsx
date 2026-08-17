@@ -197,7 +197,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 border-x border-gray-200 dark:border-gray-700 p-3 sm:p-4 space-y-3 sm:space-y-4">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800 border-x border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-3 sm:space-y-4">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
@@ -242,7 +242,7 @@ export default function ChatPage() {
                           {currentUser?.role === 'MANAGER' && (
                             <button
                               onClick={() => deleteMessage(msg.id)}
-                              className={`absolute top-1 ${isOwn ? '-left-7 sm:-left-8' : '-right-7 sm:-right-8'} opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
+                              className={`absolute top-1 ${isOwn ? '-left-7 sm:-left-8' : '-right-7 sm:-right-8'} opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />
                             </button>
