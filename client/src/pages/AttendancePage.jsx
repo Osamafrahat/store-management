@@ -135,16 +135,16 @@ export default function AttendancePage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {[
-          { label: t('hr.attendance.total') || 'Total', value: summary.total, color: 'text-gray-900 dark:text-white' },
-          { label: t('hr.attendance.present') || 'Present', value: summary.present, color: 'text-green-600 dark:text-green-400' },
-          { label: t('hr.attendance.absent') || 'Absent', value: summary.absent, color: 'text-red-600 dark:text-red-400' },
-          { label: t('hr.attendance.late') || 'Late', value: summary.late, color: 'text-yellow-600 dark:text-yellow-400' },
-          { label: t('hr.attendance.halfDay') || 'Half Day', value: summary.half_day, color: 'text-orange-600 dark:text-orange-400' },
-          { label: t('hr.attendance.onLeave') || 'On Leave', value: summary.on_leave, color: 'text-blue-600 dark:text-blue-400' },
+          { label: t('hr.attendance.total') || 'Total', value: summary.total, bg: 'bg-gray-50 dark:bg-gray-800', border: 'border-l-gray-400', text: 'text-gray-900 dark:text-white', icon: '📊' },
+          { label: t('hr.attendance.present') || 'Present', value: summary.present, bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-l-green-500', text: 'text-green-700 dark:text-green-400', icon: '✓' },
+          { label: t('hr.attendance.absent') || 'Absent', value: summary.absent, bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-l-red-500', text: 'text-red-700 dark:text-red-400', icon: '✗' },
+          { label: t('hr.attendance.late') || 'Late', value: summary.late, bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-l-yellow-500', text: 'text-yellow-700 dark:text-yellow-400', icon: '⏰' },
+          { label: t('hr.attendance.halfDay') || 'Half Day', value: summary.half_day, bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-l-orange-500', text: 'text-orange-700 dark:text-orange-400', icon: '🕐' },
+          { label: t('hr.attendance.onLeave') || 'On Leave', value: summary.on_leave, bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-l-blue-500', text: 'text-blue-700 dark:text-blue-400', icon: '🏖' },
         ].map(item => (
-          <div key={item.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center">
-            <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</div>
+          <div key={item.label} className={`${item.bg} rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 ${item.border} p-3 text-center`}>
+            <div className={`text-2xl font-bold ${item.text}`}>{item.value}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{item.label}</div>
           </div>
         ))}
       </div>
@@ -285,9 +285,12 @@ export default function AttendancePage() {
                 <span className="text-gray-500 dark:text-gray-400">{t('hr.attendance.date') || 'Date'}</span>
                 <span className="font-medium text-gray-900 dark:text-white">{detailRecord.date}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-gray-500 dark:text-gray-400">{t('hr.attendance.status') || 'Status'}</span>
-                <span className="font-medium text-gray-900 dark:text-white">{t(`hr.attendance.status.${detailRecord.status}`) || detailRecord.status}</span>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${detailRecord.status === 'present' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : detailRecord.status === 'absent' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : detailRecord.status === 'late' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : detailRecord.status === 'half_day' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${detailRecord.status === 'present' ? 'bg-green-500' : detailRecord.status === 'absent' ? 'bg-red-500' : detailRecord.status === 'late' ? 'bg-yellow-500' : detailRecord.status === 'half_day' ? 'bg-orange-500' : 'bg-blue-500'}`}></span>
+                  {t(`hr.attendance.status.${detailRecord.status}`) || detailRecord.status}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-gray-400">{t('hr.attendance.clockIn') || 'Clock In'}</span>

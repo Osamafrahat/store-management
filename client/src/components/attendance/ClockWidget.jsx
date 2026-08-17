@@ -202,16 +202,16 @@ export default function ClockWidget() {
 
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-750 rounded-xl">
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-700/80 rounded-xl border border-gray-100 dark:border-gray-600">
                 <div className="text-lg font-bold text-gray-900 dark:text-white">{totalHoursWorked}h</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{t('hr.attendance.totalHours') || 'Hours'}</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-750 rounded-xl">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">{todayRecord?.overtime_hours || 0}h</div>
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-700/80 rounded-xl border border-gray-100 dark:border-gray-600">
+                <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{todayRecord?.overtime_hours || 0}h</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{t('hr.attendance.overtime') || 'Overtime'}</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 dark:bg-gray-750 rounded-xl">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">{todayRecord?.break_minutes || 0}m</div>
+              <div className="text-center p-3 bg-white/80 dark:bg-gray-700/80 rounded-xl border border-gray-100 dark:border-gray-600">
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{todayRecord?.break_minutes || 0}m</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{t('hr.attendance.break') || 'Break'}</div>
               </div>
             </div>
