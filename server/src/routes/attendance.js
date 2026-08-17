@@ -237,6 +237,16 @@ router.delete('/:id', requireManager, [
   }
 })
 
+// Helper: get employee_id from user
+async function getEmployeeId(userId) {
+  const { data } = await supabase
+    .from('users')
+    .select('employee_id')
+    .eq('id', userId)
+    .maybeSingle()
+  return data?.employee_id || null
+}
+
 // ==================== SELF-SERVICE ENDPOINTS ====================
 
 // Clock in (self-service)
@@ -246,7 +256,7 @@ router.post('/clock-in', [
   body('location.lng').optional().isFloat({ min: -180, max: 180 }),
 ], validate, async (req, res, next) => {
   try {
-    const employeeId = req.user.employee_id
+    const employeeId = await getEmployeeId(req.user.id)
     if (!employeeId) {
       return res.status(400).json({ error: 'No employee profile linked to your account' })
     }
@@ -328,7 +338,7 @@ router.post('/self-clock-out', [
   body('location').optional().isObject(),
 ], validate, async (req, res, next) => {
   try {
-    const employeeId = req.user.employee_id
+    const employeeId = await getEmployeeId(req.user.id)
     if (!employeeId) {
       return res.status(400).json({ error: 'No employee profile linked to your account' })
     }
@@ -390,7 +400,7 @@ router.post('/self-clock-out', [
 // Start break (self-service)
 router.post('/break-start', async (req, res, next) => {
   try {
-    const employeeId = req.user.employee_id
+    const employeeId = await getEmployeeId(req.user.id)
     if (!employeeId) return res.status(400).json({ error: 'No employee profile linked' })
 
     const today = new Date().toISOString().split('T')[0]
@@ -420,7 +430,7 @@ router.post('/break-start', async (req, res, next) => {
 // End break (self-service)
 router.post('/break-end', async (req, res, next) => {
   try {
-    const employeeId = req.user.employee_id
+    const employeeId = await getEmployeeId(req.user.id)
     if (!employeeId) return res.status(400).json({ error: 'No employee profile linked' })
 
     const today = new Date().toISOString().split('T')[0]

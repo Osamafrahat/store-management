@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { useUserStore } from '../stores/userStore'
 import { attendanceApi, employeesApi } from '../lib/api'
 import { ChevronLeft, ChevronRight, Plus, Trash2, X, BarChart3 } from 'lucide-react'
 import ClockWidget from '../components/attendance/ClockWidget'
@@ -10,7 +11,8 @@ import SearchableSelect from '../components/SearchableSelect'
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 export default function AttendancePage() {
-  const { t, language, toastSuccess, toastError, currentUser } = useAppStore()
+  const { t, language, toastSuccess, toastError } = useAppStore()
+  const currentUser = useUserStore(s => s.currentUser)
   const [records, setRecords] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)

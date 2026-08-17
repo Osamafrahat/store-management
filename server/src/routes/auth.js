@@ -129,7 +129,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
   try {
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, username, full_name, phone, email, role, permissions, is_active, last_login, created_at, updated_at')
+      .select('id, username, full_name, phone, email, role, permissions, is_active, employee_id, last_login, created_at, updated_at')
       .eq('id', req.user.id)
       .single()
 
@@ -159,7 +159,7 @@ router.put('/profile', authenticateToken, [
       .from('users')
       .update(updateData)
       .eq('id', req.user.id)
-      .select('id, username, full_name, phone, email, role, permissions, is_active, last_login, created_at, updated_at')
+      .select('id, username, full_name, phone, email, role, permissions, is_active, employee_id, last_login, created_at, updated_at')
       .single()
 
     if (error) throw error

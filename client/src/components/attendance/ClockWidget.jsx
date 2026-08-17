@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '../../stores/appStore'
+import { useUserStore } from '../../stores/userStore'
 import { attendanceApi, shiftsApi } from '../../lib/api'
 import { Clock, LogIn, LogOut, Coffee, Pause, MapPin } from 'lucide-react'
 
 export default function ClockWidget() {
-  const { t, toastSuccess, toastError, currentUser } = useAppStore()
+  const { t, toastSuccess, toastError } = useAppStore()
+  const currentUser = useUserStore(s => s.currentUser)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [todayRecord, setTodayRecord] = useState(null)
   const [todayShift, setTodayShift] = useState(null)
