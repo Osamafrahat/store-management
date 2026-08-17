@@ -4,6 +4,7 @@ import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { useAppStore } from '../stores/appStore'
 import { productsApi, ordersApi, reportsApi, suppliersApi, promotionsApi, expensesApi, accountingReportsApi, paymentsApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
+import ClockWidget from '../components/attendance/ClockWidget'
 import {
   ShoppingCart,
   Package,
@@ -186,6 +187,9 @@ export default function DashboardPage() {
           {settings.storeName || t('layout.defaultStoreName')} — {ROLES_LABELS[role] || role}
         </p>
       </div>
+
+      {/* Clock In/Out for employees */}
+      {!isManager && <ClockWidget />}
 
       {/* ===== MANAGER: Full Dashboard ===== */}
       {isManager && (
