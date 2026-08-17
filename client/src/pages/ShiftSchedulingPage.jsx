@@ -82,16 +82,24 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
     try {
       const endDate = new Date(weekStart + 'T00:00:00')
       endDate.setDate(endDate.getDate() + 6)
-      const [shiftsRes, empRes, assignRes] = await Promise.all([
+      const endStr = toLocalDateStr(endDate)
+
+      const [shiftsRes, empRes, assignRes] = await Promise.allSettled([
         shiftsApi.getAll(),
         employeesApi.getAll(),
-        shiftsApi.getAssignments({ start_date: weekStart, end_date: toLocalDateStr(endDate) }),
+        shiftsApi.getAssignments({ start_date: weekStart, end_date: endStr }),
       ])
-      setShifts(shiftsRes.data)
-      setEmployees(empRes.data)
-      setAssignments(assignRes.data)
+
+      if (shiftsRes.status === 'fulfilled') setShifts(shiftsRes.value.data || [])
+      if (empRes.status === 'fulfilled') setEmployees(empRes.value.data || [])
+      if (assignRes.status === 'fulfilled') setAssignments(assignRes.value.data || [])
+
+      const failed = [shiftsRes, empRes, assignRes].filter(r => r.status === 'rejected')
+      if (failed.length > 0) {
+        console.error('Shifts fetch errors:', failed.map(f => f.reason?.message || f.reason))
+      }
     } catch (err) {
-      toastError(t('hr.shifts.fetchFailed') || 'Failed to load shifts')
+      console.error('fetchData error:', err)
     } finally {
       setLoading(false)
     }

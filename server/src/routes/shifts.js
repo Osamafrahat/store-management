@@ -22,7 +22,10 @@ router.get('/', async (req, res, next) => {
       .from('shifts')
       .select('*')
       .order('name')
-    if (error) throw error
+    if (error) {
+      console.error('Shifts query error:', error)
+      throw error
+    }
     res.json(data || [])
   } catch (err) {
     next(err)
@@ -98,7 +101,10 @@ router.get('/assignments', async (req, res, next) => {
     if (end_date) query = query.lte('date', end_date)
     if (employee_id) query = query.eq('employee_id', employee_id)
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      console.error('Assignments query error:', error)
+      throw error
+    }
     res.json(data || [])
   } catch (err) {
     next(err)

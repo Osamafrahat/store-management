@@ -256,7 +256,6 @@ router.patch('/requests/:id/approve', requireManager, [
       if (shiftRecords.length > 0) {
         await supabase.from('employee_shifts').insert(shiftRecords)
       }
-      }
     }
 
     res.json(data)
