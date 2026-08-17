@@ -358,6 +358,7 @@ export const translations = {
     // Common
     'common.save': 'Save',
     'common.saving': 'Saving...',
+    'common.submitting': 'Submitting...',
     'common.cancel': 'Cancel',
     'common.processing': 'Processing...',
     'common.retry': 'Retry',
@@ -1049,6 +1050,8 @@ export const translations = {
 
     // Layout
     'layout.defaultStoreName': 'Store POS',
+    'layout.posSystem': 'POS System',
+    'layout.expandSidebar': 'Expand sidebar',
 
     // Activities
     'activities.title': 'Activity Log',
@@ -1243,6 +1246,8 @@ export const translations = {
     'hr.leave.employee': 'Employee',
     'hr.leave.selectEmployee': 'Select employee',
     'hr.leave.leaveType': 'Leave Type',
+    'hr.leave.type': 'Leave Type',
+    'hr.leave.daysYear': 'days/year',
     'hr.leave.selectType': 'Select type',
     'hr.leave.startDate': 'Start Date',
     'hr.leave.endDate': 'End Date',
@@ -1763,6 +1768,7 @@ export const translations = {
     // Common
     'common.save': 'حفظ',
     'common.saving': 'جاري الحفظ...',
+    'common.submitting': 'جاري الإرسال...',
     'common.cancel': 'إلغاء',
     'common.processing': 'جاري المعالجة...',
     'common.retry': 'إعادة المحاولة',
@@ -2453,6 +2459,8 @@ export const translations = {
 
     // Layout
     'layout.defaultStoreName': 'نقطة بيع المتجر',
+    'layout.posSystem': 'نظام نقطة البيع',
+    'layout.expandSidebar': 'توسيع الشريط الجانبي',
 
     // Activities
     'activities.title': 'سجل الأنشطة',
@@ -2647,6 +2655,8 @@ export const translations = {
     'hr.leave.employee': 'الموظف',
     'hr.leave.selectEmployee': 'اختر موظف',
     'hr.leave.leaveType': 'نوع الإجازة',
+    'hr.leave.type': 'نوع الإجازة',
+    'hr.leave.daysYear': 'أيام/سنة',
     'hr.leave.selectType': 'اختر النوع',
     'hr.leave.startDate': 'تاريخ البداية',
     'hr.leave.endDate': 'تاريخ النهاية',
