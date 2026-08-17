@@ -186,6 +186,35 @@ router.patch('/requests/:id/approve', requireManager, [
       }
     }
 
+    // Auto-create attendance records for approved leave
+    if (status === 'approved') {
+      const start = new Date(existing.start_date)
+      const end = new Date(existing.end_date)
+      const attendanceRecords = []
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0]
+        // Check if attendance record already exists
+        const { data: existingAtt } = await supabase
+          .from('attendance')
+          .select('id')
+          .eq('employee_id', existing.employee_id)
+          .eq('date', dateStr)
+          .maybeSingle()
+        if (!existingAtt) {
+          attendanceRecords.push({
+            employee_id: existing.employee_id,
+            date: dateStr,
+            status: 'on_leave',
+            source: 'leave',
+            notes: `Approved leave`,
+          })
+        }
+      }
+      if (attendanceRecords.length > 0) {
+        await supabase.from('attendance').insert(attendanceRecords)
+      }
+    }
+
     res.json(data)
   } catch (err) {
     next(err)
