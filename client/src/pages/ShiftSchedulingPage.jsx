@@ -263,7 +263,7 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
       </div>
 
       {/* Shift Definitions - Draggable */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-3">
         {!readOnly && (
           <div className="flex items-center gap-2 mb-2">
             <GripVertical className="w-3.5 h-3.5 text-gray-400" />
@@ -296,7 +296,7 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
       </div>
 
       {/* Week Navigation */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-3">
         <button onClick={prevWeek} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
           <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
         </button>
@@ -316,7 +316,7 @@ export default function ShiftSchedulingPage({ readOnly = false }) {
       ) : activeEmployees.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">{t('hr.shifts.noEmployees') || 'No active employees'}</div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm overflow-x-auto">
           <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">

@@ -150,7 +150,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Month Navigation + Search */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
+      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-3">
         <div className="flex items-center gap-2">
           <button onClick={() => {
             if (selectedMonth === 1) { setSelectedMonth(12); setSelectedYear(y => y - 1) }

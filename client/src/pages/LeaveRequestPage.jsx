@@ -120,7 +120,7 @@ export default function LeaveRequestPage() {
 
       {/* Leave Balances */}
       {balances.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('hr.leave.balances') || 'Leave Balances'}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {balances.map(b => (
@@ -143,7 +143,7 @@ export default function LeaveRequestPage() {
       ) : (
         <div className="space-y-3">
           {requests.map(req => (
-            <div key={req.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div key={req.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

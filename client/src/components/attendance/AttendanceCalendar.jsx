@@ -53,11 +53,11 @@ export default function AttendanceCalendar({ records, employees, year, month, on
   const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="text-start px-4 py-3 font-medium text-gray-600 dark:text-gray-300 min-w-[150px] sticky left-0 bg-white dark:bg-gray-800 z-10">
+            <th className="text-start px-4 py-3 font-medium text-gray-600 dark:text-gray-300 min-w-[150px] sticky left-0 bg-gray-50 dark:bg-gray-800/50 z-10">
               {t('hr.shifts.employee') || 'Employee'}
             </th>
             {days.map(d => {
@@ -75,7 +75,7 @@ export default function AttendanceCalendar({ records, employees, year, month, on
         <tbody>
           {activeEmployees.map(emp => (
             <tr key={emp.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-750">
-              <td className="px-4 py-2 sticky left-0 bg-white dark:bg-gray-800 z-10">
+              <td className="px-4 py-2 sticky left-0 bg-gray-50 dark:bg-gray-800/50 z-10">
                 <div className="font-medium text-gray-900 dark:text-white text-sm">{emp.name}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{emp.role}</div>
               </td>

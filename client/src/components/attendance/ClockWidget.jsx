@@ -131,7 +131,7 @@ export default function ClockWidget() {
 
   if (!loading && !linked) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
         <div className="text-center text-gray-500 dark:text-gray-400">
           <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">{t('hr.attendance.noEmployeeProfile') || 'No employee profile linked to your account. Contact your manager.'}</p>
@@ -141,7 +141,7 @@ export default function ClockWidget() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
         <div className="flex items-center justify-between">

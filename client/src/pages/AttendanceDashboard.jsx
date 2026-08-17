@@ -96,7 +96,7 @@ export default function AttendanceDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -107,7 +107,7 @@ export default function AttendanceDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -118,7 +118,7 @@ export default function AttendanceDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -129,7 +129,7 @@ export default function AttendanceDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
@@ -145,7 +145,7 @@ export default function AttendanceDashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bar Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="lg:col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t('hr.attendance.dailyBreakdown') || 'Daily Breakdown'}</h3>
           {barData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -166,7 +166,7 @@ export default function AttendanceDashboard() {
         </div>
 
         {/* Pie Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{t('hr.attendance.statusDistribution') || 'Status Distribution'}</h3>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -188,7 +188,7 @@ export default function AttendanceDashboard() {
 
       {/* Employee Summary Table */}
       {dashboard?.employeeSummaries?.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('hr.attendance.employeeSummary') || 'Employee Summary'}</h3>
           </div>

@@ -327,7 +327,7 @@ function ManagerDashboard({ stats, t }) {
       {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
       {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
       {stats.recentOrders.length === 0 && stats.lowStockProducts.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
+        <div className="col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6 md:p-12 text-center">
           <BarChart3 className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
@@ -344,7 +344,7 @@ function SalesDashboard({ stats, t }) {
       {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
       {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
       {stats.recentOrders.length === 0 && stats.lowStockProducts.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
+        <div className="col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6 md:p-12 text-center">
           <TrendingUp className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
@@ -360,7 +360,7 @@ function CashierDashboard({ stats, t }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {stats.recentOrders.length > 0 && <RecentOrders orders={stats.recentOrders} t={t} />}
       {stats.recentOrders.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
+        <div className="col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6 md:p-12 text-center">
           <ShoppingCart className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.startSelling')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.startSellingDesc')}</p>
@@ -376,7 +376,7 @@ function InventoryDashboard({ stats, t }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {stats.lowStockProducts.length > 0 && <LowStockAlert products={stats.lowStockProducts} t={t} />}
       {stats.lowStockProducts.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
+        <div className="col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6 md:p-12 text-center">
           <Package className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.manageInventory')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.manageInventoryDesc')}</p>
@@ -420,7 +420,7 @@ function AccountantDashboard({ stats, t }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {stats.recentPayments.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">{t('dashboard.recentPayments')}</h3>
             <Link to="/accounting/payments" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
@@ -451,7 +451,7 @@ function AccountantDashboard({ stats, t }) {
       )}
 
       {stats.recentExpenses.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">{t('dashboard.recentExpenses')}</h3>
             <Link to="/expenses" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
@@ -475,7 +475,7 @@ function AccountantDashboard({ stats, t }) {
       )}
 
       {stats.recentPayments.length === 0 && stats.recentExpenses.length === 0 && (
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-12 text-center">
+        <div className="col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6 md:p-12 text-center">
           <DollarSign className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('dashboard.welcomeTitle')}</h3>
           <p className="text-gray-500 dark:text-gray-400">{t('dashboard.welcomeMessage')}</p>
@@ -500,7 +500,7 @@ function StatCard({ icon: Icon, label, value, color, href }) {
   return (
     <Link
       to={href}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg transition-shadow"
+      className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4 hover:shadow-md transition-shadow"
     >
       <div className="flex items-center gap-3">
         <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
@@ -584,7 +584,7 @@ function QuickActions({ showAll, showPOS, showInventory, showSuppliers, showProm
 
 function RecentOrders({ orders, t }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">{t('dashboard.recentOrders')}</h3>
         <Link to="/reports" className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1">
@@ -615,7 +615,7 @@ function RecentOrders({ orders, t }) {
 
 function LowStockAlert({ products, t }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-800 p-6">
+    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/50 shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center gap-2 text-amber-600">
           <AlertTriangle className="w-5 h-5" />

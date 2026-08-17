@@ -559,7 +559,7 @@ export default function Layout({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-gray-900">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 sm:px-6 py-2 sm:py-3 shadow-sm">
+        <header className="bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700/50 px-3 sm:px-6 py-2 sm:py-3 shadow-sm">
           <div className="flex items-center justify-between gap-2 min-w-0">
             <button
               onClick={() => setMobileMenuOpen(true)}
