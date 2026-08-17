@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import supabase from '../db/supabase.js'
+import supabase, { supabaseStorage } from '../db/supabase.js'
 
 const router = Router()
 
@@ -63,9 +63,20 @@ router.delete('/all', async (req, res) => {
     if (user.role !== 'MANAGER') {
       return res.status(403).json({ error: 'Only managers can delete all messages' })
     }
-    const { error } = await supabase.from('messages').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    const { data: messages, error: fetchError } = await supabase
+      .from('messages')
+      .select('id')
+    if (fetchError) throw fetchError
+    if (!messages || messages.length === 0) {
+      return res.json({ message: 'No messages to delete', count: 0 })
+    }
+    const ids = messages.map(m => m.id)
+    const { error } = await supabaseStorage
+      .from('messages')
+      .delete()
+      .in('id', ids)
     if (error) throw error
-    res.json({ message: 'All messages deleted' })
+    res.json({ message: 'All messages deleted', count: ids.length })
   } catch (err) {
     console.error('Delete all messages error:', err)
     res.status(500).json({ error: 'Failed to delete all messages' })
