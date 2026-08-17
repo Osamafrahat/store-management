@@ -4,6 +4,7 @@ import { useUserStore } from '../stores/userStore'
 import api from '../lib/api'
 import supabase from '../lib/supabase'
 import { MessageCircle, Send, Trash2, X, Minimize2, Wifi, WifiOff } from 'lucide-react'
+import ConfirmModal from './ConfirmModal'
 
 export default function ChatWidget() {
   const { t } = useAppStore()
@@ -14,6 +15,9 @@ export default function ChatWidget() {
   const [sending, setSending] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [connected, setConnected] = useState(false)
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sentIdsRef = useRef(new Set())
@@ -134,22 +138,28 @@ export default function ChatWidget() {
   }
 
   const deleteAllMessages = async () => {
-    if (!confirm(t('chat.deleteAllConfirm') || 'Delete ALL messages? This cannot be undone.')) return
+    setDeleting(true)
     try {
       await api.delete('/chat/all')
       setMessages([])
+      setDeleteAllOpen(false)
     } catch (err) {
       console.error('Failed to delete all messages:', err)
+    } finally {
+      setDeleting(false)
     }
   }
 
   const deleteMessage = async (id) => {
-    if (!confirm(t('chat.deleteConfirm') || 'Delete this message?')) return
+    setDeleting(true)
     try {
       await api.delete(`/chat/${id}`)
       setMessages(prev => prev.filter(m => m.id !== id))
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete message:', err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -222,7 +232,7 @@ export default function ChatWidget() {
             </div>
             <div className="flex items-center gap-1">
               {currentUser?.role === 'MANAGER' && messages.length > 0 && (
-                <button onClick={deleteAllMessages} className="p-1 rounded-lg hover:bg-white/20 transition-colors" title={t('chat.deleteAll') || 'Delete all messages'}>
+                <button onClick={() => setDeleteAllOpen(true)} className="p-1 rounded-lg hover:bg-white/20 transition-colors" title={t('chat.deleteAll') || 'Delete all messages'}>
                   <Trash2 className="w-3.5 h-3.5 text-white" />
                 </button>
               )}
@@ -270,7 +280,7 @@ export default function ChatWidget() {
                             </div>
                             {currentUser?.role === 'MANAGER' && (
                               <button
-                                onClick={() => deleteMessage(msg.id)}
+                                onClick={() => setDeleteTarget(msg.id)}
                                 className={`absolute top-0 ${isOwn ? '-left-5 sm:-left-6' : '-right-5 sm:-right-6'} opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
                               >
                                 <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
@@ -310,6 +320,28 @@ export default function ChatWidget() {
           </form>
         </div>
       )}
+      <ConfirmModal
+        open={deleteAllOpen}
+        onClose={() => setDeleteAllOpen(false)}
+        onConfirm={deleteAllMessages}
+        title={t('chat.deleteAllTitle') || 'Delete All Messages'}
+        message={t('chat.deleteAllConfirm') || 'Are you sure you want to delete ALL messages? This action cannot be undone.'}
+        type="danger"
+        confirmText={t('chat.deleteAll') || 'Delete All'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteMessage(deleteTarget)}
+        title={t('chat.deleteTitle') || 'Delete Message'}
+        message={t('chat.deleteConfirm') || 'Are you sure you want to delete this message?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </>
   )
 }

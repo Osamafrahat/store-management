@@ -1085,7 +1085,13 @@ export const translations = {
     'chat.placeholder': 'Type a message...',
     'chat.today': 'Today',
     'chat.yesterday': 'Yesterday',
-    'chat.deleteConfirm': 'Delete this message?',
+    'chat.deleteConfirm': 'Are you sure you want to delete this message?',
+    'chat.deleteTitle': 'Delete Message',
+    'chat.deleteAll': 'Delete All',
+    'chat.deleteAllConfirm': 'Are you sure you want to delete ALL messages? This action cannot be undone.',
+    'chat.deleteAllTitle': 'Delete All Messages',
+    'common.cancel': 'Cancel',
+    'common.delete': 'Delete',
   },
   ar: {
     // Dashboard
@@ -2185,7 +2191,13 @@ export const translations = {
     'chat.placeholder': 'اكتب رسالة...',
     'chat.today': 'اليوم',
     'chat.yesterday': 'أمس',
-    'chat.deleteConfirm': 'حذف هذه الرسالة؟',
+    'chat.deleteConfirm': 'هل أنت متأكد من حذف هذه الرسالة؟',
+    'chat.deleteTitle': 'حذف الرسالة',
+    'chat.deleteAll': 'حذف الكل',
+    'chat.deleteAllConfirm': 'هل أنت متأكد من حذف جميع الرسائل؟ لا يمكن التراجع عن هذا الإجراء.',
+    'chat.deleteAllTitle': 'حذف جميع الرسائل',
+    'common.cancel': 'إلغاء',
+    'common.delete': 'حذف',
   },
 }
 

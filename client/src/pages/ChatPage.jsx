@@ -4,6 +4,7 @@ import { useUserStore } from '../stores/userStore'
 import api from '../lib/api'
 import supabase from '../lib/supabase'
 import { Send, Trash2, MessageCircle, Users, Wifi, WifiOff } from 'lucide-react'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function ChatPage() {
   const { t } = useAppStore()
@@ -13,6 +14,9 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [connected, setConnected] = useState(false)
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting, setDeleting] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sentIdsRef = useRef(new Set())
@@ -124,22 +128,28 @@ export default function ChatPage() {
   }
 
   const deleteAllMessages = async () => {
-    if (!confirm(t('chat.deleteAllConfirm') || 'Delete ALL messages? This cannot be undone.')) return
+    setDeleting(true)
     try {
       await api.delete('/chat/all')
       setMessages([])
+      setDeleteAllOpen(false)
     } catch (err) {
       console.error('Failed to delete all messages:', err)
+    } finally {
+      setDeleting(false)
     }
   }
 
   const deleteMessage = async (id) => {
-    if (!confirm(t('chat.deleteConfirm') || 'Delete this message?')) return
+    setDeleting(true)
     try {
       await api.delete(`/chat/${id}`)
       setMessages(prev => prev.filter(m => m.id !== id))
+      setDeleteTarget(null)
     } catch (err) {
       console.error('Failed to delete message:', err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -194,7 +204,7 @@ export default function ChatPage() {
         <div className="flex items-center gap-2">
           {currentUser?.role === 'MANAGER' && messages.length > 0 && (
             <button
-              onClick={deleteAllMessages}
+              onClick={() => setDeleteAllOpen(true)}
               className="p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
               title={t('chat.deleteAll') || 'Delete all messages'}
             >
@@ -260,7 +270,7 @@ export default function ChatPage() {
                           </p>
                           {currentUser?.role === 'MANAGER' && (
                             <button
-                              onClick={() => deleteMessage(msg.id)}
+                              onClick={() => setDeleteTarget(msg.id)}
                               className={`absolute top-1 ${isOwn ? '-left-7 sm:-left-8' : '-right-7 sm:-right-8'} opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all`}
                             >
                               <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400" />
@@ -299,6 +309,28 @@ export default function ChatPage() {
           </button>
         </div>
       </form>
+      <ConfirmModal
+        open={deleteAllOpen}
+        onClose={() => setDeleteAllOpen(false)}
+        onConfirm={deleteAllMessages}
+        title={t('chat.deleteAllTitle') || 'Delete All Messages'}
+        message={t('chat.deleteAllConfirm') || 'Are you sure you want to delete ALL messages? This action cannot be undone.'}
+        type="danger"
+        confirmText={t('chat.deleteAll') || 'Delete All'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteMessage(deleteTarget)}
+        title={t('chat.deleteTitle') || 'Delete Message'}
+        message={t('chat.deleteConfirm') || 'Are you sure you want to delete this message?'}
+        type="danger"
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        loading={deleting}
+      />
     </div>
   )
 }
