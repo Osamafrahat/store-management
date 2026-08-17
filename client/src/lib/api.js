@@ -257,6 +257,11 @@ export const attendanceApi = {
   clockOut: (id, data) => api.patch(`/attendance/${id}/clock-out`, data),
   update: (id, data) => api.patch(`/attendance/${id}`, data),
   delete: (id) => api.delete(`/attendance/${id}`),
+  clockIn: (data) => api.post('/attendance/clock-in', data),
+  selfClockOut: (data) => api.post('/attendance/self-clock-out', data),
+  breakStart: () => api.post('/attendance/break-start'),
+  breakEnd: () => api.post('/attendance/break-end'),
+  getDashboard: (params) => api.get('/attendance/dashboard', { params }),
 }
 
 // HR: Leave API

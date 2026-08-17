@@ -12,6 +12,10 @@ const ALLOWED_SETTINGS = [
   'eta_client_id', 'eta_client_secret', 'eta_pos_serial',
   'eta_registration_number', 'eta_activity_code',
   'eta_store_governate', 'eta_auto_submit',
+  'attendance.lateGraceMinutes', 'attendance.overtimeThresholdHours',
+  'attendance.autoClockOut', 'attendance.autoClockOutTime',
+  'attendance.enableGeolocation', 'attendance.requiredRadiusMeters',
+  'attendance.storeLatitude', 'attendance.storeLongitude',
 ]
 
 router.get('/', async (req, res, next) => {

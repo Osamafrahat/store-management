@@ -483,7 +483,15 @@ INSERT INTO store_settings ("key", value) VALUES
   ('currencySymbol', 'ج.م'),
   ('receiptFooter', 'Thank you for your purchase!'),
   ('lowStockThreshold', '10'),
-  ('loyaltyPointsPerCurrency', '1')
+  ('loyaltyPointsPerCurrency', '1'),
+  ('attendance.lateGraceMinutes', '5'),
+  ('attendance.overtimeThresholdHours', '8'),
+  ('attendance.autoClockOut', 'false'),
+  ('attendance.autoClockOutTime', '23:00'),
+  ('attendance.enableGeolocation', 'false'),
+  ('attendance.requiredRadiusMeters', '100'),
+  ('attendance.storeLatitude', '30.0444'),
+  ('attendance.storeLongitude', '31.2357')
 ON CONFLICT ("key") DO NOTHING;
 
 -- ============================================================
@@ -551,6 +559,13 @@ CREATE TABLE IF NOT EXISTS attendance (
   clock_out TIMESTAMPTZ,
   status TEXT NOT NULL DEFAULT 'present',
   overtime_hours NUMERIC DEFAULT 0,
+  total_hours NUMERIC DEFAULT 0,
+  break_start TIMESTAMPTZ,
+  break_end TIMESTAMPTZ,
+  break_minutes NUMERIC DEFAULT 0,
+  clock_in_location JSONB,
+  clock_out_location JSONB,
+  source TEXT DEFAULT 'manager',
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

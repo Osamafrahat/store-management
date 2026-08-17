@@ -33,6 +33,7 @@ import syncRouter from './routes/sync.js'
 import etaRouter from './routes/eta.js'
 import { backupRouter } from './routes/backup.js'
 import { startBackupScheduler } from './services/backupScheduler.js'
+import { startAttendanceCron } from './services/attendanceCron.js'
 import chatRouter from './routes/chat.js'
 import attendanceRouter from './routes/attendance.js'
 import leaveRouter from './routes/leave.js'
@@ -155,6 +156,7 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
   initAccounting()
   startBackupScheduler()
+  startAttendanceCron()
 })
 
 export default app

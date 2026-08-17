@@ -144,6 +144,7 @@ export default function Layout({ children }) {
   if (currentUser?.role === 'MANAGER') {
     hrItems.push({ name: t('nav.employees') || 'Employees', href: '/employees', icon: Users })
     hrItems.push({ name: t('nav.attendance') || 'Attendance', href: '/hr/attendance', icon: Clock })
+    hrItems.push({ name: t('nav.attendanceDashboard') || 'Attendance Dashboard', href: '/hr/attendance-dashboard', icon: BarChart3 })
     hrItems.push({ name: t('nav.leave') || 'Leave', href: '/hr/leave', icon: Calendar })
     hrItems.push({ name: t('nav.payroll') || 'Payroll', href: '/hr/payroll', icon: DollarSign })
     hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts', icon: Briefcase })

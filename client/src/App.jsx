@@ -31,6 +31,7 @@ const InvoicesPage = lazy(() => import('./pages/InvoicesPage'))
 const BackupPage = lazy(() => import('./pages/BackupPage'))
 const ChatPage = lazy(() => import('./pages/ChatPage'))
 const AttendancePage = lazy(() => import('./pages/AttendancePage'))
+const AttendanceDashboard = lazy(() => import('./pages/AttendanceDashboard'))
 const LeavePage = lazy(() => import('./pages/LeavePage'))
 const PayrollPage = lazy(() => import('./pages/PayrollPage'))
 const ShiftSchedulingPage = lazy(() => import('./pages/ShiftSchedulingPage'))
@@ -107,6 +108,7 @@ function App() {
                 <Route path="/backup" element={<ProtectedRoute><Layout><BackupPage /></Layout></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><Layout><ChatPage /></Layout></ProtectedRoute>} />
                 <Route path="/hr/attendance" element={<ProtectedRoute><Layout><AttendancePage /></Layout></ProtectedRoute>} />
+                <Route path="/hr/attendance-dashboard" element={<ProtectedRoute><Layout><AttendanceDashboard /></Layout></ProtectedRoute>} />
                 <Route path="/hr/leave" element={<ProtectedRoute><Layout><LeavePage /></Layout></ProtectedRoute>} />
                 <Route path="/hr/payroll" element={<ProtectedRoute><Layout><PayrollPage /></Layout></ProtectedRoute>} />
                 <Route path="/hr/shifts" element={<ProtectedRoute><Layout><ShiftSchedulingPage /></Layout></ProtectedRoute>} />
