@@ -356,7 +356,7 @@ export default function SettingsPage() {
                 onClick={() => setFormData(prev => ({ ...prev, 'attendance.enableGeolocation': prev['attendance.enableGeolocation'] === 'true' || prev['attendance.enableGeolocation'] === true ? 'false' : 'true' }))}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'bg-primary-600 shadow-inner' : 'bg-gray-300 dark:bg-gray-600'}`}
               >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200 ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'start-[26px]' : 'start-1'}`} />
               </button>
             </div>
 
