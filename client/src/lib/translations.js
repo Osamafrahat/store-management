@@ -555,6 +555,17 @@ export const translations = {
     'settings.loyaltyPointsPerCurrency': 'Points per Currency Unit',
     'settings.loyaltyPointsDesc': 'Number of loyalty points earned per unit of currency spent',
 
+    // Attendance Settings
+    'settings.attendance': 'Attendance',
+    'settings.lateGraceMinutes': 'Late Grace Minutes',
+    'settings.lateGraceMinutesHelper': 'Minutes after shift start before marking as late',
+    'settings.enableGeolocation': 'Enable Geolocation',
+    'settings.enableGeolocationHelper': 'Require GPS check-in for clock in/out',
+    'settings.requiredRadius': 'Required Radius (meters)',
+    'settings.requiredRadiusHelper': 'Maximum allowed distance from store for GPS check-in',
+    'settings.storeLatitude': 'Store Latitude',
+    'settings.storeLongitude': 'Store Longitude',
+
     // Notifications
     'notifications.title': 'Notifications',
     'notifications.subtitle': 'Stay on top of what matters',
@@ -1965,6 +1976,17 @@ export const translations = {
     'settings.loyaltyPoints': 'نقاط الولاء',
     'settings.loyaltyPointsPerCurrency': 'نقاط لكل وحدة عملة',
     'settings.loyaltyPointsDesc': 'عدد نقاط الولاء المكتسبة لكل وحدة عملة تم إنفاقها',
+
+    // Attendance Settings (Arabic)
+    'settings.attendance': 'الحضور والانصراف',
+    'settings.lateGraceMinutes': 'دقائق التخليص للتأخر',
+    'settings.lateGraceMinutesHelper': 'الدقائق بعد بداية الوردية قبل التأشير كمتأخر',
+    'settings.enableGeolocation': 'تفعيل الموقع الجغرافي',
+    'settings.enableGeolocationHelper': 'تطلب تسجيل الموقع عند الحضور والانصراف',
+    'settings.requiredRadius': 'نصف القطر المطلوب (متر)',
+    'settings.requiredRadiusHelper': 'الحد الأقصى للمسافة المسموحة من المتجر لتسجيل الموقع',
+    'settings.storeLatitude': 'خط عرض المتجر',
+    'settings.storeLongitude': 'خط طول المتجر',
 
     // Notifications
     'notifications.title': 'الإشعارات',

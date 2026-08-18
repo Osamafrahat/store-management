@@ -33,6 +33,11 @@ export const useAppStore = create((set, get) => ({
     currencySymbol: 'ج.م',
     receiptFooter: 'Thank you for your purchase!',
     lowStockThreshold: 10,
+    'attendance.lateGraceMinutes': 5,
+    'attendance.enableGeolocation': 'false',
+    'attendance.requiredRadiusMeters': 100,
+    'attendance.storeLatitude': '30.0444',
+    'attendance.storeLongitude': '31.2357',
   },
   settingsLoaded: false,
 

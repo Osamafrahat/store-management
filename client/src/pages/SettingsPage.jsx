@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { settingsApi } from '../lib/api'
 import { languageNames } from '../lib/translations'
-import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star, Upload, X } from 'lucide-react'
+import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star, Upload, X, MapPin } from 'lucide-react'
 
 export default function SettingsPage() {
   const { settings, updateSettings, language, setLanguage, t, toastSuccess, toastError } = useAppStore()
@@ -311,6 +311,101 @@ export default function SettingsPage() {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {t('settings.loyaltyPointsDesc')} {t('settings.loyaltyHelper')}
             </p>
+          </div>
+        </div>
+
+        {/* Attendance Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <MapPin className="w-5 h-5 text-green-600" />
+            </div>
+            <h2 className="text-lg font-semibold">{t('settings.attendance') || 'Attendance'}</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('settings.lateGraceMinutes') || 'Late Grace Minutes'}
+              </label>
+              <input
+                type="number"
+                name="attendance.lateGraceMinutes"
+                value={formData['attendance.lateGraceMinutes'] || 5}
+                onChange={handleChange}
+                min="0"
+                max="60"
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              />
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {t('settings.lateGraceMinutesHelper') || 'Minutes after shift start before marking as late'}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-750 rounded-lg">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t('settings.enableGeolocation') || 'Enable Geolocation'}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('settings.enableGeolocationHelper') || 'Require GPS check-in for clock in/out'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, 'attendance.enableGeolocation': prev['attendance.enableGeolocation'] === 'true' ? 'false' : 'true' }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData['attendance.enableGeolocation'] === 'true' ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData['attendance.enableGeolocation'] === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('settings.requiredRadius') || 'Required Radius (meters)'}
+              </label>
+              <input
+                type="number"
+                name="attendance.requiredRadiusMeters"
+                value={formData['attendance.requiredRadiusMeters'] || 100}
+                onChange={handleChange}
+                min="10"
+                max="1000"
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              />
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {t('settings.requiredRadiusHelper') || 'Maximum allowed distance from store for GPS check-in'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.storeLatitude') || 'Store Latitude'}
+                </label>
+                <input
+                  type="number"
+                  name="attendance.storeLatitude"
+                  value={formData['attendance.storeLatitude'] || '30.0444'}
+                  onChange={handleChange}
+                  step="0.0001"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('settings.storeLongitude') || 'Store Longitude'}
+                </label>
+                <input
+                  type="number"
+                  name="attendance.storeLongitude"
+                  value={formData['attendance.storeLongitude'] || '31.2357'}
+                  onChange={handleChange}
+                  step="0.0001"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
