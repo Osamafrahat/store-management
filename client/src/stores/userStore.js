@@ -182,7 +182,10 @@ export const useUserStore = create(
       // Logout
       logout: () => {
         authApi.logout().catch(() => {})
+        // Clear all auth-related localStorage keys
         localStorage.removeItem('auth_token')
+        localStorage.removeItem('user-storage')
+        localStorage.removeItem('cart-storage')
         set({
           currentUser: null,
           isAuthenticated: false,

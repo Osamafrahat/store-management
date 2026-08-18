@@ -111,14 +111,6 @@ export default function LoginPage() {
               {loading ? t('users.signingIn') : t('users.signIn')}
             </button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('users.demoCredentials')}</p>
-            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-              <p><span className="font-medium">Admin:</span> admin / admin123</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

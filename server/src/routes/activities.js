@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import supabase from '../db/supabase.js'
+import { sanitizeSearch } from '../helpers/search.js'
 
 const router = Router()
 
@@ -26,7 +27,8 @@ router.get('/', managerOnly, async (req, res) => {
     if (entity_type) query = query.eq('entity_type', entity_type)
     if (user_id) query = query.eq('user_id', user_id)
     if (search) {
-      query = query.or(`user_name.ilike.%${search}%,entity_name.ilike.%${search}%,action.ilike.%${search}%`)
+      const s = sanitizeSearch(search)
+      if (s) query = query.or(`user_name.ilike.%${s}%,entity_name.ilike.%${s}%,action.ilike.%${s}%`)
     }
 
     const { data, error, count } = await query

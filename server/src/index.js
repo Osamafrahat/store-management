@@ -47,14 +47,33 @@ const PORT = process.env.PORT || 3001
 app.set('trust proxy', 1)
 
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    }
+  },
   crossOriginEmbedderPolicy: false
 }))
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean)
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (server-to-server, curl, Postman)
+    if (!origin) return callback(null, true)
+    
+    if (allowedOrigins.length === 0) {
+      // No origins configured — reject all browser requests
+      return callback(new Error('CORS not configured'))
+    }
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))

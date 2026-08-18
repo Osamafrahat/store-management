@@ -173,6 +173,14 @@ router.put('/profile', authenticateToken, [
 
 router.post('/logout', authenticateToken, async (req, res) => {
   try {
+    // Invalidate session token server-side
+    if (req.user?.id) {
+      await supabase
+        .from('users')
+        .update({ session_token: null, updated_at: new Date().toISOString() })
+        .eq('id', req.user.id)
+    }
+
     logActivity({
       user_id: req.user?.id,
       user_name: req.user?.full_name || req.user?.username,

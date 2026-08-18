@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import supabase from '../db/supabase.js'
 import { createJournalEntry, seedChartOfAccounts } from '../services/accountingEngine.js'
+import { sanitizeSearch } from '../helpers/search.js'
 
 const router = Router()
 
@@ -31,7 +32,10 @@ router.get('/', async (req, res) => {
     if (method) query = query.eq('method', method)
     if (date_from) query = query.gte('payment_date', date_from)
     if (date_to) query = query.lte('payment_date', date_to)
-    if (search) query = query.or(`payment_number.ilike.%${search}%,reference.ilike.%${search}%,notes.ilike.%${search}%`)
+    if (search) {
+      const s = sanitizeSearch(search)
+      if (s) query = query.or(`payment_number.ilike.%${s}%,reference.ilike.%${s}%,notes.ilike.%${s}%`)
+    }
 
     const { data, error, count } = await query
     if (error) throw error

@@ -65,9 +65,19 @@ router.post('/sql', async (req, res) => {
   }
 })
 
+// Sanitize backup filename - prevent path traversal
+function isValidBackupFilename(filename) {
+  if (!filename || typeof filename !== 'string') return false
+  // Only allow alphanumeric, dots, hyphens, underscores
+  return /^[a-zA-Z0-9._-]+$/.test(filename) && !filename.includes('..')
+}
+
 router.get('/download/:filename', async (req, res) => {
   try {
     const { filename } = req.params
+    if (!isValidBackupFilename(filename)) {
+      return res.status(400).json({ error: 'Invalid filename' })
+    }
     const jsonPath = path.join(BACKUP_DIR, 'json', filename)
     const sqlPath = path.join(BACKUP_DIR, 'sql', filename)
 
@@ -88,6 +98,9 @@ router.post('/restore', async (req, res) => {
   try {
     const { filename } = req.body
     if (!filename) return res.status(400).json({ error: 'Filename is required' })
+    if (!isValidBackupFilename(filename)) {
+      return res.status(400).json({ error: 'Invalid filename' })
+    }
 
     const jsonPath = path.join(BACKUP_DIR, 'json', filename)
     try { await fs.access(jsonPath) } catch {
@@ -105,6 +118,9 @@ router.post('/restore', async (req, res) => {
 
 router.delete('/:filename', async (req, res) => {
   try {
+    if (!isValidBackupFilename(req.params.filename)) {
+      return res.status(400).json({ error: 'Invalid filename' })
+    }
     await deleteBackup(req.params.filename)
     log(req, { action: 'deleted', entity_type: 'backup', entity_name: req.params.filename })
     res.json({ message: 'Backup deleted' })
@@ -180,6 +196,9 @@ router.post('/cloud/upload', async (req, res) => {
 
 router.get('/cloud/download/:filename', async (req, res) => {
   try {
+    if (!isValidBackupFilename(req.params.filename)) {
+      return res.status(400).json({ error: 'Invalid filename' })
+    }
     const data = await downloadFromCloud(req.params.filename)
     res.setHeader('Content-Type', 'application/octet-stream')
     res.setHeader('Content-Disposition', `attachment; filename="${req.params.filename}"`)
@@ -193,6 +212,9 @@ router.get('/cloud/download/:filename', async (req, res) => {
 
 router.delete('/cloud/:filename', async (req, res) => {
   try {
+    if (!isValidBackupFilename(req.params.filename)) {
+      return res.status(400).json({ error: 'Invalid filename' })
+    }
     await deleteCloudBackup(req.params.filename)
     log(req, { action: 'deleted', entity_type: 'cloud_backup', entity_name: req.params.filename })
     res.json({ message: 'Cloud backup deleted' })

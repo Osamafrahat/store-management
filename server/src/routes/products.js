@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { sanitizeSearch } from '../helpers/search.js'
 
 const router = Router()
 
@@ -26,7 +27,8 @@ router.get('/', async (req, res, next) => {
       query = query.eq('is_active', is_active === 'true')
     }
     if (search) {
-      query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,barcode.ilike.%${search}%`)
+      const s = sanitizeSearch(search)
+      if (s) query = query.or(`name.ilike.%${s}%,sku.ilike.%${s}%,barcode.ilike.%${s}%`)
     }
 
     query = query.order('name')

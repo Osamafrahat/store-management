@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from './stores/appStore'
 import { useUserStore } from './stores/userStore'
