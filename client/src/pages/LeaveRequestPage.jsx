@@ -123,13 +123,23 @@ export default function LeaveRequestPage() {
         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('hr.leave.balances') || 'Leave Balances'}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {balances.map(b => (
-              <div key={b.id} className="text-center p-3 bg-gray-50 dark:bg-gray-750 rounded-lg border border-gray-100 dark:border-gray-600">
-                <div className="text-lg font-bold text-gray-900 dark:text-white">{b.remaining_days}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{b.leave_types?.name}</div>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{b.used_days}/{b.total_days} {t('hr.leave.used') || 'used'}</div>
-              </div>
-            ))}
+            {balances.map(b => {
+              const pct = b.total_days > 0 ? Math.round((b.used_days / b.total_days) * 100) : 0
+              const barColor = pct >= 80 ? 'bg-red-500' : pct >= 50 ? 'bg-yellow-500' : 'bg-green-500'
+              return (
+                <div key={b.id} className="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{b.leave_types?.name}</span>
+                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${pct >= 80 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : pct >= 50 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>{pct}%</span>
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{b.remaining_days}<span className="text-sm font-normal text-gray-400 dark:text-gray-500 ml-1">{t('hr.leave.days') || 'days'}</span></div>
+                  <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(pct, 100)}%` }}></div>
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{b.used_days}/{b.total_days} {t('hr.leave.used') || 'used'}</div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -143,20 +153,21 @@ export default function LeaveRequestPage() {
       ) : (
         <div className="space-y-3">
           {requests.map(req => (
-            <div key={req.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4">
+            <div key={req.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <span className="font-medium text-gray-900 dark:text-white">{req.leave_types?.name}</span>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[req.status] || STATUS_COLORS.pending}`}>
                       {t(`hr.leave.status.${req.status}`) || req.status}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(req.start_date)} → {formatDate(req.end_date)} · {req.days} {t('hr.leave.days') || 'days'}
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(req.start_date)} → {formatDate(req.end_date)}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{req.days} {t('hr.leave.days') || 'days'}</span>
                   </div>
                   {req.reason && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{req.reason}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-2 pl-5 border-l-2 border-gray-200 dark:border-gray-600">{req.reason}</div>
                   )}
                 </div>
                 <div className="text-xs text-gray-400 dark:text-gray-500">
