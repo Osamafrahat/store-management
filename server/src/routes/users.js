@@ -24,14 +24,20 @@ router.get('/', async (req, res, next) => {
 
     if (error) throw error
 
-    // Enrich with employee data
-    const enriched = await Promise.all((data || []).map(async (user) => {
-      let employee = null
-      if (user.employee_id) {
-        const { data: emp } = await supabase.from('employees').select('id, name, role, phone, email, is_active').eq('id', user.employee_id).single()
-        employee = emp || null
-      }
-      return { ...user, employee }
+    // Batch-fetch all linked employees in one query
+    const empIds = (data || []).filter(u => u.employee_id).map(u => u.employee_id)
+    let employeesMap = {}
+    if (empIds.length > 0) {
+      const { data: emps } = await supabase
+        .from('employees')
+        .select('id, name, role, phone, email, is_active')
+        .in('id', empIds)
+      ;(emps || []).forEach(e => { employeesMap[e.id] = e })
+    }
+
+    const enriched = (data || []).map(user => ({
+      ...user,
+      employee: user.employee_id ? (employeesMap[user.employee_id] || null) : null
     }))
 
     res.json(enriched)
@@ -71,7 +77,11 @@ router.get('/:id', [
 // Create user
 router.post('/', [
   body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+    .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+    .matches(/[0-9]/).withMessage('Password must contain at least one number'),
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
   body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
 ], validate, async (req, res, next) => {
@@ -123,7 +133,11 @@ router.put('/:id', [
   param('id').isNumeric().withMessage('Invalid user ID'),
   body('fullName').optional().trim().notEmpty().withMessage('Full name cannot be empty'),
   body('role').optional().isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
-  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').optional()
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+    .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+    .matches(/[0-9]/).withMessage('Password must contain at least one number'),
 ], validate, async (req, res, next) => {
   try {
     const { data: existing } = await supabase

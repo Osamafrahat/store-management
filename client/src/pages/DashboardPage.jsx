@@ -104,7 +104,8 @@ export default function DashboardPage() {
       }
 
       if (hasPermission(PERMISSIONS.INVENTORY_VIEW)) {
-        const products = results[resultIndex]?.data || []
+        const productsRes = results[resultIndex]
+        const products = productsRes?.data?.data || productsRes?.data || []
         const lowStock = products.filter(p => p.stock_quantity <= (p.low_stock_threshold || 10))
         setStats(prev => ({
           ...prev,

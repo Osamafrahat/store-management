@@ -37,7 +37,9 @@ export default function InventoryPage() {
         categoriesApi.getAll(),
         suppliersApi.getAll()
       ])
-      setProducts(productsRes.data)
+      // Handle both paginated { data: [...] } and plain array responses
+      const productsData = productsRes.data?.data || productsRes.data || []
+      setProducts(productsData)
       setCategories(categoriesRes.data)
       setSuppliers(suppliersRes.data)
     } catch (err) {

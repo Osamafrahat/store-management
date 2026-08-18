@@ -19,7 +19,7 @@ router.get('/', async (req, res, next) => {
 
     let query = supabase
       .from('expenses')
-      .select('*')
+      .select('*, users(full_name)')
       .order('created_at', { ascending: false })
 
     if (start_date) {
@@ -35,17 +35,7 @@ router.get('/', async (req, res, next) => {
     const { data, error } = await query
     if (error) throw error
 
-    // Enrich with user data
-    const enriched = await Promise.all((data || []).map(async (expense) => {
-      let user_name = null
-      if (expense.recorded_by) {
-        const { data: u } = await supabase.from('users').select('full_name').eq('id', expense.recorded_by).single()
-        user_name = u?.full_name || null
-      }
-      return { ...expense, users: user_name ? { full_name: user_name } : null }
-    }))
-
-    res.json(enriched)
+    res.json(data || [])
   } catch (err) {
     next(err)
   }

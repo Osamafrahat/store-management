@@ -87,12 +87,13 @@ export default function POSPage() {
             categoriesApi.getAll(),
             customersApi.getAll()
           ])
-          setProducts(productsRes.data)
+          const productsData = productsRes.data?.data || productsRes.data || []
+          setProducts(productsData)
           setCategories(categoriesRes.data)
           setCustomers(customersRes.data)
 
           await cacheData({
-            products: productsRes.data,
+            products: productsData,
             categories: categoriesRes.data,
             customers: customersRes.data,
           })

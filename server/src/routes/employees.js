@@ -29,6 +29,18 @@ const validate = (req, res, next) => {
 // Get all employees
 router.get('/', async (req, res, next) => {
   try {
+    // Use subquery to get linked user data in one query
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, username, full_name, role, employee_id')
+      .not('employee_id', 'is', null)
+
+    // Index users by employee_id for fast lookup
+    const usersByEmployeeId = {}
+    ;(usersData || []).forEach(u => {
+      if (u.employee_id) usersByEmployeeId[u.employee_id] = u
+    })
+
     const { data, error } = await supabase
       .from('employees')
       .select('*')
@@ -36,14 +48,9 @@ router.get('/', async (req, res, next) => {
 
     if (error) throw error
 
-    // Enrich with user data via users.employee_id
-    const enriched = await Promise.all((data || []).map(async (emp) => {
-      let user = null
-      try {
-        const { data: u } = await supabase.from('users').select('id, username, full_name, role').eq('employee_id', emp.id).maybeSingle()
-        user = u || null
-      } catch { /* no linked user */ }
-      return { ...emp, user }
+    const enriched = (data || []).map(emp => ({
+      ...emp,
+      user: usersByEmployeeId[emp.id] || null
     }))
 
     res.json(enriched)

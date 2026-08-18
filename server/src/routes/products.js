@@ -16,9 +16,10 @@ const validate = (req, res, next) => {
 // Get all products
 router.get('/', async (req, res, next) => {
   try {
-    const { category_id, is_active, search } = req.query
+    const { category_id, is_active, search, page = 1, limit = 100 } = req.query
+    const offset = (page - 1) * limit
 
-    let query = supabase.from('products').select('*, suppliers(name)')
+    let query = supabase.from('products').select('*, suppliers(name)', { count: 'exact' })
 
     if (category_id) {
       query = query.eq('category_id', category_id)
@@ -31,12 +32,12 @@ router.get('/', async (req, res, next) => {
       if (s) query = query.or(`name.ilike.%${s}%,sku.ilike.%${s}%,barcode.ilike.%${s}%`)
     }
 
-    query = query.order('name')
+    query = query.order('name').range(offset, offset + parseInt(limit) - 1)
 
-    const { data, error } = await query
+    const { data, error, count } = await query
     if (error) throw error
 
-    res.json(data)
+    res.json({ data, total: count, page: parseInt(page), limit: parseInt(limit) })
   } catch (err) {
     next(err)
   }

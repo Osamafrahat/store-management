@@ -10,7 +10,12 @@ router.get('/', async (req, res, next) => {
 
     let query = supabase
       .from('orders')
-      .select('*')
+      .select(`
+        *,
+        users(full_name),
+        customers(name),
+        refunds(id, amount, is_partial)
+      `)
       .order('created_at', { ascending: false })
       .limit(parseInt(limit))
 
@@ -24,35 +29,13 @@ router.get('/', async (req, res, next) => {
     const { data, error } = await query
     if (error) throw error
 
-    // Enrich with user and customer names
-    const enriched = await Promise.all((data || []).map(async (order) => {
-      let user_name = null
-      let customer_name = null
-      if (order.user_id) {
-        const { data: u } = await supabase.from('users').select('full_name').eq('id', order.user_id).single()
-        user_name = u?.full_name || null
-      }
-      if (order.customer_id) {
-        const { data: c } = await supabase.from('customers').select('name').eq('id', order.customer_id).single()
-        customer_name = c?.name || null
-      }
+    // Enrich with refund summary
+    const enriched = (data || []).map(order => {
+      const refunds = order.refunds || []
+      const total_refunded = refunds.reduce((sum, r) => sum + parseFloat(r.amount), 0)
+      const refund_count = refunds.length
+      const has_partial_refund = refunds.some(r => r.is_partial)
 
-      // Get refund summary for this order
-      let total_refunded = 0
-      let refund_count = 0
-      let has_partial_refund = false
-      const { data: refunds } = await supabase
-        .from('refunds')
-        .select('id, amount, is_partial')
-        .eq('order_id', order.id)
-
-      if (refunds && refunds.length > 0) {
-        refund_count = refunds.length
-        total_refunded = refunds.reduce((sum, r) => sum + parseFloat(r.amount), 0)
-        has_partial_refund = refunds.some(r => r.is_partial)
-      }
-
-      // Determine refund status
       let refund_status = 'paid'
       if (has_partial_refund) {
         refund_status = 'partial'
@@ -62,14 +45,12 @@ router.get('/', async (req, res, next) => {
 
       return {
         ...order,
-        users: user_name ? { full_name: user_name } : null,
-        customers: customer_name ? { name: customer_name } : null,
         total_refunded,
         refund_count,
         has_partial_refund,
         refund_status,
       }
-    }))
+    })
 
     res.json(enriched)
   } catch (err) {

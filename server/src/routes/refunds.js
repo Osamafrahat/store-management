@@ -17,33 +17,16 @@ router.get('/', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('refunds')
-      .select('*')
+      .select(`
+        *,
+        orders(order_number, total),
+        users(full_name)
+      `)
       .order('created_at', { ascending: false })
 
     if (error) throw error
 
-    // Enrich with order and user data
-    const enriched = await Promise.all((data || []).map(async (refund) => {
-      let order_number = null
-      let order_total = null
-      if (refund.order_id) {
-        const { data: o } = await supabase.from('orders').select('order_number, total').eq('id', refund.order_id).single()
-        order_number = o?.order_number || null
-        order_total = o?.total || null
-      }
-      let user_name = null
-      if (refund.processed_by) {
-        const { data: u } = await supabase.from('users').select('full_name').eq('id', refund.processed_by).single()
-        user_name = u?.full_name || null
-      }
-      return {
-        ...refund,
-        orders: order_number ? { order_number, total: order_total } : null,
-        users: user_name ? { full_name: user_name } : null
-      }
-    }))
-
-    res.json(enriched)
+    res.json(data || [])
   } catch (err) {
     next(err)
   }
