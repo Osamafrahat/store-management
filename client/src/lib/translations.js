@@ -565,6 +565,15 @@ export const translations = {
     'settings.requiredRadiusHelper': 'Maximum allowed distance from store for GPS check-in',
     'settings.storeLatitude': 'Store Latitude',
     'settings.storeLongitude': 'Store Longitude',
+    'settings.storeLocation': 'Store Location',
+    'settings.storeLocationHelper': 'GPS coordinates for geolocation check-in',
+    'settings.useMyLocation': 'Use My Location',
+    'settings.latitude': 'Latitude',
+    'settings.longitude': 'Longitude',
+    'settings.viewOnMap': 'View on Google Maps',
+    'settings.locationCaptured': 'Location captured successfully',
+    'settings.locationFailed': 'Failed to get location',
+    'settings.geolocationNotSupported': 'Geolocation is not supported by your browser',
 
     // Notifications
     'notifications.title': 'Notifications',
@@ -1987,6 +1996,15 @@ export const translations = {
     'settings.requiredRadiusHelper': 'الحد الأقصى للمسافة المسموحة من المتجر لتسجيل الموقع',
     'settings.storeLatitude': 'خط عرض المتجر',
     'settings.storeLongitude': 'خط طول المتجر',
+    'settings.storeLocation': 'موقع المتجر',
+    'settings.storeLocationHelper': 'إحداثيات GPS لتسجيل الموقع',
+    'settings.useMyLocation': 'استخدم موقعي',
+    'settings.latitude': 'خط العرض',
+    'settings.longitude': 'خط الطول',
+    'settings.viewOnMap': 'عرض على خرائط جوجل',
+    'settings.locationCaptured': 'تم التقاط الموقع بنجاح',
+    'settings.locationFailed': 'فشل في الحصول على الموقع',
+    'settings.geolocationNotSupported': 'الموقع الجغرافي غير مدعوم من المتصفح',
 
     // Notifications
     'notifications.title': 'الإشعارات',

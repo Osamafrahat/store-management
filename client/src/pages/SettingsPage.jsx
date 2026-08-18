@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { settingsApi } from '../lib/api'
 import { languageNames } from '../lib/translations'
-import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star, Upload, X, MapPin } from 'lucide-react'
+import { Save, Store, Percent, Receipt, AlertTriangle, Globe, Star, Upload, X, MapPin, Navigation } from 'lucide-react'
 
 export default function SettingsPage() {
   const { settings, updateSettings, language, setLanguage, t, toastSuccess, toastError } = useAppStore()
@@ -378,33 +378,85 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t('settings.storeLatitude') || 'Store Latitude'}
-                </label>
-                <input
-                  type="number"
-                  name="attendance.storeLatitude"
-                  value={formData['attendance.storeLatitude'] || '30.0444'}
-                  onChange={handleChange}
-                  step="0.0001"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                />
+            <div className="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('settings.storeLocation') || 'Store Location'}
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('settings.storeLocationHelper') || 'GPS coordinates for geolocation check-in'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!navigator.geolocation) {
+                      toastError(t('settings.geolocationNotSupported') || 'Geolocation is not supported by your browser')
+                      return
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        const lat = pos.coords.latitude.toFixed(4)
+                        const lng = pos.coords.longitude.toFixed(4)
+                        setFormData(prev => ({
+                          ...prev,
+                          'attendance.storeLatitude': lat,
+                          'attendance.storeLongitude': lng,
+                        }))
+                        toastSuccess(t('settings.locationCaptured') || 'Location captured successfully')
+                      },
+                      (err) => {
+                        toastError(t('settings.locationFailed') || 'Failed to get location: ' + err.message)
+                      },
+                      { enableHighAccuracy: true, timeout: 10000 }
+                    )
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  {t('settings.useMyLocation') || 'Use My Location'}
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t('settings.storeLongitude') || 'Store Longitude'}
-                </label>
-                <input
-                  type="number"
-                  name="attendance.storeLongitude"
-                  value={formData['attendance.storeLongitude'] || '31.2357'}
-                  onChange={handleChange}
-                  step="0.0001"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {t('settings.latitude') || 'Latitude'}
+                  </label>
+                  <input
+                    type="number"
+                    name="attendance.storeLatitude"
+                    value={formData['attendance.storeLatitude'] || '30.0444'}
+                    onChange={handleChange}
+                    step="0.0001"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {t('settings.longitude') || 'Longitude'}
+                  </label>
+                  <input
+                    type="number"
+                    name="attendance.storeLongitude"
+                    value={formData['attendance.storeLongitude'] || '31.2357'}
+                    onChange={handleChange}
+                    step="0.0001"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                  />
+                </div>
               </div>
+              {(formData['attendance.storeLatitude'] && formData['attendance.storeLongitude']) && (
+                <a
+                  href={`https://www.google.com/maps?q=${formData['attendance.storeLatitude']},${formData['attendance.storeLongitude']}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  <MapPin className="w-3 h-3" />
+                  {t('settings.viewOnMap') || 'View on Google Maps'}
+                </a>
+              )}
             </div>
           </div>
         </div>
