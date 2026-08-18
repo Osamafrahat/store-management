@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useAppStore } from '../../stores/appStore'
+import html2pdf from 'html2pdf.js'
 
 export default function InventoryPrintSheet({ products, categories, settings, user }) {
   const { t } = useAppStore()
+  const [generating, setGenerating] = useState(false)
 
   const totalProducts = products.length
   const totalQuantity = products.reduce((sum, p) => sum + p.stock_quantity, 0)
@@ -12,91 +15,57 @@ export default function InventoryPrintSheet({ products, categories, settings, us
     return cat ? cat.name : '-'
   }
 
-  const handlePrint = () => {
-    const printContent = document.getElementById('inventory-print-content').innerHTML
-    const printWindow = window.open('', '_blank', 'width=1200,height=800')
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${t('print.inventoryReport')} - ${settings?.storeName || 'Store'}</title>
-        <style>
-          @page { size: A4 portrait; margin: 10mm 12mm; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #1f2937;
-            line-height: 1.3;
-            font-size: 10px;
-          }
-          .print-header { border-bottom: 3px solid #2563eb; padding-bottom: 8px; margin-bottom: 10px; }
-          .print-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
-          .summary-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; text-align: center; }
-          .summary-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-          .summary-value { font-size: 14px; font-weight: 700; margin: 2px 0; }
-          .summary-sublabel { font-size: 7px; color: #94a3b8; }
+  const handleDownloadPDF = () => {
+    setGenerating(true)
+    const element = document.getElementById('inventory-print-content')
 
-          .print-section { margin-bottom: 10px; }
-          .section-title { font-size: 10px; font-weight: 700; color: #1e40af; border-bottom: 2px solid #dbeafe; padding-bottom: 3px; margin-bottom: 5px; }
-
-          .summary-table, .product-table { width: 100%; border-collapse: collapse; font-size: 9px; }
-          .summary-table th, .product-table th { background: #1e40af; color: white; padding: 3px 4px; text-align: left; font-weight: 600; font-size: 7.5px; text-transform: uppercase; }
-          .summary-table td, .product-table td { padding: 2px 4px; border-bottom: 1px solid #e5e7eb; }
-          .product-table tbody tr:nth-child(even) { background: #f9fafb; }
-          .status-badge { display: inline-block; padding: 1px 4px; border-radius: 8px; font-size: 7px; font-weight: 600; }
-          .checkbox-square { display: inline-block; width: 10px; height: 10px; border: 1.5px solid #374151; border-radius: 2px; }
-          .bg-green-50 { background: #dcfce7; } .text-green-600 { color: #16a34a; }
-          .bg-orange-50 { background: #fff7ed; } .text-orange-600 { color: #ea580c; }
-          .bg-red-50 { background: #fef2f2; } .text-red-600 { color: #dc2626; }
-          .totals-row { background: #1e40af !important; color: white; }
-          .totals-row td { padding: 4px; border: none; }
-          .print-footer { border-top: 1px solid #e5e7eb; padding-top: 5px; margin-top: 6px; }
-          .text-right { text-align: right; }
-          .font-bold { font-weight: 700; }
-          .font-medium { font-weight: 500; }
-        </style>
-      </head>
-      <body>
-        ${printContent}
-      </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.onload = () => {
-      printWindow.print()
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     }
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      setGenerating(false)
+    }).catch(() => {
+      setGenerating(false)
+    })
   }
 
   return (
     <>
       <div className="mb-4">
         <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          onClick={handleDownloadPDF}
+          disabled={generating}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          {t('print.printInventoryReport')}
+          {generating ? (t('print.generating') || 'Generating PDF...') : (t('print.downloadPDF') || 'Download PDF')}
         </button>
       </div>
 
-      <div id="inventory-print-content">
+      <div id="inventory-print-content" style={{ color: '#000', fontFamily: 'Arial, Helvetica, sans-serif' }}>
         {/* Header */}
-        <div className="print-header">
+        <div style={{ borderBottom: '3px solid #000', paddingBottom: '8px', marginBottom: '10px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h1 style={{ fontSize: '16px', fontWeight: 'bold' }}>{settings?.storeName || 'Store POS'}</h1>
-              <p style={{ fontSize: '9px', color: '#6b7280' }}>{settings?.storeAddress || ''}</p>
-              <p style={{ fontSize: '9px', color: '#6b7280' }}>{settings?.storePhone || ''}</p>
+              <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', margin: 0 }}>{settings?.storeName || 'Store POS'}</h1>
+              <p style={{ fontSize: '9px', color: '#000', margin: '2px 0' }}>{settings?.storeAddress || ''}</p>
+              <p style={{ fontSize: '9px', color: '#000', margin: '2px 0' }}>{settings?.storePhone || ''}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 'bold', color: '#2563eb' }}>{t('print.gard')}</h2>
-              <p style={{ fontSize: '10px', color: '#6b7280' }}>{t('print.gardAr')}</p>
-              <p style={{ fontSize: '8px', color: '#9ca3af', marginTop: '2px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#000', margin: 0 }}>{t('print.gard')}</h2>
+              <p style={{ fontSize: '10px', color: '#000', margin: '2px 0' }}>{t('print.gardAr')}</p>
+              <p style={{ fontSize: '8px', color: '#000', marginTop: '2px' }}>
                 {t('print.date')} {new Date().toLocaleDateString('en-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
-              <p style={{ fontSize: '8px', color: '#9ca3af' }}>
+              <p style={{ fontSize: '8px', color: '#000' }}>
                 {t('print.time')} {new Date().toLocaleTimeString('en-EG')}
               </p>
             </div>
@@ -104,30 +73,30 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         </div>
 
         {/* Summary Cards */}
-        <div className="print-summary">
-          <div className="summary-card">
-            <div className="summary-label">{t('print.totalProducts')}</div>
-            <div className="summary-value">{totalProducts}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
+          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '6px', textAlign: 'center' }}>
+            <div style={{ fontSize: '8px', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('print.totalProducts')}</div>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalProducts}</div>
           </div>
-          <div className="summary-card">
-            <div className="summary-label">{t('print.totalItems')}</div>
-            <div className="summary-value">{totalQuantity.toLocaleString()}</div>
+          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '6px', textAlign: 'center' }}>
+            <div style={{ fontSize: '8px', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('print.totalItems')}</div>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalQuantity.toLocaleString()}</div>
           </div>
-          <div className="summary-card">
-            <div className="summary-label">{t('print.lowStock')}</div>
-            <div className="summary-value" style={{ color: lowStockCount > 0 ? '#dc2626' : '#16a34a' }}>{lowStockCount}</div>
+          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '6px', textAlign: 'center' }}>
+            <div style={{ fontSize: '8px', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('print.lowStock')}</div>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: lowStockCount > 0 ? '#000' : '#000', margin: '2px 0' }}>{lowStockCount}</div>
           </div>
         </div>
 
         {/* Category Breakdown */}
-        <div className="print-section">
-          <h3 className="section-title">{t('print.stockByCategory')}</h3>
-          <table className="summary-table">
+        <div style={{ marginBottom: '10px' }}>
+          <h3 style={{ fontSize: '10px', fontWeight: '700', color: '#000', borderBottom: '2px solid #000', paddingBottom: '3px', marginBottom: '5px' }}>{t('print.stockByCategory')}</h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
             <thead>
               <tr>
-                <th>{t('print.category')}</th>
-                <th>{t('print.products')}</th>
-                <th>{t('print.quantity')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '8px' }}>{t('print.category')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '8px' }}>{t('print.products')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '8px' }}>{t('print.quantity')}</th>
               </tr>
             </thead>
             <tbody>
@@ -137,9 +106,9 @@ export default function InventoryPrintSheet({ products, categories, settings, us
                 if (catProducts.length === 0) return null
                 return (
                   <tr key={cat.id}>
-                    <td style={{ fontWeight: 500 }}>{cat.name}</td>
-                    <td>{catProducts.length}</td>
-                    <td>{catQty.toLocaleString()}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', fontWeight: 500, color: '#000' }}>{cat.name}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>{catProducts.length}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>{catQty.toLocaleString()}</td>
                   </tr>
                 )
               })}
@@ -148,70 +117,70 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         </div>
 
         {/* Product List */}
-        <div className="print-section">
-          <h3 className="section-title">{t('print.completeProductList')}</h3>
-          <table className="product-table">
+        <div style={{ marginBottom: '10px' }}>
+          <h3 style={{ fontSize: '10px', fontWeight: '700', color: '#000', borderBottom: '2px solid #000', paddingBottom: '3px', marginBottom: '5px' }}>{t('print.completeProductList')}</h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8px' }}>
             <thead>
               <tr>
-                <th>#</th>
-                <th>{t('print.productName')}</th>
-                <th>{t('print.sku')}</th>
-                <th>{t('print.barcode')}</th>
-                <th>{t('print.category')}</th>
-                <th>{t('print.unit') || 'Unit'}</th>
-                <th>{t('print.qty')}</th>
-                <th style={{ textAlign: 'center' }}>✓</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>#</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>{t('print.productName')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>{t('print.sku')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>{t('print.barcode')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>{t('print.category')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>{t('print.unit') || 'Unit'}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'left', fontWeight: '600', fontSize: '7px' }}>{t('print.qty')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '3px 4px', textAlign: 'center', fontWeight: '600', fontSize: '7px' }}>✓</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product, index) => {
                 return (
                   <tr key={product.id}>
-                    <td>{index + 1}</td>
-                    <td style={{ fontWeight: 500 }}>{product.name}</td>
-                    <td style={{ fontSize: '8px' }}>{product.sku || '-'}</td>
-                    <td style={{ fontSize: '8px' }}>{product.barcode || '-'}</td>
-                    <td>{getCategoryName(product.category_id)}</td>
-                    <td style={{ fontSize: '8px' }}>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>{index + 1}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', fontWeight: 500, color: '#000' }}>{product.name}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>{product.sku || '-'}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>{product.barcode || '-'}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>{getCategoryName(product.category_id)}</td>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', color: '#000' }}>
                       {product.unit_of_measure === 'kilo' ? 'kg' :
                        product.unit_of_measure === 'liter' ? 'L' :
                        product.unit_of_measure === 'meter' ? 'm' :
                        'Pcs'}
                     </td>
-                    <td style={{ fontWeight: 700, color: product.stock_quantity <= product.low_stock_threshold ? '#dc2626' : 'inherit' }}>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', fontWeight: 700, color: '#000' }}>
                       {product.stock_quantity}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span className="checkbox-square"></span>
+                    <td style={{ padding: '2px 4px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>
+                      <span style={{ display: 'inline-block', width: '10px', height: '10px', border: '1.5px solid #000', borderRadius: '2px' }}></span>
                     </td>
                   </tr>
                 )
               })}
             </tbody>
             <tfoot>
-              <tr className="totals-row">
-                <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>{t('print.totals')}</td>
-                <td style={{ fontWeight: 'bold' }}>{totalQuantity.toLocaleString()}</td>
-                <td></td>
+              <tr>
+                <td colSpan="6" style={{ padding: '4px', background: '#000', color: '#fff', textAlign: 'right', fontWeight: 'bold' }}>{t('print.totals')}</td>
+                <td style={{ padding: '4px', background: '#000', color: '#fff', fontWeight: 'bold' }}>{totalQuantity.toLocaleString()}</td>
+                <td style={{ padding: '4px', background: '#000', color: '#fff' }}></td>
               </tr>
             </tfoot>
           </table>
         </div>
 
         {/* Footer */}
-        <div className="print-footer">
+        <div style={{ borderTop: '1px solid #000', paddingTop: '5px', marginTop: '6px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: '7px', color: '#9ca3af' }}>{t('print.generatedBy')}</p>
-              <p style={{ fontSize: '7px', color: '#9ca3af' }}>{settings?.storeName || 'Store POS'}</p>
+              <p style={{ fontSize: '7px', color: '#000' }}>{t('print.generatedBy')}</p>
+              <p style={{ fontSize: '7px', color: '#000' }}>{settings?.storeName || 'Store POS'}</p>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '8px', color: '#374151', fontWeight: 600 }}>
+              <p style={{ fontSize: '8px', color: '#000', fontWeight: 600 }}>
                 {t('print.preparedBy')} {user?.full_name || 'Unknown User'}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '7px', color: '#9ca3af' }}>{t('print.printed')} {new Date().toLocaleString()}</p>
+              <p style={{ fontSize: '7px', color: '#000' }}>{t('print.printed')} {new Date().toLocaleString()}</p>
             </div>
           </div>
         </div>

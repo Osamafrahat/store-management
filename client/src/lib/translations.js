@@ -662,6 +662,8 @@ export const translations = {
     'print.date': 'Date:',
     'print.time': 'Time:',
     'print.printInventoryReport': 'Print Inventory Report',
+    'print.downloadPDF': 'Download PDF',
+    'print.generating': 'Generating PDF...',
     'print.inventoryReport': 'Inventory Report',
 
     // Countries
@@ -2093,6 +2095,8 @@ export const translations = {
     'print.date': 'التاريخ:',
     'print.time': 'الوقت:',
     'print.printInventoryReport': 'طباعة تقرير الجرد',
+    'print.downloadPDF': 'تحميل PDF',
+    'print.generating': 'جاري إنشاء PDF...',
     'print.inventoryReport': 'تقرير الجرد',
 
     // Countries
