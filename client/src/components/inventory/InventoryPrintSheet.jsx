@@ -74,17 +74,17 @@ export default function InventoryPrintSheet({ products, categories, settings, us
 
         {/* Summary Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
-          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '9px', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('print.totalProducts')}</div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalProducts}</div>
+          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', color: '#000', letterSpacing: '0.5px' }}>{t('print.totalProducts')}</div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalProducts}</div>
           </div>
-          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '9px', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('print.totalItems')}</div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalQuantity.toLocaleString()}</div>
+          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', color: '#000', letterSpacing: '0.5px' }}>{t('print.totalItems')}</div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalQuantity.toLocaleString()}</div>
           </div>
-          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '9px', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('print.lowStock')}</div>
-            <div style={{ fontSize: '17px', fontWeight: '700', color: lowStockCount > 0 ? '#000' : '#000', margin: '2px 0' }}>{lowStockCount}</div>
+          <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '10px', color: '#000', letterSpacing: '0.5px' }}>{t('print.lowStock')}</div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{lowStockCount}</div>
           </div>
         </div>
 
