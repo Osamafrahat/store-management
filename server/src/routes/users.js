@@ -175,6 +175,13 @@ router.put('/:id', [
     if (permissions !== undefined) updateData.permissions = permissions
     if (employeeId !== undefined) updateData.employee_id = employeeId || null
 
+    // Force logout when permissions or role change
+    const permissionsChanged = permissions !== undefined && JSON.stringify(permissions) !== JSON.stringify(existing.permissions)
+    const roleChanged = role !== undefined && role !== existing.role
+    if (permissionsChanged || roleChanged || password) {
+      updateData.session_token = null
+    }
+
     if (password) {
       const salt = await bcrypt.genSalt(10)
       updateData.password = await bcrypt.hash(password, salt)

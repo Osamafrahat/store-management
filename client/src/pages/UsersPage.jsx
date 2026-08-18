@@ -470,6 +470,13 @@ function UserForm({ user, employees, onSave, onClose }) {
           </div>
 
           {/* Custom Permissions */}
+          {user && (
+            <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg">
+              <span className="text-yellow-600 dark:text-yellow-400 text-sm">
+                {language === 'ar' ? 'تغيير الصلاحيات سيجبر المستخدم على تسجيل الخروج' : 'Changing permissions will force the user to re-login'}
+              </span>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('users.permissions')}
