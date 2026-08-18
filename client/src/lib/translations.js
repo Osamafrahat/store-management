@@ -665,6 +665,12 @@ export const translations = {
     'print.downloadPDF': 'Download PDF',
     'print.generating': 'Generating PDF...',
     'print.inventoryReport': 'Inventory Report',
+    'print.rowNum': '#',
+    'print.check': '✓',
+    'print.unitKg': 'kg',
+    'print.unitLiter': 'L',
+    'print.unitMeter': 'm',
+    'print.unitPcs': 'Pcs',
 
     // Countries
     'country.egypt': 'Egypt',
@@ -2098,6 +2104,12 @@ export const translations = {
     'print.downloadPDF': 'تحميل PDF',
     'print.generating': 'جاري إنشاء PDF...',
     'print.inventoryReport': 'تقرير الجرد',
+    'print.rowNum': '#',
+    'print.check': '✓',
+    'print.unitKg': 'كجم',
+    'print.unitLiter': 'لتر',
+    'print.unitMeter': 'متر',
+    'print.unitPcs': 'قطعة',
 
     // Countries
     'country.egypt': 'مصر',
