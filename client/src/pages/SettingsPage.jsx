@@ -353,10 +353,10 @@ export default function SettingsPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, 'attendance.enableGeolocation': prev['attendance.enableGeolocation'] === 'true' ? 'false' : 'true' }))}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData['attendance.enableGeolocation'] === 'true' ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                onClick={() => setFormData(prev => ({ ...prev, 'attendance.enableGeolocation': prev['attendance.enableGeolocation'] === 'true' || prev['attendance.enableGeolocation'] === true ? 'false' : 'true' }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData['attendance.enableGeolocation'] === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
 
