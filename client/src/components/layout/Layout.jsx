@@ -139,9 +139,9 @@ export default function Layout({ children }) {
     groups.push({ key: 'accounting', label: t('nav.groupAccounting') || 'Accounting', items: accountingItems })
   }
 
-  // -- HR (Admin-only: employees management) --
+  // -- HR (Permission-based: hr_view or hr_edit) --
   const hrItems = []
-  if (currentUser?.role === 'MANAGER') {
+  if (hasPermission(PERMISSIONS.HR_VIEW) || hasPermission(PERMISSIONS.HR_EDIT)) {
     hrItems.push({ name: t('nav.employees') || 'Employees', href: '/employees', icon: Users })
     hrItems.push({ name: t('nav.attendance') || 'Attendance', href: '/hr/attendance', icon: Clock })
     hrItems.push({ name: t('nav.attendanceDashboard') || 'Attendance Dashboard', href: '/hr/attendance-dashboard', icon: BarChart3 })
@@ -149,8 +149,8 @@ export default function Layout({ children }) {
     hrItems.push({ name: t('nav.payroll') || 'Payroll', href: '/hr/payroll', icon: DollarSign })
     hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts', icon: Briefcase })
     hrItems.push({ name: t('nav.performance') || 'Performance', href: '/hr/performance', icon: Award })
-  } else {
-    // Non-managers: shifts view (read-only) + leave request
+  } else if (canAccess('/hr/shifts/view') || canAccess('/hr/leave/request')) {
+    // Non-managers with basic HR access: shifts view (read-only) + leave request
     hrItems.push({ name: t('nav.shifts') || 'Shifts', href: '/hr/shifts/view', icon: Briefcase })
     hrItems.push({ name: t('nav.leave') || 'Leave', href: '/hr/leave/request', icon: Calendar })
   }
@@ -169,12 +169,18 @@ export default function Layout({ children }) {
     })
   }
 
-  // -- Settings (Admin-only: users, activities, settings) --
+  // -- Settings (Permission-based: settings_view, settings_edit, user_manage) --
   const settingsItems = []
-  if (currentUser?.role === 'MANAGER') {
+  if (canAccess('/users')) {
     settingsItems.push({ name: t('nav.users') || 'Users', href: '/users', icon: Users })
+  }
+  if (canAccess('/activities')) {
     settingsItems.push({ name: t('nav.activities') || 'Activity Log', href: '/activities', icon: Activity })
+  }
+  if (canAccess('/backup')) {
     settingsItems.push({ name: t('nav.backup') || 'Backup', href: '/backup', icon: HardDrive })
+  }
+  if (canAccess('/settings')) {
     settingsItems.push({ name: t('nav.settings'), href: '/settings', icon: Settings })
   }
   if (settingsItems.length > 0) {

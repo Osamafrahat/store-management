@@ -4,6 +4,7 @@ import { authApi, usersApi } from '../lib/api'
 
 // Permission definitions
 export const PERMISSIONS = {
+  DASHBOARD_VIEW: 'dashboard_view',
   POS_ACCESS: 'pos_access',
   INVENTORY_VIEW: 'inventory_view',
   INVENTORY_EDIT: 'inventory_edit',
@@ -26,10 +27,11 @@ export const PERMISSIONS = {
   ACCOUNTING_VIEW: 'accounting_view',
   ACCOUNTING_EDIT: 'accounting_edit',
   ACCOUNTING_POST: 'accounting_post',
+  HR_VIEW: 'hr_view',
+  HR_EDIT: 'hr_edit',
 }
 
 // Role definitions with default permissions
-// Admin-only permissions (MANAGER only): SETTINGS_VIEW, SETTINGS_EDIT, USER_MANAGE, EMPLOYEES_VIEW, EMPLOYEES_EDIT
 export const ROLES = {
   MANAGER: {
     name: 'Manager',
@@ -40,6 +42,7 @@ export const ROLES = {
     name: 'Sales Manager',
     nameAr: 'مدير المبيعات',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.REPORTS_VIEW,
@@ -51,12 +54,14 @@ export const ROLES = {
       PERMISSIONS.REFUNDS_VIEW,
       PERMISSIONS.REFUNDS_EDIT,
       PERMISSIONS.EXPENSES_VIEW,
+      PERMISSIONS.HR_VIEW,
     ],
   },
   CASHIER: {
     name: 'Cashier',
     nameAr: 'كاشير',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.REPORTS_VIEW,
       PERMISSIONS.CUSTOMERS_VIEW,
@@ -68,6 +73,7 @@ export const ROLES = {
     name: 'Senior Cashier',
     nameAr: 'كاشير أول',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.REPORTS_VIEW,
@@ -82,6 +88,7 @@ export const ROLES = {
     name: 'Inventory Clerk',
     nameAr: 'موظف مخزون',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.INVENTORY_EDIT,
@@ -94,6 +101,7 @@ export const ROLES = {
     name: 'Sales Associate',
     nameAr: 'موظف مبيعات',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.CUSTOMERS_VIEW,
@@ -106,6 +114,7 @@ export const ROLES = {
     name: 'Viewer',
     nameAr: 'مشاهد',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.REPORTS_VIEW,
@@ -120,6 +129,7 @@ export const ROLES = {
     name: 'Accountant',
     nameAr: 'محاسب',
     permissions: [
+      PERMISSIONS.DASHBOARD_VIEW,
       PERMISSIONS.POS_ACCESS,
       PERMISSIONS.ACCOUNTING_VIEW,
       PERMISSIONS.ACCOUNTING_EDIT,
@@ -243,6 +253,7 @@ export const useUserStore = create(
         if (currentUser.role === 'MANAGER') return true
 
         const routePermissions = {
+          '/': PERMISSIONS.DASHBOARD_VIEW,
           '/pos': PERMISSIONS.POS_ACCESS,
           '/inventory': PERMISSIONS.INVENTORY_VIEW,
           '/reports': PERMISSIONS.REPORTS_VIEW,
@@ -254,6 +265,17 @@ export const useUserStore = create(
           '/employees': PERMISSIONS.EMPLOYEES_VIEW,
           '/expenses': PERMISSIONS.EXPENSES_VIEW,
           '/refunds': PERMISSIONS.REFUNDS_VIEW,
+          '/accounting': PERMISSIONS.ACCOUNTING_VIEW,
+          '/hr/attendance': PERMISSIONS.HR_VIEW,
+          '/hr/attendance-dashboard': PERMISSIONS.HR_VIEW,
+          '/hr/leave': PERMISSIONS.HR_VIEW,
+          '/hr/payroll': PERMISSIONS.HR_VIEW,
+          '/hr/shifts': PERMISSIONS.HR_VIEW,
+          '/hr/shifts/view': PERMISSIONS.HR_VIEW,
+          '/hr/performance': PERMISSIONS.HR_VIEW,
+          '/activities': PERMISSIONS.USER_MANAGE,
+          '/backup': PERMISSIONS.USER_MANAGE,
+          '/invoices': PERMISSIONS.POS_ACCESS,
         }
 
         const requiredPermission = routePermissions[route]

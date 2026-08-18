@@ -7,6 +7,7 @@ import { X, Plus, Edit2, Trash2, User, UserCheck, Shield } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 
 const permissionLabelsEn = {
+  [PERMISSIONS.DASHBOARD_VIEW]: 'View Dashboard',
   [PERMISSIONS.POS_ACCESS]: 'POS Access',
   [PERMISSIONS.INVENTORY_VIEW]: 'View Inventory',
   [PERMISSIONS.INVENTORY_EDIT]: 'Edit Inventory',
@@ -26,9 +27,15 @@ const permissionLabelsEn = {
   [PERMISSIONS.REFUNDS_EDIT]: 'Process Refunds',
   [PERMISSIONS.EMPLOYEES_VIEW]: 'View Employees',
   [PERMISSIONS.EMPLOYEES_EDIT]: 'Manage Employees',
+  [PERMISSIONS.ACCOUNTING_VIEW]: 'View Accounting',
+  [PERMISSIONS.ACCOUNTING_EDIT]: 'Edit Accounting',
+  [PERMISSIONS.ACCOUNTING_POST]: 'Post Journal Entries',
+  [PERMISSIONS.HR_VIEW]: 'View HR',
+  [PERMISSIONS.HR_EDIT]: 'Edit HR',
 }
 
 const permissionLabelsAr = {
+  [PERMISSIONS.DASHBOARD_VIEW]: 'عرض لوحة التحكم',
   [PERMISSIONS.POS_ACCESS]: 'الوصول لنقطة البيع',
   [PERMISSIONS.INVENTORY_VIEW]: 'عرض المخزون',
   [PERMISSIONS.INVENTORY_EDIT]: 'تعديل المخزون',
@@ -48,6 +55,11 @@ const permissionLabelsAr = {
   [PERMISSIONS.REFUNDS_EDIT]: 'معالجة المرتجعات',
   [PERMISSIONS.EMPLOYEES_VIEW]: 'عرض الموظفين',
   [PERMISSIONS.EMPLOYEES_EDIT]: 'إدارة الموظفين',
+  [PERMISSIONS.ACCOUNTING_VIEW]: 'عرض المحاسبة',
+  [PERMISSIONS.ACCOUNTING_EDIT]: 'تعديل المحاسبة',
+  [PERMISSIONS.ACCOUNTING_POST]: 'تدوين القيود المحاسبية',
+  [PERMISSIONS.HR_VIEW]: 'عرض الموارد البشرية',
+  [PERMISSIONS.HR_EDIT]: 'تعديل الموارد البشرية',
 }
 
 export default function UsersPage() {
