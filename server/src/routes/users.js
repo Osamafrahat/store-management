@@ -201,12 +201,19 @@ router.patch('/:id/toggle-active', [
 
     const newActiveState = !existing.is_active
 
+    const updatePayload = {
+      is_active: newActiveState,
+      updated_at: new Date().toISOString()
+    }
+
+    // Force logout: clear session_token when deactivating
+    if (!newActiveState) {
+      updatePayload.session_token = null
+    }
+
     const { data, error } = await supabase
       .from('users')
-      .update({
-        is_active: newActiveState,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', req.params.id)
       .select('id, username, full_name, role, permissions, is_active, must_change_password, last_login, employee_id, created_at, updated_at')
       .single()
@@ -244,7 +251,11 @@ router.delete('/:id', [
       return res.status(403).json({ error: 'Cannot delete the admin user' })
     }
 
-    // Link is maintained via users.employee_id — no employees.user_id needed
+    // Force logout: clear session_token before deleting
+    await supabase
+      .from('users')
+      .update({ session_token: null })
+      .eq('id', req.params.id)
 
     const { error } = await supabase
       .from('users')

@@ -45,15 +45,27 @@ export async function authenticateToken(req, res, next) {
         .eq('id', decoded.id)
         .single()
 
-      if (user && !user.is_active) {
-        return res.status(403).json({ error: 'Account is deactivated' })
+      // User was deleted
+      if (!user) {
+        return res.status(401).json({ error: 'Account not found', sessionExpired: true })
       }
 
-      if (user && decoded.sessionToken && user.session_token && decoded.sessionToken !== user.session_token) {
+      // Account is deactivated
+      if (!user.is_active) {
+        return res.status(403).json({ error: 'Account is deactivated', sessionExpired: true })
+      }
+
+      // Session invalidated (deactivated, deleted, or new login)
+      if (decoded.sessionToken && user.session_token && decoded.sessionToken !== user.session_token) {
         return res.status(401).json({ error: 'Session expired. Another login was detected.', sessionExpired: true })
       }
+
+      // Session cleared (force logout)
+      if (decoded.sessionToken && !user.session_token) {
+        return res.status(401).json({ error: 'Session expired. Account was deactivated.', sessionExpired: true })
+      }
     } catch {
-      // session_token column may not exist yet
+      // Graceful fallback if session_token column doesn't exist
     }
 
     req.user = decoded
