@@ -59,7 +59,7 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Language Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <Globe className="w-5 h-5 text-blue-600" />
@@ -86,7 +86,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Store Information */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
               <Store className="w-5 h-5 text-primary-600" />
@@ -170,7 +170,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Tax Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
               <Percent className="w-5 h-5 text-amber-600" />
@@ -199,7 +199,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Currency Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <Receipt className="w-5 h-5 text-green-600" />
@@ -236,7 +236,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Receipt Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <Receipt className="w-5 h-5 text-purple-600" />
@@ -260,7 +260,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Inventory Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -287,7 +287,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Loyalty Points Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
               <Star className="w-5 h-5 text-yellow-600" />
@@ -315,7 +315,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Attendance Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
               <MapPin className="w-5 h-5 text-green-600" />
@@ -342,7 +342,7 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-750 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('settings.enableGeolocation') || 'Enable Geolocation'}
@@ -378,7 +378,7 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -462,7 +462,7 @@ export default function SettingsPage() {
         </div>
 
         {/* ETA Integration Settings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
               <Receipt className="w-5 h-5 text-indigo-600" />
