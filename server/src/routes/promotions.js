@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -68,7 +69,7 @@ router.post('/validate', [
 })
 
 // Create promotion
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('promotions_edit'), [
   body('code').trim().notEmpty().withMessage('Promo code is required'),
   body('type').isIn(['percentage', 'fixed']).withMessage('Type must be percentage or fixed'),
   body('value').isFloat({ min: 0 }).withMessage('Value must be a positive number'),
@@ -111,7 +112,7 @@ router.post('/', [
 })
 
 // Update promotion
-router.put('/:id', [
+router.put('/:id', authenticateToken, requirePermission('promotions_edit'), [
   param('id').isNumeric().withMessage('Invalid promotion ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -143,7 +144,7 @@ router.put('/:id', [
 })
 
 // Delete promotion
-router.delete('/:id', [
+router.delete('/:id', authenticateToken, requirePermission('promotions_edit'), [
   param('id').isNumeric().withMessage('Invalid promotion ID'),
 ], validate, async (req, res, next) => {
   try {

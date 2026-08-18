@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { param, body, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
-import { requireManager } from '../middleware/auth.js'
+import { requireManager, authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -53,7 +53,7 @@ router.get('/:id', requireManager, [
 })
 
 // Process payroll for a period
-router.post('/', requireManager, [
+router.post('/', requirePermission('hr_edit'), [
   body('period_start').isISO8601().withMessage('Period start is required'),
   body('period_end').isISO8601().withMessage('Period end is required'),
 ], validate, async (req, res, next) => {
@@ -165,7 +165,7 @@ router.post('/', requireManager, [
 })
 
 // Mark payroll item as paid
-router.patch('/:id/pay', requireManager, [
+router.patch('/:id/pay', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid payroll item ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -209,7 +209,7 @@ router.patch('/:id/pay', requireManager, [
 })
 
 // Delete payroll run
-router.delete('/:id', requireManager, [
+router.delete('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid payroll ID'),
 ], validate, async (req, res, next) => {
   try {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
-import { useUserStore } from '../stores/userStore'
+import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { employeesApi, usersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, UserCheck, User, Phone, Mail, Calendar, DollarSign, Shield } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
@@ -18,6 +18,8 @@ const USER_ROLES = (t) => [
 
 export default function EmployeesPage() {
   const { t, toastSuccess, toastError } = useAppStore()
+  const { currentUser, hasPermission } = useUserStore()
+  const canEdit = hasPermission(PERMISSIONS.EMPLOYEES_EDIT)
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -152,16 +154,18 @@ export default function EmployeesPage() {
           <h1 className="text-2xl font-bold">{t('employees.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('employees.subtitle')}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingEmployee(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          <Plus className="w-4 h-4" />
-          {t('employees.addEmployee')}
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => {
+              setEditingEmployee(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            <Plus className="w-4 h-4" />
+            {t('employees.addEmployee')}
+          </button>
+        )}
       </div>
 
       {/* Employees Grid */}
@@ -191,18 +195,22 @@ export default function EmployeesPage() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => handleEdit(employee)}
-                    className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(employee.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => handleEdit(employee)}
+                      className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {canEdit && (
+                    <button
+                      onClick={() => setDeleteTarget(employee.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 

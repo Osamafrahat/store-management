@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 import { sanitizeSearch } from '../helpers/search.js'
 
 const router = Router()
@@ -58,7 +59,7 @@ router.get('/:id', [
 })
 
 // Create customer
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('customers_edit'), [
   body('name').trim().notEmpty().withMessage('Customer name is required'),
 ], validate, async (req, res, next) => {
   try {
@@ -111,7 +112,7 @@ router.post('/', [
 })
 
 // Update customer
-router.put('/:id', [
+router.put('/:id', authenticateToken, requirePermission('customers_edit'), [
   param('id').isNumeric().withMessage('Invalid customer ID'),
   body('name').trim().notEmpty().withMessage('Customer name is required'),
 ], validate, async (req, res, next) => {
@@ -158,7 +159,7 @@ router.put('/:id', [
 })
 
 // Delete customer (soft delete)
-router.delete('/:id', [
+router.delete('/:id', authenticateToken, requirePermission('customers_edit'), [
   param('id').isNumeric().withMessage('Invalid customer ID'),
 ], validate, async (req, res, next) => {
   try {

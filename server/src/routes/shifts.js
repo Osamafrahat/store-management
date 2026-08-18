@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { param, body, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
-import { requireManager } from '../middleware/auth.js'
+import { requireManager, authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -33,7 +33,7 @@ router.get('/', async (req, res, next) => {
 })
 
 // Create shift (admin)
-router.post('/', requireManager, [
+router.post('/', requirePermission('hr_edit'), [
   body('name').trim().notEmpty().withMessage('Shift name is required'),
   body('start_time').notEmpty().withMessage('Start time is required'),
   body('end_time').notEmpty().withMessage('End time is required'),
@@ -53,7 +53,7 @@ router.post('/', requireManager, [
 })
 
 // Update shift (admin)
-router.put('/:id', requireManager, [
+router.put('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid shift ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -72,7 +72,7 @@ router.put('/:id', requireManager, [
 })
 
 // Delete shift (admin)
-router.delete('/:id', requireManager, [
+router.delete('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid shift ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -112,7 +112,7 @@ router.get('/assignments', async (req, res, next) => {
 })
 
 // Assign shift to employee (supports date range)
-router.post('/assignments', requireManager, [
+router.post('/assignments', requirePermission('hr_edit'), [
   body('employee_id').isNumeric().withMessage('Employee ID is required'),
   body('shift_id').isNumeric().withMessage('Shift ID is required'),
   body('start_date').isISO8601().withMessage('Start date is required'),
@@ -166,7 +166,7 @@ router.post('/assignments', requireManager, [
 })
 
 // Bulk assign shifts for a week
-router.post('/assignments/bulk', requireManager, [
+router.post('/assignments/bulk', requirePermission('hr_edit'), [
   body('assignments').isArray().withMessage('Assignments array is required'),
 ], validate, async (req, res, next) => {
   try {
@@ -209,7 +209,7 @@ router.post('/assignments/bulk', requireManager, [
 })
 
 // Delete employee shift assignment
-router.delete('/assignments/:id', requireManager, [
+router.delete('/assignments/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid assignment ID'),
 ], validate, async (req, res, next) => {
   try {

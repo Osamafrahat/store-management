@@ -90,3 +90,40 @@ export function requireManager(req, res, next) {
   }
   next()
 }
+
+export function requirePermission(...permissions) {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' })
+    }
+    // Manager bypasses all permission checks
+    if (req.user.role === 'MANAGER') {
+      return next()
+    }
+    try {
+      const { data: user } = await supabase
+        .from('users')
+        .select('permissions')
+        .eq('id', req.user.id)
+        .single()
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' })
+      }
+      let userPermissions = user.permissions
+      if (typeof userPermissions === 'string') {
+        try {
+          userPermissions = JSON.parse(userPermissions)
+        } catch {
+          userPermissions = []
+        }
+      }
+      const hasPermission = permissions.some(p => userPermissions?.includes(p))
+      if (!hasPermission) {
+        return res.status(403).json({ error: 'Insufficient permissions' })
+      }
+      next()
+    } catch {
+      return res.status(500).json({ error: 'Failed to check permissions' })
+    }
+  }
+}

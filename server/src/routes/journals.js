@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 import { createJournalEntry } from '../services/accountingEngine.js'
 import { sanitizeSearch } from '../helpers/search.js'
 
@@ -55,7 +56,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // Create manual journal entry
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, requirePermission('accounting_edit', 'accounting_post'), async (req, res) => {
   try {
     const { date, description, reference, lines } = req.body
     if (!description || !lines || lines.length < 2) {
@@ -80,7 +81,7 @@ router.post('/', async (req, res) => {
 })
 
 // Reverse a journal entry
-router.post('/:id/reverse', async (req, res) => {
+router.post('/:id/reverse', authenticateToken, requirePermission('accounting_edit', 'accounting_post'), async (req, res) => {
   try {
     const { data: original, error: fetchError } = await supabase
       .from('journal_entries')
@@ -124,7 +125,7 @@ router.post('/:id/reverse', async (req, res) => {
 })
 
 // Delete draft journal entry (only non-posted)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, requirePermission('accounting_edit'), async (req, res) => {
   try {
     const { data: entry } = await supabase
       .from('journal_entries')

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { customersApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, User, Phone, Mail, MapPin, Star } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 
 export default function CustomersPage() {
   const { t, toastSuccess, toastError } = useAppStore()
+  const { currentUser, hasPermission } = useUserStore()
+  const canEdit = hasPermission(PERMISSIONS.CUSTOMERS_EDIT)
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -94,16 +97,18 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold">{t('customers.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('customers.subtitle')}</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingCustomer(null)
-            setShowForm(true)
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          <Plus className="w-4 h-4" />
-          {t('customers.addCustomer')}
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => {
+              setEditingCustomer(null)
+              setShowForm(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            <Plus className="w-4 h-4" />
+            {t('customers.addCustomer')}
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -148,18 +153,22 @@ export default function CustomersPage() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => handleEdit(customer)}
-                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(customer.id)}
-                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => handleEdit(customer)}
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {canEdit && (
+                    <button
+                      onClick={() => setDeleteTarget(customer.id)}
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 

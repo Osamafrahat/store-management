@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useProductStore } from '../stores/productStore'
 import { useAppStore } from '../stores/appStore'
-import { useUserStore } from '../stores/userStore'
+import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { productsApi, categoriesApi, suppliersApi } from '../lib/api'
 import ProductList from '../components/inventory/ProductList'
 import ProductForm from '../components/inventory/ProductForm'
@@ -14,7 +14,8 @@ import ConfirmModal from '../components/ConfirmModal'
 export default function InventoryPage() {
   const { products, categories, setProducts, setCategories, setLoading, setError } = useProductStore()
   const { t, settings } = useAppStore()
-  const { currentUser } = useUserStore()
+  const { currentUser, hasPermission } = useUserStore()
+  const canEdit = hasPermission(PERMISSIONS.INVENTORY_EDIT)
   const [showProductForm, setShowProductForm] = useState(false)
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
@@ -106,20 +107,24 @@ export default function InventoryPage() {
             <Printer className="w-4 h-4" />
             <span className="hidden sm:inline">{t('inventory.printReport') || 'Print Report'}</span>
           </button>
-          <button
-            onClick={() => setShowCategoryManager(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
-            <Tag className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('inventory.categories')}</span>
-          </button>
-          <button
-            onClick={handleCreateProduct}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('inventory.addProduct')}</span>
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => setShowCategoryManager(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+            >
+              <Tag className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('inventory.categories')}</span>
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={handleCreateProduct}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('inventory.addProduct')}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -154,6 +159,7 @@ export default function InventoryPage() {
           ? products.filter(p => p.stock_quantity <= p.low_stock_threshold)
           : products
         }
+        canEdit={canEdit}
         onEdit={handleEditProduct}
         onDelete={(id) => setDeleteTarget(id)}
         onPrintBarcode={(product) => setBarcodeProduct(product)}

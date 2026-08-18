@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { expensesApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, Receipt, DollarSign, TrendingDown, Filter } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
@@ -18,6 +19,8 @@ const EXPENSE_CATEGORIES = [
 
 export default function ExpensesPage() {
   const { t, toastSuccess, toastError } = useAppStore()
+  const { currentUser, hasPermission } = useUserStore()
+  const canEdit = hasPermission(PERMISSIONS.EXPENSES_EDIT)
   const [expenses, setExpenses] = useState([])
   const [summary, setSummary] = useState({ summary: {}, total: 0 })
   const [loading, setLoading] = useState(true)
@@ -123,6 +126,7 @@ export default function ExpensesPage() {
           <h1 className="text-2xl font-bold">{t('expenses.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('expenses.subtitle')}</p>
         </div>
+        {canEdit && (
         <button
           onClick={() => {
             setEditingExpense(null)
@@ -133,6 +137,7 @@ export default function ExpensesPage() {
           <Plus className="w-4 h-4" />
           {t('expenses.addExpense')}
         </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -256,18 +261,22 @@ export default function ExpensesPage() {
                   <td className="px-4 py-3 text-sm font-semibold text-red-600">${expense.amount.toFixed(2)}</td>
                   <td className="px-4 py-3 text-sm">
                     <div className="flex gap-1">
+                      {canEdit && (
                       <button
                         onClick={() => handleEdit(expense)}
                         className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
+                      )}
+                      {canEdit && (
                       <button
                         onClick={() => setDeleteTarget(expense.id)}
                         className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                      )}
                     </div>
                   </td>
                 </tr>

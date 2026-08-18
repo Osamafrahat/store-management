@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { param, body, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
-import { requireManager } from '../middleware/auth.js'
+import { requireManager, authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -58,7 +58,7 @@ router.get('/:id', [
 })
 
 // Create performance review
-router.post('/', requireManager, [
+router.post('/', requirePermission('hr_edit'), [
   body('employee_id').isNumeric().withMessage('Employee ID is required'),
   body('review_period_start').isISO8601().withMessage('Review period start is required'),
   body('review_period_end').isISO8601().withMessage('Review period end is required'),
@@ -102,7 +102,7 @@ router.post('/', requireManager, [
 })
 
 // Update performance review
-router.put('/:id', requireManager, [
+router.put('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid review ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -155,7 +155,7 @@ router.put('/:id', requireManager, [
 })
 
 // Delete performance review
-router.delete('/:id', requireManager, [
+router.delete('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid review ID'),
 ], validate, async (req, res, next) => {
   try {

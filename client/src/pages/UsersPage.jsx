@@ -63,7 +63,8 @@ const permissionLabelsAr = {
 }
 
 export default function UsersPage() {
-  const { users, currentUser, addUser, updateUser, deleteUser, toggleUserActive } = useUserStore()
+  const { users, currentUser, addUser, updateUser, deleteUser, toggleUserActive, hasPermission } = useUserStore()
+  const canManage = hasPermission(PERMISSIONS.USER_MANAGE)
   const { t, language } = useAppStore()
   const permissionLabels = language === 'ar' ? permissionLabelsAr : permissionLabelsEn
   const location = useLocation()
@@ -168,6 +169,7 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold">{t('users.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400">{t('users.subtitle')}</p>
         </div>
+        {canManage && (
         <button
           onClick={() => {
             setEditingUser(null)
@@ -178,6 +180,7 @@ export default function UsersPage() {
           <Plus className="w-4 h-4" />
           {t('users.addUser')}
         </button>
+        )}
       </div>
 
       {/* Users Table */}
@@ -253,7 +256,7 @@ export default function UsersPage() {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-2">
-                      {user.id !== 1 && (
+                      {user.id !== 1 && canManage && (
                         <button
                           onClick={() => handleEdit(user)}
                           className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
@@ -261,7 +264,7 @@ export default function UsersPage() {
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
-                      {user.id !== 1 && user.id !== currentUser?.id && (
+                      {user.id !== 1 && user.id !== currentUser?.id && canManage && (
                         <button
                           onClick={() => setDeleteTarget(user.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"

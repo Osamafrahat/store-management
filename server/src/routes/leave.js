@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { param, body, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
-import { requireManager } from '../middleware/auth.js'
+import { requireManager, authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -30,7 +30,7 @@ router.get('/types', async (req, res, next) => {
 })
 
 // Create leave type (admin)
-router.post('/types', requireManager, [
+router.post('/types', requirePermission('hr_edit'), [
   body('name').trim().notEmpty().withMessage('Leave type name is required'),
   body('days_per_year').isNumeric().withMessage('Days per year is required'),
 ], validate, async (req, res, next) => {
@@ -49,7 +49,7 @@ router.post('/types', requireManager, [
 })
 
 // Update leave type (admin)
-router.put('/types/:id', requireManager, [
+router.put('/types/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid leave type ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -121,7 +121,7 @@ router.post('/requests', [
 })
 
 // Approve/reject leave request
-router.patch('/requests/:id/approve', requireManager, [
+router.patch('/requests/:id/approve', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid request ID'),
   body('status').isIn(['approved', 'rejected']).withMessage('Status must be approved or rejected'),
 ], validate, async (req, res, next) => {
@@ -265,7 +265,7 @@ router.patch('/requests/:id/approve', requireManager, [
 })
 
 // Delete leave request
-router.delete('/requests/:id', requireManager, [
+router.delete('/requests/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid request ID'),
 ], validate, async (req, res, next) => {
   try {

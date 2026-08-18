@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -33,7 +34,7 @@ router.get('/', async (req, res, next) => {
 })
 
 // Create refund
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('refunds_edit'), [
   body('order_id').isNumeric().withMessage('Invalid order ID'),
   body('amount').isNumeric().withMessage('Amount must be a number'),
   body('reason').trim().notEmpty().withMessage('Refund reason is required'),

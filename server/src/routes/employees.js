@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import bcrypt from 'bcryptjs'
 import supabase from '../db/supabase.js'
-import { requireManager } from '../middleware/auth.js'
+import { authenticateToken, requireManager, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -81,7 +81,7 @@ router.get('/:id', [
 })
 
 // Create employee (admin-only)
-router.post('/', requireManager, [
+router.post('/', authenticateToken, requirePermission('employees_edit'), [
   body('name').trim().notEmpty().withMessage('Employee name is required'),
   body('role').trim().notEmpty().withMessage('Employee role is required'),
 ], validate, async (req, res, next) => {
@@ -147,7 +147,7 @@ router.post('/', requireManager, [
 })
 
 // Update employee (admin-only)
-router.put('/:id', requireManager, [
+router.put('/:id', authenticateToken, requirePermission('employees_edit'), [
   param('id').isNumeric().withMessage('Invalid employee ID'),
   body('name').trim().notEmpty().withMessage('Employee name is required'),
   body('role').trim().notEmpty().withMessage('Employee role is required'),
@@ -200,7 +200,7 @@ router.put('/:id', requireManager, [
 })
 
 // Toggle employee active status - admin-only, also toggles linked user
-router.patch('/:id/toggle-active', requireManager, [
+router.patch('/:id/toggle-active', authenticateToken, requirePermission('employees_edit'), [
   param('id').isNumeric().withMessage('Invalid employee ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -240,7 +240,7 @@ router.patch('/:id/toggle-active', requireManager, [
 })
 
 // Delete employee (hard delete) - admin-only, unlinks and deactivates linked user
-router.delete('/:id', requireManager, [
+router.delete('/:id', authenticateToken, requirePermission('employees_edit'), [
   param('id').isNumeric().withMessage('Invalid employee ID'),
 ], validate, async (req, res, next) => {
   try {

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -64,7 +65,7 @@ router.get('/:id', [
 })
 
 // Create supplier
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('suppliers_edit'), [
   body('name').trim().notEmpty().withMessage('Supplier name is required'),
 ], validate, async (req, res, next) => {
   try {
@@ -103,7 +104,7 @@ router.post('/', [
 })
 
 // Update supplier
-router.put('/:id', [
+router.put('/:id', authenticateToken, requirePermission('suppliers_edit'), [
   param('id').isNumeric().withMessage('Invalid supplier ID'),
   body('name').trim().notEmpty().withMessage('Supplier name is required'),
 ], validate, async (req, res, next) => {
@@ -133,7 +134,7 @@ router.put('/:id', [
 })
 
 // Delete supplier
-router.delete('/:id', [
+router.delete('/:id', authenticateToken, requirePermission('suppliers_edit'), [
   param('id').isNumeric().withMessage('Invalid supplier ID'),
 ], validate, async (req, res, next) => {
   try {

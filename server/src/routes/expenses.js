@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -78,7 +79,7 @@ router.get('/summary', async (req, res, next) => {
 })
 
 // Create expense
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('expenses_edit'), [
   body('category').trim().notEmpty().withMessage('Expense category is required'),
   body('amount').isNumeric().withMessage('Amount must be a number'),
 ], validate, async (req, res, next) => {
@@ -117,7 +118,7 @@ router.post('/', [
 })
 
 // Update expense
-router.put('/:id', [
+router.put('/:id', authenticateToken, requirePermission('expenses_edit'), [
   param('id').isNumeric().withMessage('Invalid expense ID'),
   body('category').trim().notEmpty().withMessage('Expense category is required'),
   body('amount').isNumeric().withMessage('Amount must be a number'),
@@ -156,7 +157,7 @@ router.put('/:id', [
 })
 
 // Delete expense
-router.delete('/:id', [
+router.delete('/:id', authenticateToken, requirePermission('expenses_edit'), [
   param('id').isNumeric().withMessage('Invalid expense ID'),
 ], validate, async (req, res, next) => {
   try {

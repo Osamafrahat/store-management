@@ -4,7 +4,7 @@ import { formatCurrency } from '../../lib/utils'
 import { suppliersApi, stockApi } from '../../lib/api'
 import { Edit2, Trash2, Search, ChevronDown, Package, AlertTriangle, QrCode, ArrowDown } from 'lucide-react'
 
-export default function ProductList({ products, onEdit, onDelete, onPrintBarcode, onRefresh }) {
+export default function ProductList({ products, canEdit, onEdit, onDelete, onPrintBarcode, onRefresh }) {
   const { t, toastSuccess, toastError } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState('name')
@@ -238,23 +238,27 @@ export default function ProductList({ products, onEdit, onDelete, onPrintBarcode
                     >
                       <ArrowDown className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onEdit(product)}
-                      className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (deletingId) return
-                        setDeletingId(product.id)
-                        onDelete(product.id).finally(() => setDeletingId(null))
-                      }}
-                      disabled={deletingId}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg disabled:opacity-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={() => onEdit(product)}
+                        className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        onClick={() => {
+                          if (deletingId) return
+                          setDeletingId(product.id)
+                          onDelete(product.id).finally(() => setDeletingId(null))
+                        }}
+                        disabled={deletingId}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

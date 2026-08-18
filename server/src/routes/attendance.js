@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { param, body, query, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
-import { requireManager } from '../middleware/auth.js'
+import { requireManager, authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -104,7 +104,7 @@ router.get('/summary/:employeeId', [
 })
 
 // Create attendance record (manager manual)
-router.post('/', requireManager, [
+router.post('/', requirePermission('hr_edit'), [
   body('employee_id').isNumeric().withMessage('Employee ID is required'),
 ], validate, async (req, res, next) => {
   try {
@@ -152,7 +152,7 @@ router.post('/', requireManager, [
 })
 
 // Clock out (manager)
-router.patch('/:id/clock-out', requireManager, [
+router.patch('/:id/clock-out', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid attendance ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -189,7 +189,7 @@ router.patch('/:id/clock-out', requireManager, [
 })
 
 // Update attendance record
-router.patch('/:id', requireManager, [
+router.patch('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid attendance ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -222,7 +222,7 @@ router.patch('/:id', requireManager, [
 })
 
 // Delete attendance record
-router.delete('/:id', requireManager, [
+router.delete('/:id', requirePermission('hr_edit'), [
   param('id').isNumeric().withMessage('Invalid attendance ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -508,7 +508,7 @@ router.post('/break-end', async (req, res, next) => {
 // ==================== DASHBOARD ENDPOINT ====================
 
 // Attendance dashboard stats
-router.get('/dashboard', requireManager, async (req, res, next) => {
+router.get('/dashboard', requirePermission('hr_view'), async (req, res, next) => {
   try {
     const startDate = req.query.start_date || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
     const endDate = req.query.end_date || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]

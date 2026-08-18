@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import bcrypt from 'bcryptjs'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -75,7 +76,7 @@ router.get('/:id', [
 })
 
 // Create user
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('user_manage'), [
   body('username').trim().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
   body('password')
     .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
@@ -129,7 +130,7 @@ router.post('/', [
 })
 
 // Update user
-router.put('/:id', [
+router.put('/:id', authenticateToken, requirePermission('user_manage'), [
   param('id').isNumeric().withMessage('Invalid user ID'),
   body('fullName').optional().trim().notEmpty().withMessage('Full name cannot be empty'),
   body('role').optional().isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
@@ -206,7 +207,7 @@ router.put('/:id', [
 })
 
 // Toggle user active status
-router.patch('/:id/toggle-active', [
+router.patch('/:id/toggle-active', authenticateToken, requirePermission('user_manage'), [
   param('id').isNumeric().withMessage('Invalid user ID'),
 ], validate, async (req, res, next) => {
   try {
@@ -254,7 +255,7 @@ router.patch('/:id/toggle-active', [
 })
 
 // Delete user
-router.delete('/:id', [
+router.delete('/:id', authenticateToken, requirePermission('user_manage'), [
   param('id').isNumeric().withMessage('Invalid user ID'),
 ], validate, async (req, res, next) => {
   try {

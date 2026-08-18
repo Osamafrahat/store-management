@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -28,7 +29,7 @@ router.get('/', async (req, res, next) => {
 })
 
 // Create category
-router.post('/', [
+router.post('/', authenticateToken, requirePermission('inventory_edit'), [
   body('name').trim().notEmpty().withMessage('Category name is required'),
 ], validate, async (req, res, next) => {
   try {
@@ -49,7 +50,7 @@ router.post('/', [
 })
 
 // Update category
-router.put('/:id', [
+router.put('/:id', authenticateToken, requirePermission('inventory_edit'), [
   param('id').isNumeric().withMessage('Invalid category ID'),
   body('name').trim().notEmpty().withMessage('Category name is required'),
 ], validate, async (req, res, next) => {
@@ -72,7 +73,7 @@ router.put('/:id', [
 })
 
 // Delete category
-router.delete('/:id', [
+router.delete('/:id', authenticateToken, requirePermission('inventory_edit'), [
   param('id').isNumeric().withMessage('Invalid category ID'),
 ], validate, async (req, res, next) => {
   try {
