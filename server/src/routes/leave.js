@@ -188,19 +188,23 @@ router.patch('/requests/:id/approve', requireManager, [
 
     // Auto-create attendance + shift records for approved leave
     if (status === 'approved') {
-      // Find or create a "Leave" shift
+      // Get leave type name for shift label
+      const { data: lt } = await supabase.from('leave_types').select('name').eq('id', existing.leave_type_id).single()
+      const shiftName = lt?.name || 'Annual'
+
+      // Find or create shift with leave type name
       let leaveShift = null
       const { data: existingShift } = await supabase
         .from('shifts')
         .select('id')
-        .ilike('name', 'Leave')
+        .ilike('name', shiftName)
         .maybeSingle()
       if (existingShift) {
         leaveShift = existingShift
       } else {
         const { data: newShift } = await supabase
           .from('shifts')
-          .insert({ name: 'Leave', start_time: '00:00', end_time: '00:00' })
+          .insert({ name: shiftName, start_time: '00:00', end_time: '00:00' })
           .select('id')
           .single()
         leaveShift = newShift
@@ -208,23 +212,23 @@ router.patch('/requests/:id/approve', requireManager, [
 
       const start = new Date(existing.start_date + 'T00:00:00')
       const end = new Date(existing.end_date + 'T00:00:00')
-      const attendanceRecords = []
-      const shiftRecords = []
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const year = d.getFullYear()
         const month = String(d.getMonth() + 1).padStart(2, '0')
         const day = String(d.getDate()).padStart(2, '0')
         const dateStr = `${year}-${month}-${day}`
 
-        // Check if attendance record already exists
+        // Upsert attendance record
         const { data: existingAtt } = await supabase
           .from('attendance')
           .select('id')
           .eq('employee_id', existing.employee_id)
           .eq('date', dateStr)
           .maybeSingle()
-        if (!existingAtt) {
-          attendanceRecords.push({
+        if (existingAtt) {
+          await supabase.from('attendance').update({ status: 'on_leave', source: 'leave', notes: 'Approved leave' }).eq('id', existingAtt.id)
+        } else {
+          await supabase.from('attendance').insert({
             employee_id: existing.employee_id,
             date: dateStr,
             status: 'on_leave',
@@ -233,7 +237,7 @@ router.patch('/requests/:id/approve', requireManager, [
           })
         }
 
-        // Check if shift assignment already exists
+        // Upsert shift assignment — replace any existing shift
         if (leaveShift) {
           const { data: existingShiftAssign } = await supabase
             .from('employee_shifts')
@@ -241,20 +245,16 @@ router.patch('/requests/:id/approve', requireManager, [
             .eq('employee_id', existing.employee_id)
             .eq('date', dateStr)
             .maybeSingle()
-          if (!existingShiftAssign) {
-            shiftRecords.push({
+          if (existingShiftAssign) {
+            await supabase.from('employee_shifts').update({ shift_id: leaveShift.id }).eq('id', existingShiftAssign.id)
+          } else {
+            await supabase.from('employee_shifts').insert({
               employee_id: existing.employee_id,
               shift_id: leaveShift.id,
               date: dateStr,
             })
           }
         }
-      }
-      if (attendanceRecords.length > 0) {
-        await supabase.from('attendance').insert(attendanceRecords)
-      }
-      if (shiftRecords.length > 0) {
-        await supabase.from('employee_shifts').insert(shiftRecords)
       }
     }
 
