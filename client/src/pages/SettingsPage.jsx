@@ -342,21 +342,21 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700/30">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('settings.enableGeolocation') || 'Enable Geolocation'}
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   {t('settings.enableGeolocationHelper') || 'Require GPS check-in for clock in/out'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, 'attendance.enableGeolocation': prev['attendance.enableGeolocation'] === 'true' || prev['attendance.enableGeolocation'] === true ? 'false' : 'true' }))}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'bg-primary-600 shadow-inner' : 'bg-gray-300 dark:bg-gray-600'}`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${formData['attendance.enableGeolocation'] === 'true' || formData['attendance.enableGeolocation'] === true ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
 
