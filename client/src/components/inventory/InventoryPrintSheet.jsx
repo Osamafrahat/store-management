@@ -23,7 +23,7 @@ export default function InventoryPrintSheet({ products, categories, settings, us
       margin: [8, 8, 8, 8],
       filename: `Inventory_Report_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     }
@@ -50,7 +50,7 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         </button>
       </div>
 
-      <div id="inventory-print-content" style={{ color: '#000', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+      <div id="inventory-print-content" dir="auto" style={{ color: '#000', fontFamily: 'Tahoma, Arial, Helvetica, sans-serif', letterSpacing: 0 }}>
         {/* Header */}
         <div style={{ borderBottom: '3px solid #000', paddingBottom: '8px', marginBottom: '10px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -75,15 +75,15 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         {/* Summary Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
           <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: '#000', letterSpacing: '0.5px' }}>{t('print.totalProducts')}</div>
+            <div style={{ fontSize: '10px', color: '#000' }}>{t('print.totalProducts')}</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalProducts}</div>
           </div>
           <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: '#000', letterSpacing: '0.5px' }}>{t('print.totalItems')}</div>
+            <div style={{ fontSize: '10px', color: '#000' }}>{t('print.totalItems')}</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{totalQuantity.toLocaleString()}</div>
           </div>
           <div style={{ border: '1px solid #ccc', borderRadius: '6px', padding: '8px', textAlign: 'center' }}>
-            <div style={{ fontSize: '10px', color: '#000', letterSpacing: '0.5px' }}>{t('print.lowStock')}</div>
+            <div style={{ fontSize: '10px', color: '#000' }}>{t('print.lowStock')}</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', margin: '2px 0' }}>{lowStockCount}</div>
           </div>
         </div>
