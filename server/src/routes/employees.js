@@ -8,14 +8,12 @@ const router = Router()
 
 // Role-based permissions mapping (mirrors frontend ROLES in userStore.js)
 const ROLE_PERMISSIONS = {
-  MANAGER: ['pos_access','inventory_view','inventory_edit','reports_view','suppliers_view','suppliers_edit','promotions_view','promotions_edit','settings_view','settings_edit','user_manage','customers_view','customers_edit','expenses_view','expenses_edit','refunds_view','refunds_edit','employees_view','employees_edit','accounting_view','accounting_edit','accounting_post'],
-  SALES_MANAGER: ['pos_access','inventory_view','reports_view','suppliers_view','promotions_view','promotions_edit','customers_view','customers_edit','refunds_view','refunds_edit','expenses_view'],
-  CASHIER: ['pos_access','reports_view','customers_view','customers_edit','refunds_view'],
-  SENIOR_CASHIER: ['pos_access','inventory_view','reports_view','customers_view','customers_edit','refunds_view','refunds_edit','promotions_view'],
-  INVENTORY_CLERK: ['pos_access','inventory_view','inventory_edit','suppliers_view','suppliers_edit','reports_view'],
-  SALES_ASSOCIATE: ['pos_access','inventory_view','customers_view','customers_edit','promotions_view','reports_view'],
-  VIEWER: ['pos_access','inventory_view','reports_view','suppliers_view','promotions_view','customers_view','expenses_view','refunds_view'],
-  ACCOUNTANT: ['pos_access','accounting_view','accounting_edit','accounting_post','reports_view','expenses_view','expenses_edit','suppliers_view','customers_view'],
+  MANAGER: ['dashboard_view','pos_access','inventory_view','inventory_edit','reports_view','suppliers_view','suppliers_edit','promotions_view','promotions_edit','settings_view','settings_edit','user_manage','customers_view','customers_edit','expenses_view','expenses_edit','refunds_view','refunds_edit','employees_view','employees_edit','hr_view','hr_edit','services_view','services_edit','accounting_view','accounting_edit','accounting_post'],
+  SALES_MANAGER: ['dashboard_view','pos_access','inventory_view','reports_view','suppliers_view','promotions_view','promotions_edit','customers_view','customers_edit','refunds_view','refunds_edit','expenses_view','services_view','services_edit'],
+  CASHIER: ['dashboard_view','pos_access','reports_view','customers_view','customers_edit','refunds_view','services_view'],
+  INVENTORY_CLERK: ['dashboard_view','pos_access','inventory_view','inventory_edit','suppliers_view','suppliers_edit','reports_view'],
+  ACCOUNTANT: ['dashboard_view','pos_access','accounting_view','accounting_edit','accounting_post','reports_view','expenses_view','expenses_edit','suppliers_view','customers_view'],
+  HR_MANAGER: ['dashboard_view','pos_access','hr_view','hr_edit','reports_view','employees_view','employees_edit','customers_view'],
 }
 
 const validate = (req, res, next) => {
@@ -108,7 +106,7 @@ router.post('/', authenticateToken, requirePermission('employees_edit'), [
     // Auto-create user account if requested
     let user = null
     if (create_user && username) {
-      const validRole = ['MANAGER','SALES_MANAGER','CASHIER','SENIOR_CASHIER','INVENTORY_CLERK','SALES_ASSOCIATE','VIEWER','ACCOUNTANT'].includes(user_role) ? user_role : 'CASHIER'
+      const validRole = ['MANAGER','SALES_MANAGER','CASHIER','INVENTORY_CLERK','ACCOUNTANT','HR_MANAGER'].includes(user_role) ? user_role : 'CASHIER'
 
       // Check username uniqueness
       const { data: existingUser } = await supabase.from('users').select('id').eq('username', username).single()

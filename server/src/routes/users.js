@@ -84,7 +84,7 @@ router.post('/', authenticateToken, requirePermission('user_manage'), [
     .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
     .matches(/[0-9]/).withMessage('Password must contain at least one number'),
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
+  body('role').isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'INVENTORY_CLERK', 'ACCOUNTANT', 'HR_MANAGER']).withMessage('Invalid role'),
 ], validate, async (req, res, next) => {
   try {
     const { username, password, fullName, role, permissions, employeeId } = req.body
@@ -133,7 +133,7 @@ router.post('/', authenticateToken, requirePermission('user_manage'), [
 router.put('/:id', authenticateToken, requirePermission('user_manage'), [
   param('id').isNumeric().withMessage('Invalid user ID'),
   body('fullName').optional().trim().notEmpty().withMessage('Full name cannot be empty'),
-  body('role').optional().isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'SENIOR_CASHIER', 'INVENTORY_CLERK', 'SALES_ASSOCIATE', 'VIEWER', 'ACCOUNTANT']).withMessage('Invalid role'),
+  body('role').optional().isIn(['MANAGER', 'SALES_MANAGER', 'CASHIER', 'INVENTORY_CLERK', 'ACCOUNTANT', 'HR_MANAGER']).withMessage('Invalid role'),
   body('password').optional()
     .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
     .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')

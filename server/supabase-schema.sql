@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS users (
   full_name TEXT NOT NULL,
   phone TEXT,
   email TEXT,
-  role TEXT NOT NULL DEFAULT 'VIEWER',
+  role TEXT NOT NULL DEFAULT 'CASHIER',
   permissions JSONB DEFAULT '[]',
   is_active BOOLEAN DEFAULT true,
   must_change_password BOOLEAN DEFAULT false,

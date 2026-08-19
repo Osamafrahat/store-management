@@ -173,11 +173,10 @@ export default function DashboardPage() {
   const role = currentUser?.role
   const isManager = role === 'MANAGER'
   const isSalesManager = role === 'SALES_MANAGER'
-  const isCashier = role === 'CASHIER' || role === 'SENIOR_CASHIER'
+  const isCashier = role === 'CASHIER'
   const isInventoryClerk = role === 'INVENTORY_CLERK'
-  const isSalesAssociate = role === 'SALES_ASSOCIATE'
   const isAccountant = role === 'ACCOUNTANT'
-  const isViewer = role === 'VIEWER'
+  const isHrManager = role === 'HR_MANAGER'
 
   return (
     <div className="space-y-6">
@@ -225,15 +224,12 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* ===== CASHIER / SENIOR CASHIER: POS Focus ===== */}
+      {/* ===== CASHIER: POS Focus ===== */}
       {isCashier && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
             <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
-            {role === 'SENIOR_CASHIER' && (
-              <StatCard icon={Tag} label={t('dashboard.activePromotions')} value={stats.activePromotions} color="pink" href="/promotions" />
-            )}
           </div>
           <QuickActions showPOS={false} />
           <CashierDashboard stats={stats} t={t} />
@@ -253,15 +249,15 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* ===== SALES ASSOCIATE: Basic POS ===== */}
-      {isSalesAssociate && (
+      {/* ===== HR MANAGER: HR Focus ===== */}
+      {isHrManager && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
-            <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard icon={Users} label={t('dashboard.teamMembers')} value={t('dashboard.viewAll')} color="indigo" href="/employees" />
+            <StatCard icon={Calendar} label={t('dashboard.attendance')} value={t('dashboard.viewAll')} color="blue" href="/attendance" />
+            <StatCard icon={Star} label={t('dashboard.performance')} value={t('dashboard.viewAll')} color="purple" href="/performance" />
           </div>
-          <QuickActions showPOS />
-          <SalesDashboard stats={stats} t={t} />
+          <QuickActions showHR />
         </>
       )}
 
@@ -278,34 +274,6 @@ export default function DashboardPage() {
           <AccountantDashboard stats={stats} t={t} />
         </>
       )}
-
-      {/* ===== VIEWER: Read-Only Overview ===== */}
-      {isViewer && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {hasPermission(PERMISSIONS.POS_ACCESS) && (
-              <>
-                <StatCard icon={DollarSign} label={t('dashboard.todaysSales')} value={formatCurrency(stats.todaySales)} color="green" href="/reports" />
-                <StatCard icon={ShoppingBag} label={t('dashboard.todaysOrders')} value={stats.todayOrders} color="blue" href="/reports" />
-              </>
-            )}
-            {hasPermission(PERMISSIONS.INVENTORY_VIEW) && (
-              <>
-                <StatCard icon={Package} label={t('dashboard.totalProducts')} value={stats.totalProducts} color="purple" href="/inventory" />
-                <StatCard icon={AlertTriangle} label={t('dashboard.lowStockItems')} value={stats.lowStockCount} color={stats.lowStockCount > 0 ? 'red' : 'gray'} href="/inventory" />
-              </>
-            )}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {hasPermission(PERMISSIONS.POS_ACCESS) && stats.recentOrders.length > 0 && (
-              <RecentOrders orders={stats.recentOrders} t={t} />
-            )}
-            {hasPermission(PERMISSIONS.INVENTORY_VIEW) && stats.lowStockProducts.length > 0 && (
-              <LowStockAlert products={stats.lowStockProducts} t={t} />
-            )}
-          </div>
-        </>
-      )}
     </div>
   )
 }
@@ -314,11 +282,9 @@ const ROLES_LABELS = {
   MANAGER: 'Manager / مدير',
   SALES_MANAGER: 'Sales Manager / مدير المبيعات',
   CASHIER: 'Cashier / كاشير',
-  SENIOR_CASHIER: 'Senior Cashier / كاشير أول',
   INVENTORY_CLERK: 'Inventory Clerk /موظف مخزون',
-  SALES_ASSOCIATE: 'Sales Associate /موظف مبيعات',
   ACCOUNTANT: 'Accountant / محاسب',
-  VIEWER: 'Viewer / مشاهد',
+  HR_MANAGER: 'HR Manager / مدير الموارد البشرية',
 }
 
 // ===== Manager Dashboard =====

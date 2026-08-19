@@ -219,10 +219,16 @@ export default function UsersPage() {
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                         user.role === 'MANAGER'
                           ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                          : user.role === 'SALES_MANAGER'
+                          ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
                           : user.role === 'CASHIER'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                          : user.role === 'INVENTORY_CLERK'
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : user.role === 'INVENTORY_CLERK'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                          : user.role === 'ACCOUNTANT'
+                          ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                          : user.role === 'HR_MANAGER'
+                          ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}>
                         {ROLES[user.role]?.name || user.role}

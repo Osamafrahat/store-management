@@ -9,11 +9,9 @@ const USER_ROLES = (t) => [
   { value: 'MANAGER', label: t('role.manager') },
   { value: 'SALES_MANAGER', label: t('role.salesManager') || 'Sales Manager' },
   { value: 'CASHIER', label: t('role.cashier') },
-  { value: 'SENIOR_CASHIER', label: t('role.seniorCashier') || 'Senior Cashier' },
   { value: 'INVENTORY_CLERK', label: t('role.inventoryClerk') },
-  { value: 'SALES_ASSOCIATE', label: t('role.salesAssociate') || 'Sales Associate' },
   { value: 'ACCOUNTANT', label: t('role.accountant') || 'Accountant' },
-  { value: 'VIEWER', label: t('role.viewer') || 'Viewer' },
+  { value: 'HR_MANAGER', label: t('role.hrManager') || 'HR Manager' },
 ]
 
 export default function EmployeesPage() {
@@ -130,13 +128,11 @@ export default function EmployeesPage() {
       MANAGER: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
       SALES_MANAGER: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
       CASHIER: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-      SENIOR_CASHIER: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
       INVENTORY_CLERK: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      SALES_ASSOCIATE: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       ACCOUNTANT: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-      VIEWER: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+      HR_MANAGER: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
     }
-    return colors[role] || colors.VIEWER
+    return colors[role] || colors.CASHIER
   }
 
   if (loading) {

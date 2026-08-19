@@ -123,10 +123,9 @@ export default function ProfilePage() {
     MANAGER: 'Manager',
     SALES_MANAGER: 'Sales Manager',
     CASHIER: 'Cashier',
-    SENIOR_CASHIER: 'Senior Cashier',
     INVENTORY_CLERK: 'Inventory Clerk',
-    SALES_ASSOCIATE: 'Sales Associate',
-    VIEWER: 'Viewer',
+    ACCOUNTANT: 'Accountant',
+    HR_MANAGER: 'HR Manager',
   }
 
   return (

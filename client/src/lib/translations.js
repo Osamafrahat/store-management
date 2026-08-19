@@ -888,13 +888,9 @@ export const translations = {
     'role.manager': 'Manager',
     'role.cashier': 'Cashier',
     'role.inventoryClerk': 'Inventory Clerk',
-    'role.sales': 'Sales',
-    'role.other': 'Other',
     'role.salesManager': 'Sales Manager',
-    'role.seniorCashier': 'Senior Cashier',
-    'role.salesAssociate': 'Sales Associate',
     'role.accountant': 'Accountant',
-    'role.viewer': 'Viewer',
+    'role.hrManager': 'HR Manager',
 
     // Settings Helpers
     'settings.currentRate': 'Current rate: ',
@@ -2501,13 +2497,9 @@ export const translations = {
     'role.manager': 'مدير',
     'role.cashier': 'أمين صندوق',
     'role.inventoryClerk': 'مسؤول مخزون',
-    'role.sales': 'مبيعات',
-    'role.other': 'أخرى',
     'role.salesManager': 'مدير المبيعات',
-    'role.seniorCashier': 'كاشير أول',
-    'role.salesAssociate': 'موظف مبيعات',
     'role.accountant': 'محاسب',
-    'role.viewer': 'مشاهد',
+    'role.hrManager': 'مدير الموارد البشرية',
 
     // Settings Helpers
     'settings.currentRate': 'النسبة الحالية: ',

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
   full_name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'VIEWER',
+  role TEXT NOT NULL DEFAULT 'CASHIER',
   permissions JSONB DEFAULT '[]',
   is_active BOOLEAN DEFAULT true,
   must_change_password BOOLEAN DEFAULT false,
