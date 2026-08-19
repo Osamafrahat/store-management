@@ -85,23 +85,34 @@ export const useCartStore = create(
         return items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
       },
 
+      getProductSubtotal: () => {
+        const { items } = get()
+        return items.filter(item => item.product._type !== 'service').reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+      },
+
+      getServiceSubtotal: () => {
+        const { items } = get()
+        return items.filter(item => item.product._type === 'service').reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+      },
+
       getDiscount: () => {
         const { promoDiscount } = get()
-        const subtotal = get().getSubtotal()
+        const subtotal = get().getProductSubtotal()
         return subtotal * (promoDiscount / 100)
       },
 
       getTax: (taxRate = 14) => {
-        const subtotal = get().getSubtotal()
+        const productSubtotal = get().getProductSubtotal()
         const discount = get().getDiscount()
-        return (subtotal - discount) * (taxRate / 100)
+        return (productSubtotal - discount) * (taxRate / 100)
       },
 
       getTotal: (taxRate = 14) => {
-        const subtotal = get().getSubtotal()
+        const productSubtotal = get().getProductSubtotal()
+        const serviceSubtotal = get().getServiceSubtotal()
         const discount = get().getDiscount()
         const tax = get().getTax(taxRate)
-        return subtotal - discount + tax
+        return productSubtotal - discount + tax + serviceSubtotal
       },
 
       getItemCount: () => {

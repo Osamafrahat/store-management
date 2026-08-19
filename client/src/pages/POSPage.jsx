@@ -406,6 +406,7 @@ export default function POSPage() {
                   user_id: currentUser?.id,
                   customer_id: selectedCustomer?.id || null,
                   promotion_id: null,
+                  notes: serviceItems.length > 0 ? `Includes ${serviceItems.length} service(s)` : null,
                   created_at: new Date().toISOString(),
                 }
 
@@ -443,19 +444,62 @@ export default function POSPage() {
                   })
                 }
               } else {
-                // Service-only order
-                setLastOrder({
+                // Service-only: still create an order for invoice tracking
+                const orderData = {
                   order_number: generateOrderNumber(),
                   items: serviceItems.map(item => ({
                     product_name: item.product.name,
                     quantity: item.quantity,
                     unit_price: item.product.price,
+                    _type: 'service',
                   })),
+                  subtotal: serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+                  discount_amount: 0,
+                  tax_amount: 0,
                   total: serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
-                  customers: selectedCustomer ? { name: selectedCustomer.name } : null,
-                  users: currentUser ? { full_name: currentUser.fullName } : null,
-                  service_sale: true,
-                })
+                  payment_method: paymentData.method,
+                  payment_status: 'paid',
+                  payments: paymentData.payments,
+                  user_id: currentUser?.id,
+                  customer_id: selectedCustomer?.id || null,
+                  notes: 'Service sale - no VAT',
+                  created_at: new Date().toISOString(),
+                }
+
+                if (navigator.onLine) {
+                  const clientOrderId = `ONL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+                  const response = await ordersApi.create({ ...orderData, client_order_id: clientOrderId })
+                  let completedOrder
+                  if (response.data?.id) {
+                    const fullOrderRes = await ordersApi.getById(response.data.id)
+                    completedOrder = {
+                      ...fullOrderRes.data,
+                      items: serviceItems.map(item => ({
+                        product_name: item.product.name,
+                        quantity: item.quantity,
+                        unit_price: item.product.price,
+                        _type: 'service',
+                      })),
+                    }
+                  } else {
+                    completedOrder = {
+                      ...orderData,
+                      users: currentUser ? { full_name: currentUser.fullName } : null,
+                      customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                    }
+                  }
+                  setLastOrder(completedOrder)
+                } else {
+                  const clientOrderId = await queueOrder(orderData)
+                  toastSuccess(t('offline.orderQueued'))
+                  setLastOrder({
+                    ...orderData,
+                    client_order_id: clientOrderId,
+                    offline: true,
+                    users: currentUser ? { full_name: currentUser.fullName } : null,
+                    customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                  })
+                }
               }
 
               if (serviceItems.length > 0) {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { ordersApi, etaApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
-import { FileText, Search, Eye, RefreshCcw, CheckCircle, XCircle, Clock, Send } from 'lucide-react'
+import { FileText, Search, Eye, RefreshCcw, CheckCircle, XCircle, Clock, Send, Wrench } from 'lucide-react'
 import ReceiptModal from '../components/pos/ReceiptModal'
 
 const STATUS_COLORS = {
@@ -49,6 +49,10 @@ export default function InvoicesPage() {
     return order.payment_status || 'paid'
   }
 
+  const isServiceOrder = (order) => {
+    return order.notes?.includes('Service sale') || order.notes?.includes('service(s)') || order.items?.some(i => i._type === 'service')
+  }
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !search ||
       order.order_number?.toLowerCase().includes(search.toLowerCase()) ||
@@ -64,10 +68,15 @@ export default function InvoicesPage() {
     paid: orders.filter(o => getOrderStatus(o) === 'paid').length,
     refunded: orders.filter(o => getOrderStatus(o) === 'refunded').length,
     partial: orders.filter(o => getOrderStatus(o) === 'partial').length,
+    serviceOrders: orders.filter(o => isServiceOrder(o)).length,
     totalRevenue: orders.filter(o => getOrderStatus(o) !== 'refunded').reduce((s, o) => {
       const total = parseFloat(o.total) || 0
       const refunded = parseFloat(o.total_refunded) || 0
       return s + (total - refunded)
+    }, 0),
+    serviceRevenue: orders.filter(o => isServiceOrder(o) && getOrderStatus(o) !== 'refunded').reduce((s, o) => {
+      const total = parseFloat(o.total) || 0
+      return s + total
     }, 0),
   }
 
@@ -122,13 +131,22 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg"><FileText className="w-5 h-5 text-primary-600" /></div>
             <div>
               <p className="text-sm text-gray-500">{t('invoices.totalOrders') || 'Total Orders'}</p>
               <p className="text-xl font-bold">{stats.total}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><Wrench className="w-5 h-5 text-blue-600" /></div>
+            <div>
+              <p className="text-sm text-gray-500">{t('services.serviceSales') || 'Service Sales'}</p>
+              <p className="text-xl font-bold text-blue-600">{stats.serviceOrders}</p>
             </div>
           </div>
         </div>
@@ -165,6 +183,9 @@ export default function InvoicesPage() {
             <div>
               <p className="text-sm text-gray-500">{t('invoices.totalRevenue') || 'Total Revenue'}</p>
               <p className="text-xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
+              {stats.serviceRevenue > 0 && (
+                <p className="text-xs text-blue-500">{t('services.serviceRevenue') || 'Services'}: {formatCurrency(stats.serviceRevenue)}</p>
+              )}
             </div>
           </div>
         </div>
@@ -234,7 +255,17 @@ export default function InvoicesPage() {
                   const StatusIcon = STATUS_ICONS[orderStatus] || Clock
                   return (
                     <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="px-4 py-3 font-mono font-semibold">{order.order_number}</td>
+                      <td className="px-4 py-3 font-mono font-semibold">
+                        <div className="flex items-center gap-2">
+                          {order.order_number}
+                          {isServiceOrder(order) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                              <Wrench className="w-3 h-3" />
+                              {t('services.service') || 'Service'}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 hidden sm:table-cell">{order.customers?.name || '-'}</td>
                       <td className="px-4 py-3 hidden md:table-cell">{order.users?.full_name || '-'}</td>
