@@ -91,12 +91,12 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         {/* Category Breakdown */}
         <div style={{ marginBottom: '16px' }}>
           <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#000', borderBottom: '2px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>{t('print.stockByCategory')}</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
             <thead>
               <tr>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 8px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.category')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 8px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.products')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 8px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.quantity')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 8px', textAlign: 'left', fontWeight: '600', fontSize: '11px' }}>{t('print.category')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 8px', textAlign: 'left', fontWeight: '600', fontSize: '11px' }}>{t('print.products')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 8px', textAlign: 'left', fontWeight: '600', fontSize: '11px' }}>{t('print.quantity')}</th>
               </tr>
             </thead>
             <tbody>
@@ -119,17 +119,17 @@ export default function InventoryPrintSheet({ products, categories, settings, us
         {/* Product List */}
         <div style={{ marginBottom: '16px' }}>
           <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#000', borderBottom: '2px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>{t('print.completeProductList')}</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
             <thead>
               <tr>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.rowNum')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.productName')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.sku')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.barcode')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.category')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.unit') || 'Unit'}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '9px' }}>{t('print.qty')}</th>
-                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'center', fontWeight: '600', fontSize: '9px' }}>{t('print.check')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.rowNum')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.productName')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.sku')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.barcode')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.category')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.unit') || 'Unit'}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'left', fontWeight: '600', fontSize: '10px' }}>{t('print.qty')}</th>
+                <th style={{ background: '#000', color: '#fff', padding: '5px 6px', textAlign: 'center', fontWeight: '600', fontSize: '10px' }}>{t('print.check')}</th>
               </tr>
             </thead>
             <tbody>
@@ -160,8 +160,8 @@ export default function InventoryPrintSheet({ products, categories, settings, us
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan="6" style={{ padding: '6px 8px', background: '#000', color: '#fff', textAlign: 'right', fontWeight: 'bold', fontSize: '10px' }}>{t('print.totals')}</td>
-                <td style={{ padding: '6px 8px', background: '#000', color: '#fff', fontWeight: 'bold', fontSize: '10px' }}>{totalQuantity.toLocaleString()}</td>
+                <td colSpan="6" style={{ padding: '6px 8px', background: '#000', color: '#fff', textAlign: 'right', fontWeight: 'bold', fontSize: '11px' }}>{t('print.totals')}</td>
+                <td style={{ padding: '6px 8px', background: '#000', color: '#fff', fontWeight: 'bold', fontSize: '11px' }}>{totalQuantity.toLocaleString()}</td>
                 <td style={{ padding: '6px 8px', background: '#000', color: '#fff' }}></td>
               </tr>
             </tfoot>
