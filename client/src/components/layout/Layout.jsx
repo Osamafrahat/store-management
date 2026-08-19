@@ -114,6 +114,17 @@ export default function Layout({ children }) {
     groups.push({ key: 'sales', label: t('nav.groupSales') || 'Sales', items: salesItems })
   }
 
+  // -- Services --
+  const serviceItems = []
+  if (canAccess('/services')) {
+    serviceItems.push({ name: t('nav.services') || 'Services', href: '/services', icon: Wrench })
+    serviceItems.push({ name: t('nav.servicePlans') || 'Plans', href: '/service-plans', icon: CreditCard })
+    serviceItems.push({ name: t('nav.subscriptions') || 'Subscriptions', href: '/subscriptions', icon: RefreshCw })
+  }
+  if (serviceItems.length > 0) {
+    groups.push({ key: 'services', label: t('nav.groupServices') || 'Services', items: serviceItems })
+  }
+
   // -- Inventory --
   const inventoryItems = []
   if (canAccess('/inventory')) {
@@ -158,17 +169,6 @@ export default function Layout({ children }) {
   }
   if (hrItems.length > 0) {
     groups.push({ key: 'hr', label: t('nav.groupHR') || 'HR', items: hrItems })
-  }
-
-  // -- Services --
-  const serviceItems = []
-  if (canAccess('/services')) {
-    serviceItems.push({ name: t('nav.services') || 'Services', href: '/services', icon: Wrench })
-    serviceItems.push({ name: t('nav.servicePlans') || 'Plans', href: '/service-plans', icon: CreditCard })
-    serviceItems.push({ name: t('nav.subscriptions') || 'Subscriptions', href: '/subscriptions', icon: RefreshCw })
-  }
-  if (serviceItems.length > 0) {
-    groups.push({ key: 'services', label: t('nav.groupServices') || 'Services', items: serviceItems })
   }
 
   // -- Reporting --
