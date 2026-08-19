@@ -87,7 +87,12 @@ export const useCartStore = create(
 
       getProductSubtotal: () => {
         const { items } = get()
-        return items.filter(item => item.product._type !== 'service').reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+        return items.filter(item => item.product._type !== 'service' && item.product._type !== 'subscription').reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+      },
+
+      getNonProductSubtotal: () => {
+        const { items } = get()
+        return items.filter(item => item.product._type === 'service' || item.product._type === 'subscription').reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
       },
 
       getServiceSubtotal: () => {
@@ -109,10 +114,10 @@ export const useCartStore = create(
 
       getTotal: (taxRate = 14) => {
         const productSubtotal = get().getProductSubtotal()
-        const serviceSubtotal = get().getServiceSubtotal()
+        const nonProductSubtotal = get().getNonProductSubtotal()
         const discount = get().getDiscount()
         const tax = get().getTax(taxRate)
-        return productSubtotal - discount + tax + serviceSubtotal
+        return productSubtotal - discount + tax + nonProductSubtotal
       },
 
       getItemCount: () => {

@@ -6,7 +6,7 @@ import { formatCurrency } from '../../lib/utils'
 import { Trash2, Plus, Minus, Tag, ShoppingBag, X, Wrench } from 'lucide-react'
 
 export default memo(function Cart({ onCheckout }) {
-  const { items, removeItem, updateQuantity, clearCart, getSubtotal, getProductSubtotal, getServiceSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount, applyPromo, removePromo } = useCartStore()
+  const { items, removeItem, updateQuantity, clearCart, getSubtotal, getProductSubtotal, getNonProductSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount, applyPromo, removePromo } = useCartStore()
   const { settings, t, toastError } = useAppStore()
   const [promoInput, setPromoInput] = useState('')
   const [promoError, setPromoError] = useState('')
@@ -233,15 +233,15 @@ export default memo(function Cart({ onCheckout }) {
             <span className="text-gray-500 dark:text-gray-400">{t('cart.subtotal')}</span>
             <span>{formatCurrency(getSubtotal())}</span>
           </div>
-          {getServiceSubtotal() > 0 && (
+          {getNonProductSubtotal() > 0 && (
             <div className="flex justify-between text-sm text-blue-600">
               <span>{t('services.services') || 'Services'}</span>
-              <span>{formatCurrency(getServiceSubtotal())}</span>
+              <span>{formatCurrency(getNonProductSubtotal())}</span>
             </div>
           )}
-          {getServiceSubtotal() > 0 && (
+          {getNonProductSubtotal() > 0 && (
             <div className="flex justify-between text-sm text-gray-500">
-              <span>{t('cart.taxExempt') || 'Tax exempt (services)'}</span>
+              <span>{t('cart.taxExempt') || 'Tax exempt'}</span>
               <span>—</span>
             </div>
           )}
