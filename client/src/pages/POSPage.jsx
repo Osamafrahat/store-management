@@ -11,7 +11,7 @@ import Cart from '../components/pos/Cart'
 import PaymentModal from '../components/pos/PaymentModal'
 import BarcodeScanner from '../components/pos/BarcodeScanner'
 import ReceiptModal from '../components/pos/ReceiptModal'
-import { Search, Zap, User, Wrench } from 'lucide-react'
+import { Search, Zap, User, Wrench, CreditCard } from 'lucide-react'
 
 export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -25,6 +25,7 @@ export default function POSPage() {
   const [customerSearch, setCustomerSearch] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [services, setServices] = useState([])
+  const [plans, setPlans] = useState([])
   const [activeTab, setActiveTab] = useState('products')
   const searchInputRef = useRef(null)
   const barcodeInputRef = useRef(null)
@@ -78,11 +79,12 @@ export default function POSPage() {
 
       if (navigator.onLine) {
         try {
-          const [productsRes, categoriesRes, customersRes, servicesRes] = await Promise.all([
+          const [productsRes, categoriesRes, customersRes, servicesRes, plansRes] = await Promise.all([
             productsApi.getAll(),
             categoriesApi.getAll(),
             customersApi.getAll(),
             servicesApi.getAll(),
+            servicePlansApi.getAll(),
           ])
           const productsData = productsRes.data?.data || productsRes.data || []
           setProducts(productsData)
@@ -90,6 +92,8 @@ export default function POSPage() {
           setCustomers(customersRes.data)
           const servicesData = (servicesRes.data || []).filter(s => s.is_active !== false).map(s => ({ ...s, _type: 'service' }))
           setServices(servicesData)
+          const plansData = (plansRes.data || []).filter(p => p.is_active !== false).map(p => ({ ...p, _type: 'subscription' }))
+          setPlans(plansData)
 
           await cacheData({
             products: productsData,
@@ -185,13 +189,24 @@ export default function POSPage() {
     return true
   }), [services, searchQuery])
 
+  const filteredPlans = useMemo(() => plans.filter(p => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      return (
+        p.name.toLowerCase().includes(query) ||
+        p.name_ar?.toLowerCase().includes(query)
+      )
+    }
+    return true
+  }), [plans, searchQuery])
+
   const filteredCustomers = useMemo(() => customers.filter(c => {
     if (!customerSearch) return true
     const query = customerSearch.toLowerCase()
     return c.name?.toLowerCase().includes(query) || c.phone?.includes(query)
   }), [customers, customerSearch])
 
-  const displayItems = activeTab === 'products' ? filteredProducts : filteredServices
+  const displayItems = activeTab === 'products' ? filteredProducts : activeTab === 'services' ? filteredServices : filteredPlans
 
   return (
     <div className="flex flex-col md:flex-row md:h-[calc(100vh-8rem)] gap-4 md:overflow-hidden">
@@ -219,7 +234,7 @@ export default function POSPage() {
           </button>
         </div>
 
-        {/* Products / Services Tabs */}
+        {/* Products / Services / Subscriptions Tabs */}
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('products')}
@@ -240,7 +255,18 @@ export default function POSPage() {
             }`}
           >
             <Wrench className="w-4 h-4" />
-            {t('nav.services') || 'Services'}
+            {t('pos.services') || 'Services'}
+          </button>
+          <button
+            onClick={() => setActiveTab('subscriptions')}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'subscriptions'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            {t('pos.subscriptions') || 'Subscriptions'}
           </button>
         </div>
 
@@ -367,46 +393,64 @@ export default function POSPage() {
             if (isSubmitting) return
             setIsSubmitting(true)
             try {
+              const productItems = items.filter(i => i.product._type !== 'service' && i.product._type !== 'subscription')
               const serviceItems = items.filter(i => i.product._type === 'service')
-              const productItems = items.filter(i => i.product._type !== 'service')
+              const subscriptionItems = items.filter(i => i.product._type === 'subscription')
 
-              // Create subscriptions for service items
-              for (const item of serviceItems) {
-                if (!selectedCustomer) {
-                  toastError(t('pos.customerRequiredForService') || 'Customer required for service sales')
-                  setIsSubmitting(false)
-                  return
-                }
+              // Validate customer required for subscriptions
+              if (subscriptionItems.length > 0 && !selectedCustomer) {
+                toastError(t('pos.customerRequiredForSubscription') || 'Customer is required for subscriptions')
+                setIsSubmitting(false)
+                return
+              }
+
+              // Create subscriptions from plan items
+              for (const item of subscriptionItems) {
                 await subscriptionsApi.quickCreate({
                   customer_id: selectedCustomer.id,
-                  service_id: item.product.id,
-                  billing_amount: item.product.price * item.quantity,
+                  plan_id: item.product.id,
                   payment_method: paymentData.method,
                   notes: `POS sale - ${item.product.name}`,
                 })
               }
 
-              // Create order for product items (if any)
-              if (productItems.length > 0) {
+              // Build order items for products + services (both are one-time sales)
+              const allOrderItems = [
+                ...productItems.map(item => ({
+                  product_id: item.product.id,
+                  product_name: item.product.name,
+                  quantity: item.quantity,
+                  unit_price: item.product.price,
+                  _type: 'product',
+                })),
+                ...serviceItems.map(item => ({
+                  product_name: item.product.name,
+                  quantity: item.quantity,
+                  unit_price: item.product.price,
+                  _type: 'service',
+                })),
+              ]
+
+              const productSubtotal = productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+              const serviceSubtotal = serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+              const orderSubtotal = productSubtotal + serviceSubtotal
+
+              // Create order if there are products or services
+              if (allOrderItems.length > 0) {
                 const orderData = {
                   order_number: generateOrderNumber(),
-                  items: productItems.map(item => ({
-                    product_id: item.product.id,
-                    product_name: item.product.name,
-                    quantity: item.quantity,
-                    unit_price: item.product.price,
-                  })),
-                  subtotal: productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+                  items: allOrderItems,
+                  subtotal: orderSubtotal,
                   discount_amount: 0,
-                  tax_amount: productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * ((settings.taxRate || 14) / 100),
-                  total: productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * (1 + (settings.taxRate || 14) / 100),
+                  tax_amount: productSubtotal * ((settings.taxRate || 14) / 100),
+                  total: productSubtotal * (1 + (settings.taxRate || 14) / 100) + serviceSubtotal,
                   payment_method: paymentData.method,
                   payment_status: 'paid',
                   payments: paymentData.payments,
                   user_id: currentUser?.id,
                   customer_id: selectedCustomer?.id || null,
                   promotion_id: null,
-                  notes: serviceItems.length > 0 ? `Includes ${serviceItems.length} service(s)` : null,
+                  notes: subscriptionItems.length > 0 ? `Includes ${subscriptionItems.length} subscription(s)` : null,
                   created_at: new Date().toISOString(),
                 }
 
@@ -418,28 +462,11 @@ export default function POSPage() {
                     const fullOrderRes = await ordersApi.getById(response.data.id)
                     completedOrder = {
                       ...fullOrderRes.data,
-                      items: [
-                        ...(fullOrderRes.data.items || []),
-                        ...serviceItems.map(item => ({
-                          product_name: item.product.name,
-                          quantity: item.quantity,
-                          unit_price: item.product.price,
-                          _type: 'service',
-                        })),
-                      ],
+                      items: allOrderItems,
                     }
                   } else {
                     completedOrder = {
                       ...orderData,
-                      items: [
-                        ...orderData.items,
-                        ...serviceItems.map(item => ({
-                          product_name: item.product.name,
-                          quantity: item.quantity,
-                          unit_price: item.product.price,
-                          _type: 'service',
-                        })),
-                      ],
                       users: currentUser ? { full_name: currentUser.fullName } : null,
                       customers: selectedCustomer ? { name: selectedCustomer.name } : null,
                     }
@@ -450,15 +477,6 @@ export default function POSPage() {
                   toastSuccess(t('offline.orderQueued'))
                   setLastOrder({
                     ...orderData,
-                    items: [
-                      ...orderData.items,
-                      ...serviceItems.map(item => ({
-                        product_name: item.product.name,
-                        quantity: item.quantity,
-                        unit_price: item.product.price,
-                        _type: 'service',
-                      })),
-                    ],
                     client_order_id: clientOrderId,
                     offline: true,
                     users: currentUser ? { full_name: currentUser.fullName } : null,
@@ -466,75 +484,27 @@ export default function POSPage() {
                   })
                 }
               } else {
-                // Service-only: create order without items (subscriptions tracked separately)
-                const serviceTotal = serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
-                const orderData = {
+                // Subscription-only: create a receipt without order
+                setLastOrder({
                   order_number: generateOrderNumber(),
-                  items: [],
-                  subtotal: serviceTotal,
-                  discount_amount: 0,
-                  tax_amount: 0,
-                  total: serviceTotal,
-                  payment_method: paymentData.method,
-                  payment_status: 'paid',
-                  payments: paymentData.payments,
-                  user_id: currentUser?.id,
-                  customer_id: selectedCustomer?.id || null,
-                  notes: 'Service sale',
-                  created_at: new Date().toISOString(),
-                }
-
-                if (navigator.onLine) {
-                  const clientOrderId = `ONL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-                  const response = await ordersApi.create({ ...orderData, client_order_id: clientOrderId })
-                  let completedOrder
-                  if (response.data?.id) {
-                    completedOrder = {
-                      ...response.data,
-                      items: serviceItems.map(item => ({
-                        product_name: item.product.name,
-                        quantity: item.quantity,
-                        unit_price: item.product.price,
-                        _type: 'service',
-                      })),
-                      users: currentUser ? { full_name: currentUser.fullName } : null,
-                      customers: selectedCustomer ? { name: selectedCustomer.name } : null,
-                    }
-                  } else {
-                    completedOrder = {
-                      ...orderData,
-                      items: serviceItems.map(item => ({
-                        product_name: item.product.name,
-                        quantity: item.quantity,
-                        unit_price: item.product.price,
-                        _type: 'service',
-                      })),
-                      users: currentUser ? { full_name: currentUser.fullName } : null,
-                      customers: selectedCustomer ? { name: selectedCustomer.name } : null,
-                    }
-                  }
-                  setLastOrder(completedOrder)
-                } else {
-                  const clientOrderId = await queueOrder(orderData)
-                  toastSuccess(t('offline.orderQueued'))
-                  setLastOrder({
-                    ...orderData,
-                    items: serviceItems.map(item => ({
-                      product_name: item.product.name,
-                      quantity: item.quantity,
-                      unit_price: item.product.price,
-                      _type: 'service',
-                    })),
-                    client_order_id: clientOrderId,
-                    offline: true,
-                    users: currentUser ? { full_name: currentUser.fullName } : null,
-                    customers: selectedCustomer ? { name: selectedCustomer.name } : null,
-                  })
-                }
+                  items: subscriptionItems.map(item => ({
+                    product_name: item.product.name,
+                    quantity: item.quantity,
+                    unit_price: item.product.price,
+                    _type: 'subscription',
+                  })),
+                  total: subscriptionItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+                  customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                  users: currentUser ? { full_name: currentUser.fullName } : null,
+                  subscription_sale: true,
+                })
               }
 
+              if (subscriptionItems.length > 0) {
+                toastSuccess(t('pos.subscriptionCreated') || 'Subscription created')
+              }
               if (serviceItems.length > 0) {
-                toastSuccess(t('pos.serviceSold') || 'Service sold successfully')
+                toastSuccess(t('pos.serviceSold') || 'Service sold')
               }
 
               setSelectedCustomer(null)
@@ -542,7 +512,7 @@ export default function POSPage() {
               setShowPayment(false)
               setShowReceipt(true)
 
-              if (navigator.onLine && productItems.length > 0) {
+              if (navigator.onLine) {
                 fetchData()
               }
             } catch (err) {

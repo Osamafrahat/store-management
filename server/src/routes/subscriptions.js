@@ -264,30 +264,49 @@ router.delete('/:id', authenticateToken, requirePermission('services_edit'), [
 // Quick subscription from POS (creates subscription + records payment)
 router.post('/quick', authenticateToken, requirePermission('services_edit'), [
   body('customer_id').isNumeric().withMessage('Customer is required'),
-  body('service_id').isNumeric().withMessage('Service is required'),
-  body('billing_amount').isFloat({ min: 0.01 }).withMessage('Amount must be positive'),
+  body('plan_id').isNumeric().withMessage('Plan is required'),
   body('payment_method').optional().isIn(['cash', 'card', 'bank']),
 ], validate, async (req, res) => {
   try {
-    const { customer_id, service_id, plan_id, billing_amount, payment_method, notes } = req.body
+    const { customer_id, plan_id, payment_method, notes } = req.body
     const today = new Date().toISOString().split('T')[0]
+
+    // Get plan details for billing amount and duration
+    const { data: plan, error: planError } = await supabase
+      .from('service_plans')
+      .select('*')
+      .eq('id', plan_id)
+      .single()
+    if (planError || !plan) return res.status(404).json({ error: 'Plan not found' })
+
+    // Calculate end date based on plan duration
+    const startDate = new Date(today)
+    let endDate = new Date(startDate)
+    const duration = plan.duration_months || 1
+    if (plan.billing_cycle === 'annual') {
+      endDate.setMonth(endDate.getMonth() + (duration * 12))
+    } else if (plan.billing_cycle === 'weekly') {
+      endDate.setDate(endDate.getDate() + (duration * 7))
+    } else {
+      endDate.setMonth(endDate.getMonth() + duration)
+    }
 
     const insertData = {
       customer_id,
-      service_id,
-      plan_id: plan_id || null,
+      service_id: null,
+      plan_id,
       start_date: today,
-      end_date: null,
-      next_billing_date: null,
+      end_date: endDate.toISOString().split('T')[0],
+      next_billing_date: endDate.toISOString().split('T')[0],
       auto_renew: false,
-      billing_amount,
+      billing_amount: plan.price,
       notes: notes || 'POS sale',
     }
 
     const { data: sub, error: subError } = await supabase
       .from('subscriptions')
       .insert(insertData)
-      .select('*, customer:customers(id, name, phone), service:services(id, name, name_ar)')
+      .select('*, customer:customers(id, name, phone), plan:service_plans(id, name, name_ar, billing_cycle, price)')
       .single()
     if (subError) throw subError
 
@@ -296,7 +315,7 @@ router.post('/quick', authenticateToken, requirePermission('services_edit'), [
       .from('subscription_payments')
       .insert({
         subscription_id: sub.id,
-        amount: billing_amount,
+        amount: plan.price,
         payment_method: payment_method || 'cash',
         notes: 'POS payment',
       })

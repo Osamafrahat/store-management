@@ -226,7 +226,6 @@ function SubscriptionForm({ subscription, services, plans, customers, onSave, on
   const today = new Date().toISOString().split('T')[0]
   const [form, setForm] = useState({
     customer_id: subscription?.customer_id || '',
-    service_id: subscription?.service_id || '',
     plan_id: subscription?.plan_id || '',
     start_date: subscription?.start_date || today,
     end_date: subscription?.end_date || '',
@@ -236,13 +235,23 @@ function SubscriptionForm({ subscription, services, plans, customers, onSave, on
     notes: subscription?.notes || '',
   })
 
+  const selectedPlan = plans.find(p => p.id === parseInt(form.plan_id))
+
+  const handlePlanChange = (planId) => {
+    const plan = plans.find(p => p.id === parseInt(planId))
+    setForm({
+      ...form,
+      plan_id: planId,
+      billing_amount: plan?.price || form.billing_amount,
+    })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     await onSave({
       ...form,
       billing_amount: parseFloat(form.billing_amount) || 0,
       customer_id: parseInt(form.customer_id),
-      service_id: form.service_id ? parseInt(form.service_id) : null,
       plan_id: form.plan_id ? parseInt(form.plan_id) : null,
     })
   }
@@ -263,23 +272,18 @@ function SubscriptionForm({ subscription, services, plans, customers, onSave, on
               {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('services.service') || 'Service'}</label>
-              <select value={form.service_id} onChange={e => setForm({ ...form, service_id: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                <option value="">{t('services.selectService') || 'Select service'}</option>
-                {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{t('services.plan') || 'Plan'}</label>
-              <select value={form.plan_id} onChange={e => setForm({ ...form, plan_id: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                <option value="">{t('services.selectPlan') || 'Select plan'}</option>
-                {plans.map(p => <option key={p.id} value={p.id}>{p.name} - {p.price?.toLocaleString()} {t('common.currency') || 'EGP'}</option>)}
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">{t('services.plan') || 'Plan'} *</label>
+            <select value={form.plan_id} onChange={e => handlePlanChange(e.target.value)} required
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <option value="">{t('services.selectPlan') || 'Select plan'}</option>
+              {plans.map(p => <option key={p.id} value={p.id}>{p.name} - {p.price?.toLocaleString()} {t('common.currency') || 'EGP'} ({p.billing_cycle})</option>)}
+            </select>
+            {selectedPlan && (
+              <p className="text-xs text-gray-500 mt-1">
+                {selectedPlan.duration_months} {t('services.months') || 'months'} | {selectedPlan.billing_cycle}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
