@@ -33,7 +33,7 @@ import syncRouter from './routes/sync.js'
 import etaRouter from './routes/eta.js'
 import { backupRouter } from './routes/backup.js'
 import { startBackupScheduler } from './services/backupScheduler.js'
-import { startAttendanceCron } from './services/attendanceCron.js'
+import { startAttendanceCron, runAutoClockOut } from './services/attendanceCron.js'
 import chatRouter from './routes/chat.js'
 import attendanceRouter from './routes/attendance.js'
 import leaveRouter from './routes/leave.js'
@@ -158,6 +158,16 @@ app.use('/api', (req, res) => {
 })
 
 app.use(errorHandler)
+
+// Test endpoint to manually trigger attendance cron (manager only)
+app.post('/api/test/attendance-cron', authenticateToken, requireManager, async (req, res) => {
+  try {
+    await runAutoClockOut()
+    res.json({ success: true, message: 'Attendance cron executed manually' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
 // Auto-initialize accounting data on startup
 async function initAccounting() {
