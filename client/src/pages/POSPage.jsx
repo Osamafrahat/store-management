@@ -418,15 +418,28 @@ export default function POSPage() {
                     const fullOrderRes = await ordersApi.getById(response.data.id)
                     completedOrder = {
                       ...fullOrderRes.data,
-                      items: productItems.map(item => ({
-                        product_name: item.product.name,
-                        quantity: item.quantity,
-                        unit_price: item.product.price,
-                      })),
+                      items: [
+                        ...(fullOrderRes.data.items || []),
+                        ...serviceItems.map(item => ({
+                          product_name: item.product.name,
+                          quantity: item.quantity,
+                          unit_price: item.product.price,
+                          _type: 'service',
+                        })),
+                      ],
                     }
                   } else {
                     completedOrder = {
                       ...orderData,
+                      items: [
+                        ...orderData.items,
+                        ...serviceItems.map(item => ({
+                          product_name: item.product.name,
+                          quantity: item.quantity,
+                          unit_price: item.product.price,
+                          _type: 'service',
+                        })),
+                      ],
                       users: currentUser ? { full_name: currentUser.fullName } : null,
                       customers: selectedCustomer ? { name: selectedCustomer.name } : null,
                     }
@@ -437,6 +450,15 @@ export default function POSPage() {
                   toastSuccess(t('offline.orderQueued'))
                   setLastOrder({
                     ...orderData,
+                    items: [
+                      ...orderData.items,
+                      ...serviceItems.map(item => ({
+                        product_name: item.product.name,
+                        quantity: item.quantity,
+                        unit_price: item.product.price,
+                        _type: 'service',
+                      })),
+                    ],
                     client_order_id: clientOrderId,
                     offline: true,
                     users: currentUser ? { full_name: currentUser.fullName } : null,
@@ -444,25 +466,21 @@ export default function POSPage() {
                   })
                 }
               } else {
-                // Service-only: still create an order for invoice tracking
+                // Service-only: create order without items (subscriptions tracked separately)
+                const serviceTotal = serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
                 const orderData = {
                   order_number: generateOrderNumber(),
-                  items: serviceItems.map(item => ({
-                    product_name: item.product.name,
-                    quantity: item.quantity,
-                    unit_price: item.product.price,
-                    _type: 'service',
-                  })),
-                  subtotal: serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+                  items: [],
+                  subtotal: serviceTotal,
                   discount_amount: 0,
                   tax_amount: 0,
-                  total: serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+                  total: serviceTotal,
                   payment_method: paymentData.method,
                   payment_status: 'paid',
                   payments: paymentData.payments,
                   user_id: currentUser?.id,
                   customer_id: selectedCustomer?.id || null,
-                  notes: 'Service sale - no VAT',
+                  notes: 'Service sale',
                   created_at: new Date().toISOString(),
                 }
 
@@ -471,19 +489,26 @@ export default function POSPage() {
                   const response = await ordersApi.create({ ...orderData, client_order_id: clientOrderId })
                   let completedOrder
                   if (response.data?.id) {
-                    const fullOrderRes = await ordersApi.getById(response.data.id)
                     completedOrder = {
-                      ...fullOrderRes.data,
+                      ...response.data,
                       items: serviceItems.map(item => ({
                         product_name: item.product.name,
                         quantity: item.quantity,
                         unit_price: item.product.price,
                         _type: 'service',
                       })),
+                      users: currentUser ? { full_name: currentUser.fullName } : null,
+                      customers: selectedCustomer ? { name: selectedCustomer.name } : null,
                     }
                   } else {
                     completedOrder = {
                       ...orderData,
+                      items: serviceItems.map(item => ({
+                        product_name: item.product.name,
+                        quantity: item.quantity,
+                        unit_price: item.product.price,
+                        _type: 'service',
+                      })),
                       users: currentUser ? { full_name: currentUser.fullName } : null,
                       customers: selectedCustomer ? { name: selectedCustomer.name } : null,
                     }
@@ -494,6 +519,12 @@ export default function POSPage() {
                   toastSuccess(t('offline.orderQueued'))
                   setLastOrder({
                     ...orderData,
+                    items: serviceItems.map(item => ({
+                      product_name: item.product.name,
+                      quantity: item.quantity,
+                      unit_price: item.product.price,
+                      _type: 'service',
+                    })),
                     client_order_id: clientOrderId,
                     offline: true,
                     users: currentUser ? { full_name: currentUser.fullName } : null,

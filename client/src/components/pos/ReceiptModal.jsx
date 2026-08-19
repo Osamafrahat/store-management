@@ -1,6 +1,6 @@
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency, formatDateTime } from '../../lib/utils'
-import { Printer, X } from 'lucide-react'
+import { Printer, X, Wrench } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { etaApi } from '../../lib/api'
 
@@ -74,7 +74,7 @@ export default function ReceiptModal({ order, onClose }) {
         ${order.items.map(item => `
           <div class="item-row">
             <div class="row">
-              <span class="item-name">${item.product_name || item.name}</span>
+              <span class="item-name">${item.product_name || item.name}${item._type === 'service' ? ' [SVC]' : ''}</span>
               <span>${formatCurrency(item.unit_price * item.quantity, settings.currencySymbol)}</span>
             </div>
             <div class="item-details">
@@ -183,7 +183,12 @@ export default function ReceiptModal({ order, onClose }) {
             {order.items.map((item, index) => (
               <div key={index} className="mb-2">
                 <div className="flex justify-between">
-                  <span className="font-medium">{item.product_name || item.name}</span>
+                  <span className="font-medium">
+                    {item.product_name || item.name}
+                    {item._type === 'service' && (
+                      <span className="ml-1 text-[10px] px-1 py-0.5 rounded bg-blue-100 text-blue-700">SVC</span>
+                    )}
+                  </span>
                   <span>{formatCurrency(item.unit_price * item.quantity, settings.currencySymbol)}</span>
                 </div>
                 <div className="text-gray-500 text-xs">
