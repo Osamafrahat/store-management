@@ -138,8 +138,15 @@ router.post('/', async (req, res, next) => {
     const { order_number, items, subtotal, discount_amount, tax_amount, total,
       payment_method, payment_status, payments, customer_id, promotion_id, client_order_id } = req.body
 
-    if (!order_number || !items || items.length === 0) {
-      return res.status(400).json({ error: 'Order number and items are required' })
+    if (!order_number) {
+      return res.status(400).json({ error: 'Order number is required' })
+    }
+    if (!items || items.length === 0) {
+      // Service-only orders may have no product items - check if notes indicate service sale
+      const isServiceOrder = req.body.notes?.includes('Service sale') || req.body.notes?.includes('service(s)')
+      if (!isServiceOrder) {
+        return res.status(400).json({ error: 'Order items are required' })
+      }
     }
 
     // Dedup: if client_order_id already exists, return existing order
