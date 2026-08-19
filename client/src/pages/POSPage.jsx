@@ -4,14 +4,14 @@ import { useCartStore } from '../stores/cartStore'
 import { useAppStore } from '../stores/appStore'
 import { useUserStore } from '../stores/userStore'
 import { useOfflineStore } from '../stores/offlineStore'
-import { productsApi, categoriesApi, ordersApi, customersApi } from '../lib/api'
+import { productsApi, categoriesApi, ordersApi, customersApi, servicesApi, servicePlansApi, subscriptionsApi } from '../lib/api'
 import { formatCurrency, generateOrderNumber } from '../lib/utils'
 import ProductGrid from '../components/pos/ProductGrid'
 import Cart from '../components/pos/Cart'
 import PaymentModal from '../components/pos/PaymentModal'
 import BarcodeScanner from '../components/pos/BarcodeScanner'
 import ReceiptModal from '../components/pos/ReceiptModal'
-import { Search, Zap, User } from 'lucide-react'
+import { Search, Zap, User, Wrench } from 'lucide-react'
 
 export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -24,6 +24,8 @@ export default function POSPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [customerSearch, setCustomerSearch] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [services, setServices] = useState([])
+  const [activeTab, setActiveTab] = useState('products')
   const searchInputRef = useRef(null)
   const barcodeInputRef = useRef(null)
   const barcodeTimeoutRef = useRef(null)
@@ -34,17 +36,14 @@ export default function POSPage() {
   const { currentUser } = useUserStore()
   const { isOnline, cacheData, loadCachedData, queueOrder } = useOfflineStore()
 
-  // Fetch products, categories, and customers on mount
   useEffect(() => {
     fetchData()
   }, [])
 
-  // Auto-focus search input
   useEffect(() => {
     searchInputRef.current?.focus()
   }, [])
 
-  // Keep barcode input focused (unless clicking on another input/textarea or modal is open)
   useEffect(() => {
     const focusBarcode = (e) => {
       if (showPayment || showReceipt) return
@@ -55,7 +54,6 @@ export default function POSPage() {
     return () => document.removeEventListener('click', focusBarcode)
   }, [showPayment, showReceipt])
 
-  // Handle barcode scanner input (USB scanner types fast, collects then submits)
   const handleBarcodeInput = (e) => {
     const value = e.target.value
     if (barcodeTimeoutRef.current) clearTimeout(barcodeTimeoutRef.current)
@@ -70,7 +68,6 @@ export default function POSPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      // ALWAYS load from cache first (instant, no flash)
       const cached = await loadCachedData()
       if (cached.products.length > 0) {
         setProducts(cached.products)
@@ -79,18 +76,20 @@ export default function POSPage() {
         setLoading(false)
       }
 
-      // Then fetch from API in background to update cache
       if (navigator.onLine) {
         try {
-          const [productsRes, categoriesRes, customersRes] = await Promise.all([
+          const [productsRes, categoriesRes, customersRes, servicesRes] = await Promise.all([
             productsApi.getAll(),
             categoriesApi.getAll(),
-            customersApi.getAll()
+            customersApi.getAll(),
+            servicesApi.getAll(),
           ])
           const productsData = productsRes.data?.data || productsRes.data || []
           setProducts(productsData)
           setCategories(categoriesRes.data)
           setCustomers(customersRes.data)
+          const servicesData = (servicesRes.data || []).filter(s => s.is_active !== false).map(s => ({ ...s, _type: 'service' }))
+          setServices(servicesData)
 
           await cacheData({
             products: productsData,
@@ -116,7 +115,6 @@ export default function POSPage() {
   }
 
   const handleBarcodeScan = async (barcode) => {
-    // Try online first
     if (navigator.onLine) {
       try {
         const response = await productsApi.getByBarcode(barcode)
@@ -135,7 +133,6 @@ export default function POSPage() {
         console.error('Product not found online:', barcode, err)
       }
     }
-    // Fallback to local products
     const localProduct = products.find(p => p.barcode === barcode)
     if (localProduct) {
       const added = addItem(localProduct)
@@ -177,15 +174,28 @@ export default function POSPage() {
     return true
   }), [products, selectedCategory, searchQuery])
 
+  const filteredServices = useMemo(() => services.filter(s => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      return (
+        s.name.toLowerCase().includes(query) ||
+        s.name_ar?.toLowerCase().includes(query)
+      )
+    }
+    return true
+  }), [services, searchQuery])
+
   const filteredCustomers = useMemo(() => customers.filter(c => {
     if (!customerSearch) return true
     const query = customerSearch.toLowerCase()
     return c.name?.toLowerCase().includes(query) || c.phone?.includes(query)
   }), [customers, customerSearch])
 
+  const displayItems = activeTab === 'products' ? filteredProducts : filteredServices
+
   return (
     <div className="flex flex-col md:flex-row md:h-[calc(100vh-8rem)] gap-4 md:overflow-hidden">
-      {/* Left side - Products */}
+      {/* Left side - Products/Services */}
       <div className="flex-1 min-w-0 flex flex-col gap-3 md:gap-4 md:overflow-y-auto">
         {/* Search and Filters */}
         <div className="flex gap-3">
@@ -209,36 +219,63 @@ export default function POSPage() {
           </button>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        {/* Products / Services Tabs */}
+        <div className="flex gap-2">
           <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              !selectedCategory
+            onClick={() => setActiveTab('products')}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'products'
                 ? 'bg-primary-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             {t('pos.allProducts')}
           </button>
-          {categories.map((category) => (
+          <button
+            onClick={() => setActiveTab('services')}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'services'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            <Wrench className="w-4 h-4" />
+            {t('nav.services') || 'Services'}
+          </button>
+        </div>
+
+        {/* Category Filter (only for products) */}
+        {activeTab === 'products' && (
+          <div className="flex gap-2 overflow-x-auto pb-2">
             <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => setSelectedCategory(null)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === category.id
+                !selectedCategory
                   ? 'bg-primary-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              {category.name}
+              {t('pos.allProducts')}
             </button>
-          ))}
-        </div>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedCategory === category.id
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {/* Product Grid */}
+        {/* Product/Service Grid */}
         <ProductGrid
-          products={filteredProducts}
+          products={displayItems}
           onAddToCart={handleQuickSale}
         />
       </div>
@@ -294,7 +331,7 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* Barcode Scanner Input (always focused for USB scanners) */}
+        {/* Barcode Scanner Input */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
           <input
             ref={barcodeInputRef}
@@ -330,61 +367,99 @@ export default function POSPage() {
             if (isSubmitting) return
             setIsSubmitting(true)
             try {
-              const orderData = {
-                order_number: generateOrderNumber(),
-                items: items.map(item => ({
-                  product_id: item.product.id,
-                  product_name: item.product.name,
-                  quantity: item.quantity,
-                  unit_price: item.product.price,
-                })),
-                subtotal: useCartStore.getState().getSubtotal(),
-                discount_amount: useCartStore.getState().getDiscount(),
-                tax_amount: useCartStore.getState().getTax(settings.taxRate),
-                total: getTotal(settings.taxRate),
-                payment_method: paymentData.method,
-                payment_status: 'paid',
-                payments: paymentData.payments,
-                user_id: currentUser?.id,
-                customer_id: selectedCustomer?.id || null,
-                promotion_id: useCartStore.getState().promoId || null,
-                created_at: new Date().toISOString(),
+              const serviceItems = items.filter(i => i.product._type === 'service')
+              const productItems = items.filter(i => i.product._type !== 'service')
+
+              // Create subscriptions for service items
+              for (const item of serviceItems) {
+                if (!selectedCustomer) {
+                  toastError(t('pos.customerRequiredForService') || 'Customer required for service sales')
+                  setIsSubmitting(false)
+                  return
+                }
+                await subscriptionsApi.quickCreate({
+                  customer_id: selectedCustomer.id,
+                  service_id: item.product.id,
+                  billing_amount: item.product.price * item.quantity,
+                  payment_method: paymentData.method,
+                  notes: `POS sale - ${item.product.name}`,
+                })
               }
 
-              if (navigator.onLine) {
-                // Online: send to server immediately
-                const clientOrderId = `ONL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-                const response = await ordersApi.create({ ...orderData, client_order_id: clientOrderId })
-                let completedOrder
-                if (response.data?.id) {
-                  const fullOrderRes = await ordersApi.getById(response.data.id)
-                  completedOrder = {
-                    ...fullOrderRes.data,
-                    items: items.map(item => ({
-                      product_name: item.product.name,
-                      quantity: item.quantity,
-                      unit_price: item.product.price,
-                    })),
+              // Create order for product items (if any)
+              if (productItems.length > 0) {
+                const orderData = {
+                  order_number: generateOrderNumber(),
+                  items: productItems.map(item => ({
+                    product_id: item.product.id,
+                    product_name: item.product.name,
+                    quantity: item.quantity,
+                    unit_price: item.product.price,
+                  })),
+                  subtotal: productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
+                  discount_amount: 0,
+                  tax_amount: productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * ((settings.taxRate || 14) / 100),
+                  total: productItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) * (1 + (settings.taxRate || 14) / 100),
+                  payment_method: paymentData.method,
+                  payment_status: 'paid',
+                  payments: paymentData.payments,
+                  user_id: currentUser?.id,
+                  customer_id: selectedCustomer?.id || null,
+                  promotion_id: null,
+                  created_at: new Date().toISOString(),
+                }
+
+                if (navigator.onLine) {
+                  const clientOrderId = `ONL-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+                  const response = await ordersApi.create({ ...orderData, client_order_id: clientOrderId })
+                  let completedOrder
+                  if (response.data?.id) {
+                    const fullOrderRes = await ordersApi.getById(response.data.id)
+                    completedOrder = {
+                      ...fullOrderRes.data,
+                      items: productItems.map(item => ({
+                        product_name: item.product.name,
+                        quantity: item.quantity,
+                        unit_price: item.product.price,
+                      })),
+                    }
+                  } else {
+                    completedOrder = {
+                      ...orderData,
+                      users: currentUser ? { full_name: currentUser.fullName } : null,
+                      customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                    }
                   }
+                  setLastOrder(completedOrder)
                 } else {
-                  completedOrder = {
+                  const clientOrderId = await queueOrder(orderData)
+                  toastSuccess(t('offline.orderQueued'))
+                  setLastOrder({
                     ...orderData,
+                    client_order_id: clientOrderId,
+                    offline: true,
                     users: currentUser ? { full_name: currentUser.fullName } : null,
                     customers: selectedCustomer ? { name: selectedCustomer.name } : null,
-                  }
+                  })
                 }
-                setLastOrder(completedOrder)
               } else {
-                // Offline: queue for later sync
-                const clientOrderId = await queueOrder(orderData)
-                toastSuccess(t('offline.orderQueued'))
+                // Service-only order
                 setLastOrder({
-                  ...orderData,
-                  client_order_id: clientOrderId,
-                  offline: true,
-                  users: currentUser ? { full_name: currentUser.fullName } : null,
+                  order_number: generateOrderNumber(),
+                  items: serviceItems.map(item => ({
+                    product_name: item.product.name,
+                    quantity: item.quantity,
+                    unit_price: item.product.price,
+                  })),
+                  total: serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
                   customers: selectedCustomer ? { name: selectedCustomer.name } : null,
+                  users: currentUser ? { full_name: currentUser.fullName } : null,
+                  service_sale: true,
                 })
+              }
+
+              if (serviceItems.length > 0) {
+                toastSuccess(t('pos.serviceSold') || 'Service sold successfully')
               }
 
               setSelectedCustomer(null)
@@ -392,8 +467,7 @@ export default function POSPage() {
               setShowPayment(false)
               setShowReceipt(true)
 
-              // Refresh products to get updated stock (online only)
-              if (navigator.onLine) {
+              if (navigator.onLine && productItems.length > 0) {
                 fetchData()
               }
             } catch (err) {

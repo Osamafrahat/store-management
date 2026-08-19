@@ -1,7 +1,7 @@
 import { useState, memo } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
-import { Package, Plus } from 'lucide-react'
+import { Package, Plus, Wrench } from 'lucide-react'
 
 export default memo(function ProductGrid({ products, onAddToCart }) {
   const { t, toastError } = useAppStore()
@@ -17,7 +17,7 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
   }
 
   const handleProductClick = (product) => {
-    if (isOutOfStock(product)) {
+    if (product._type !== 'service' && isOutOfStock(product)) {
       toastError(t('pos.outOfStock') || 'Out of stock')
       return
     }
@@ -63,7 +63,9 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
           >
             {/* Product Image */}
             <div className="aspect-square rounded-lg bg-gray-100 dark:bg-gray-700 mb-3 flex items-center justify-center overflow-hidden">
-              {product.image_url ? (
+              {product._type === 'service' ? (
+                <Wrench className="w-12 h-12 text-blue-500" />
+              ) : product.image_url ? (
                 <img
                   src={product.image_url}
                   alt={product.name}
@@ -95,14 +97,16 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
                 </p>
                 <span className={`
                   text-xs px-2 py-0.5 rounded-full
-                  ${product.stock_quantity != null && product.stock_quantity > 0
+                  ${product._type === 'service'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                    : product.stock_quantity != null && product.stock_quantity > 0
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                     : product.stock_quantity === 0
                     ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }
                 `}>
-                  {product.stock_quantity != null && product.stock_quantity > 0 ? `${t('inventory.inStock')}: ${product.stock_quantity}` : product.stock_quantity === 0 ? t('pos.outOfStock') : t('services.service') || 'Service'}
+                  {product._type === 'service' ? (t('services.service') || 'Service') : product.stock_quantity != null && product.stock_quantity > 0 ? `${t('inventory.inStock')}: ${product.stock_quantity}` : product.stock_quantity === 0 ? t('pos.outOfStock') : '—'}
                 </span>
               </div>
             </div>

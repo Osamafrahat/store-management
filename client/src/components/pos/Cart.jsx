@@ -3,7 +3,7 @@ import { useCartStore } from '../../stores/cartStore'
 import { useAppStore } from '../../stores/appStore'
 import { promotionsApi } from '../../lib/api'
 import { formatCurrency } from '../../lib/utils'
-import { Trash2, Plus, Minus, Tag, ShoppingBag, X } from 'lucide-react'
+import { Trash2, Plus, Minus, Tag, ShoppingBag, X, Wrench } from 'lucide-react'
 
 export default memo(function Cart({ onCheckout }) {
   const { items, removeItem, updateQuantity, clearCart, getSubtotal, getDiscount, getTax, getTotal, promoCode, promoDiscount, applyPromo, removePromo } = useCartStore()
@@ -93,7 +93,9 @@ export default memo(function Cart({ onCheckout }) {
               >
                 {/* Product Image */}
                 <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-                  {item.product.image_url ? (
+                  {item.product._type === 'service' ? (
+                    <Wrench className="w-6 h-6 text-blue-500" />
+                  ) : item.product.image_url ? (
                     <img
                       src={item.product.image_url}
                       alt={item.product.name}
@@ -106,7 +108,14 @@ export default memo(function Cart({ onCheckout }) {
 
                 {/* Product Details */}
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm truncate">{item.product.name}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-sm truncate">{item.product.name}</h4>
+                    {item.product._type === 'service' && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                        {t('services.service') || 'Service'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {formatCurrency(item.product.price)}
                   </p>
@@ -123,7 +132,7 @@ export default memo(function Cart({ onCheckout }) {
                           onChange={(e) => {
                             const val = parseFloat(e.target.value)
                             if (val > 0) {
-                              const updated = updateQuantity(item.product.id, val)
+                              const updated = updateQuantity(item.product.id, val, item.product._type)
                               if (!updated) {
                                 toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${item.product.stock_quantity})`)
                               }
@@ -138,7 +147,7 @@ export default memo(function Cart({ onCheckout }) {
                     ) : (
                       <>
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.product._type)}
                           className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500"
                         >
                           <Minus className="w-3 h-3" />
@@ -146,7 +155,7 @@ export default memo(function Cart({ onCheckout }) {
                         <span className="w-8 text-center font-medium">{item.quantity}</span>
                         <button
                           onClick={() => {
-                            const updated = updateQuantity(item.product.id, item.quantity + 1)
+                            const updated = updateQuantity(item.product.id, item.quantity + 1, item.product._type)
                             if (!updated) {
                               toastError(`${t('pos.insufficientStock') || 'Insufficient stock'} (${t('inventory.inStock')}: ${item.product.stock_quantity})`)
                             }
@@ -163,7 +172,7 @@ export default memo(function Cart({ onCheckout }) {
                 {/* Item Total & Remove */}
                 <div className="text-right flex flex-col justify-between">
                   <button
-                    onClick={() => removeItem(item.product.id)}
+                    onClick={() => removeItem(item.product.id, item.product._type)}
                     className="text-gray-400 hover:text-red-500"
                   >
                     <X className="w-4 h-4" />

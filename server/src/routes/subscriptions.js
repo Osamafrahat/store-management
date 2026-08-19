@@ -261,4 +261,51 @@ router.delete('/:id', authenticateToken, requirePermission('services_edit'), [
   }
 })
 
+// Quick subscription from POS (creates subscription + records payment)
+router.post('/quick', authenticateToken, requirePermission('services_edit'), [
+  body('customer_id').isNumeric().withMessage('Customer is required'),
+  body('service_id').isNumeric().withMessage('Service is required'),
+  body('billing_amount').isFloat({ min: 0.01 }).withMessage('Amount must be positive'),
+  body('payment_method').optional().isIn(['cash', 'card', 'bank']),
+], validate, async (req, res) => {
+  try {
+    const { customer_id, service_id, plan_id, billing_amount, payment_method, notes } = req.body
+    const today = new Date().toISOString().split('T')[0]
+
+    const insertData = {
+      customer_id,
+      service_id,
+      plan_id: plan_id || null,
+      start_date: today,
+      end_date: null,
+      next_billing_date: null,
+      auto_renew: false,
+      billing_amount,
+      notes: notes || 'POS sale',
+    }
+
+    const { data: sub, error: subError } = await supabase
+      .from('subscriptions')
+      .insert(insertData)
+      .select('*, customer:customers(id, name, phone), service:services(id, name, name_ar)')
+      .single()
+    if (subError) throw subError
+
+    // Record payment
+    const { error: payError } = await supabase
+      .from('subscription_payments')
+      .insert({
+        subscription_id: sub.id,
+        amount: billing_amount,
+        payment_method: payment_method || 'cash',
+        notes: 'POS payment',
+      })
+    if (payError) console.error('Failed to record payment:', payError.message)
+
+    res.status(201).json(sub)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 export default router

@@ -330,6 +330,7 @@ export const subscriptionsApi = {
   getAll: (params) => api.get('/subscriptions', { params }),
   getById: (id) => api.get(`/subscriptions/${id}`),
   create: (data) => api.post('/subscriptions', data),
+  quickCreate: (data) => api.post('/subscriptions/quick', data),
   update: (id, data) => api.put(`/subscriptions/${id}`, data),
   delete: (id) => api.delete(`/subscriptions/${id}`),
   cancel: (id) => api.patch(`/subscriptions/${id}/cancel`),
