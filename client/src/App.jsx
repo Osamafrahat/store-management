@@ -37,6 +37,9 @@ const LeaveRequestPage = lazy(() => import('./pages/LeaveRequestPage'))
 const PayrollPage = lazy(() => import('./pages/PayrollPage'))
 const ShiftSchedulingPage = lazy(() => import('./pages/ShiftSchedulingPage'))
 const PerformanceReviewsPage = lazy(() => import('./pages/PerformanceReviewsPage'))
+const ServicesPage = lazy(() => import('./pages/ServicesPage'))
+const ServicePlansPage = lazy(() => import('./pages/ServicePlansPage'))
+const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated)
@@ -116,6 +119,9 @@ function App() {
                 <Route path="/hr/shifts" element={<ProtectedRoute><Layout><ShiftSchedulingPage /></Layout></ProtectedRoute>} />
                 <Route path="/hr/shifts/view" element={<ProtectedRoute><Layout><ShiftSchedulingPage readOnly /></Layout></ProtectedRoute>} />
                 <Route path="/hr/performance" element={<ProtectedRoute><Layout><PerformanceReviewsPage /></Layout></ProtectedRoute>} />
+                <Route path="/services" element={<ProtectedRoute><Layout><ServicesPage /></Layout></ProtectedRoute>} />
+                <Route path="/service-plans" element={<ProtectedRoute><Layout><ServicePlansPage /></Layout></ProtectedRoute>} />
+                <Route path="/subscriptions" element={<ProtectedRoute><Layout><SubscriptionsPage /></Layout></ProtectedRoute>} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

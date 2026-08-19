@@ -307,4 +307,35 @@ export const performanceApi = {
   delete: (id) => api.delete(`/performance/${id}`),
 }
 
+// Services API
+export const servicesApi = {
+  getAll: () => api.get('/services'),
+  getById: (id) => api.get(`/services/${id}`),
+  create: (data) => api.post('/services', data),
+  update: (id, data) => api.put(`/services/${id}`, data),
+  delete: (id) => api.delete(`/services/${id}`),
+}
+
+// Service Plans API
+export const servicePlansApi = {
+  getAll: () => api.get('/service-plans'),
+  getById: (id) => api.get(`/service-plans/${id}`),
+  create: (data) => api.post('/service-plans', data),
+  update: (id, data) => api.put(`/service-plans/${id}`, data),
+  delete: (id) => api.delete(`/service-plans/${id}`),
+}
+
+// Subscriptions API
+export const subscriptionsApi = {
+  getAll: (params) => api.get('/subscriptions', { params }),
+  getById: (id) => api.get(`/subscriptions/${id}`),
+  create: (data) => api.post('/subscriptions', data),
+  update: (id, data) => api.put(`/subscriptions/${id}`, data),
+  delete: (id) => api.delete(`/subscriptions/${id}`),
+  cancel: (id) => api.patch(`/subscriptions/${id}/cancel`),
+  renew: (id) => api.patch(`/subscriptions/${id}/renew`),
+  getPayments: (id) => api.get(`/subscriptions/${id}/payments`),
+  recordPayment: (id, data) => api.post(`/subscriptions/${id}/payments`, data),
+}
+
 export default api

@@ -29,6 +29,8 @@ export const PERMISSIONS = {
   ACCOUNTING_POST: 'accounting_post',
   HR_VIEW: 'hr_view',
   HR_EDIT: 'hr_edit',
+  SERVICES_VIEW: 'services_view',
+  SERVICES_EDIT: 'services_edit',
 }
 
 // Role definitions with default permissions
@@ -276,6 +278,9 @@ export const useUserStore = create(
           '/activities': PERMISSIONS.USER_MANAGE,
           '/backup': PERMISSIONS.USER_MANAGE,
           '/invoices': PERMISSIONS.POS_ACCESS,
+          '/services': PERMISSIONS.SERVICES_VIEW,
+          '/service-plans': PERMISSIONS.SERVICES_VIEW,
+          '/subscriptions': PERMISSIONS.SERVICES_VIEW,
         }
 
         const requiredPermission = routePermissions[route]

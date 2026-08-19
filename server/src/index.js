@@ -40,6 +40,9 @@ import leaveRouter from './routes/leave.js'
 import payrollRouter from './routes/payroll.js'
 import shiftsRouter from './routes/shifts.js'
 import performanceRouter from './routes/performance.js'
+import servicesRouter from './routes/services.js'
+import servicePlansRouter from './routes/servicePlans.js'
+import subscriptionsRouter from './routes/subscriptions.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -141,6 +144,9 @@ app.use('/api/leave', authenticateToken, activityLogger, leaveRouter)
 app.use('/api/payroll', authenticateToken, activityLogger, payrollRouter)
 app.use('/api/shifts', authenticateToken, activityLogger, shiftsRouter)
 app.use('/api/performance', authenticateToken, activityLogger, performanceRouter)
+app.use('/api/services', authenticateToken, activityLogger, servicesRouter)
+app.use('/api/service-plans', authenticateToken, activityLogger, servicePlansRouter)
+app.use('/api/subscriptions', authenticateToken, activityLogger, subscriptionsRouter)
 
 app.get('/api/health', (req, res) => {
   const emailConfigured = !!(process.env.RESEND_API_KEY)
