@@ -133,6 +133,14 @@ router.patch('/:id/cancel', authenticateToken, requirePermission('services_edit'
   param('id').isNumeric().withMessage('Invalid subscription ID'),
 ], validate, async (req, res) => {
   try {
+    const { data: existing } = await supabase
+      .from('subscriptions')
+      .select('status')
+      .eq('id', req.params.id)
+      .single()
+    if (!existing) return res.status(404).json({ error: 'Subscription not found' })
+    if (existing.status === 'cancelled') return res.status(400).json({ error: 'Subscription is already cancelled' })
+
     const { data, error } = await supabase
       .from('subscriptions')
       .update({ status: 'cancelled', auto_renew: false, updated_at: new Date().toISOString() })
@@ -157,6 +165,7 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
       .eq('id', req.params.id)
       .single()
     if (!sub) return res.status(404).json({ error: 'Subscription not found' })
+    if (sub.status === 'cancelled') return res.status(400).json({ error: 'Cannot renew a cancelled subscription' })
 
     const today = new Date()
     let newEndDate = new Date(today)
@@ -164,9 +173,11 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
     const duration = sub.plan?.duration_months || 1
 
     if (cycle === 'annual') {
-      newEndDate.setFullYear(newEndDate.getFullYear() + 1)
+      newEndDate.setMonth(newEndDate.getMonth() + (duration * 12))
     } else if (cycle === 'monthly') {
       newEndDate.setMonth(newEndDate.getMonth() + duration)
+    } else if (cycle === 'weekly') {
+      newEndDate.setDate(newEndDate.getDate() + (duration * 7))
     } else {
       newEndDate.setMonth(newEndDate.getMonth() + duration)
     }
@@ -174,10 +185,10 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
     let nextBilling = null
     if (cycle === 'monthly') {
       nextBilling = new Date(newEndDate)
-      nextBilling.setMonth(nextBilling.getMonth() + 1)
     } else if (cycle === 'annual') {
       nextBilling = new Date(newEndDate)
-      nextBilling.setFullYear(nextBilling.getFullYear() + 1)
+    } else if (cycle === 'weekly') {
+      nextBilling = new Date(newEndDate)
     }
 
     const { data, error } = await supabase
@@ -193,6 +204,17 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
       .select()
       .single()
     if (error) throw error
+
+    // Record the renewal payment
+    await supabase
+      .from('subscription_payments')
+      .insert({
+        subscription_id: req.params.id,
+        amount: sub.billing_amount,
+        payment_method: 'cash',
+        notes: 'Renewal payment',
+      })
+
     res.json(data)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -202,7 +224,7 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
 // Record payment for subscription
 router.post('/:id/payments', authenticateToken, requirePermission('services_edit'), [
   param('id').isNumeric().withMessage('Invalid subscription ID'),
-  body('amount').isFloat({ min: 0 }).withMessage('Amount must be positive'),
+  body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be positive'),
 ], validate, async (req, res) => {
   try {
     const { amount, payment_method, notes } = req.body

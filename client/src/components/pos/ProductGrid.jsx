@@ -95,12 +95,14 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
                 </p>
                 <span className={`
                   text-xs px-2 py-0.5 rounded-full
-                  ${product.stock_quantity > 0
+                  ${product.stock_quantity != null && product.stock_quantity > 0
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                    : product.stock_quantity === 0
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }
                 `}>
-                  {product.stock_quantity > 0 ? `${t('inventory.inStock')}: ${product.stock_quantity}` : t('pos.outOfStock')}
+                  {product.stock_quantity != null && product.stock_quantity > 0 ? `${t('inventory.inStock')}: ${product.stock_quantity}` : product.stock_quantity === 0 ? t('pos.outOfStock') : t('services.service') || 'Service'}
                 </span>
               </div>
             </div>

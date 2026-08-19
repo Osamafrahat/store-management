@@ -398,7 +398,7 @@ export default function POSPage() {
               }
             } catch (err) {
               console.error('Failed to create order:', err)
-              alert(t('common.error'))
+              toastError(t('common.error') || 'Error')
             } finally {
               setIsSubmitting(false)
             }

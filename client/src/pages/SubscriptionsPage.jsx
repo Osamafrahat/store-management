@@ -20,7 +20,7 @@ const STATUS_LABEL_KEYS = {
 }
 
 export default function SubscriptionsPage() {
-  const { t, language } = useAppStore()
+  const { t, language, toastSuccess, toastError } = useAppStore()
   const { hasPermission } = useUserStore()
   const canEdit = hasPermission(PERMISSIONS.SERVICES_EDIT)
   const [subscriptions, setSubscriptions] = useState([])
@@ -34,9 +34,10 @@ export default function SubscriptionsPage() {
   const [deleting, setDeleting] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [showPayments, setShowPayments] = useState(null)
-  const [showPayForm, setShowPayForm] = useState(null)
+  const [cancelTarget, setCancelTarget] = useState(null)
+  const [renewTarget, setRenewTarget] = useState(null)
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => { fetchData() }, [filterStatus])
 
   const fetchData = async () => {
     setLoading(true)
@@ -58,23 +59,27 @@ export default function SubscriptionsPage() {
     }
   }
 
-  useEffect(() => { fetchData() }, [filterStatus])
-
   const handleCancel = async (id) => {
     try {
       await subscriptionsApi.cancel(id)
+      setCancelTarget(null)
+      toastSuccess(t('services.subscriptionCancelled') || 'Subscription cancelled')
       fetchData()
     } catch (err) {
       console.error('Failed to cancel:', err)
+      toastError(err.response?.data?.error || t('common.error') || 'Error')
     }
   }
 
   const handleRenew = async (id) => {
     try {
       await subscriptionsApi.renew(id)
+      setRenewTarget(null)
+      toastSuccess(t('services.subscriptionRenewed') || 'Subscription renewed')
       fetchData()
     } catch (err) {
       console.error('Failed to renew:', err)
+      toastError(err.response?.data?.error || t('common.error') || 'Error')
     }
   }
 
@@ -83,9 +88,11 @@ export default function SubscriptionsPage() {
     try {
       await subscriptionsApi.delete(id)
       setDeleteTarget(null)
+      toastSuccess(t('services.subscriptionDeleted') || 'Subscription deleted')
       fetchData()
     } catch (err) {
       console.error('Failed to delete:', err)
+      toastError(t('common.error') || 'Error')
     } finally {
       setDeleting(false)
     }
@@ -163,9 +170,9 @@ export default function SubscriptionsPage() {
                         <div className="flex items-center justify-end gap-1">
                           {sub.status === 'active' && (
                             <>
-                              <button onClick={() => handleRenew(sub.id)} title={t('services.renew')}
+                              <button onClick={() => setRenewTarget(sub.id)} title={t('services.renew')}
                                 className="p-1.5 text-gray-400 hover:text-green-600 rounded-lg"><RefreshCw className="w-4 h-4" /></button>
-                              <button onClick={() => handleCancel(sub.id)} title={t('services.cancel')}
+                              <button onClick={() => setCancelTarget(sub.id)} title={t('services.cancel')}
                                 className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg"><Ban className="w-4 h-4" /></button>
                             </>
                           )}
@@ -196,11 +203,20 @@ export default function SubscriptionsPage() {
           }} onClose={() => { setShowForm(false); setEditing(null) }} />
       )}
       {showPayments && <PaymentsModal subscriptionId={showPayments} onClose={() => setShowPayments(null)} onRecord={async (data) => {
-        await subscriptionsApi.recordPayment(showPayments, data)
-        setShowPayments(null)
+        try {
+          await subscriptionsApi.recordPayment(showPayments, data)
+          setShowPayments(null)
+          toastSuccess(t('services.paymentRecorded') || 'Payment recorded')
+        } catch (err) {
+          toastError(err.response?.data?.error || t('common.error') || 'Error')
+        }
       }} />}
       <ConfirmModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={() => handleDelete(deleteTarget)}
         title={t('services.deleteSubscription') || 'Delete Subscription'} message={t('services.deleteSubConfirm') || 'Are you sure?'} type="danger" loading={deleting} />
+      <ConfirmModal open={!!cancelTarget} onClose={() => setCancelTarget(null)} onConfirm={() => handleCancel(cancelTarget)}
+        title={t('services.cancelSubscription') || 'Cancel Subscription'} message={t('services.cancelSubConfirm') || 'Are you sure you want to cancel this subscription?'} type="danger" />
+      <ConfirmModal open={!!renewTarget} onClose={() => setRenewTarget(null)} onConfirm={() => handleRenew(renewTarget)}
+        title={t('services.renewSubscription') || 'Renew Subscription'} message={t('services.renewSubConfirm') || 'Are you sure you want to renew this subscription?'} type="info" />
     </div>
   )
 }
@@ -222,7 +238,13 @@ function SubscriptionForm({ subscription, services, plans, customers, onSave, on
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await onSave({ ...form, billing_amount: parseFloat(form.billing_amount) || 0, customer_id: parseInt(form.customer_id) })
+    await onSave({
+      ...form,
+      billing_amount: parseFloat(form.billing_amount) || 0,
+      customer_id: parseInt(form.customer_id),
+      service_id: form.service_id ? parseInt(form.service_id) : null,
+      plan_id: form.plan_id ? parseInt(form.plan_id) : null,
+    })
   }
 
   return (
@@ -309,6 +331,7 @@ function PaymentsModal({ subscriptionId, onClose, onRecord }) {
   const [loading, setLoading] = useState(true)
   const [showPayForm, setShowPayForm] = useState(false)
   const [form, setForm] = useState({ amount: '', payment_method: 'cash', notes: '' })
+  const [recording, setRecording] = useState(false)
 
   useEffect(() => {
     subscriptionsApi.getPayments(subscriptionId).then(({ data }) => {
@@ -318,8 +341,21 @@ function PaymentsModal({ subscriptionId, onClose, onRecord }) {
 
   const handleRecord = async (e) => {
     e.preventDefault()
-    await onRecord({ ...form, amount: parseFloat(form.amount) || 0 })
+    const amount = parseFloat(form.amount)
+    if (!amount || amount <= 0) return
+    setRecording(true)
+    try {
+      await onRecord({ ...form, amount })
+      setForm({ amount: '', payment_method: 'cash', notes: '' })
+      setShowPayForm(false)
+      const { data } = await subscriptionsApi.getPayments(subscriptionId)
+      setPayments(data)
+    } finally {
+      setRecording(false)
+    }
   }
+
+  const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -338,7 +374,7 @@ function PaymentsModal({ subscriptionId, onClose, onRecord }) {
           {showPayForm && (
             <form onSubmit={handleRecord} className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <input type="number" step="0.01" min="0" placeholder={t('services.amount') || 'Amount'} value={form.amount}
+                <input type="number" step="0.01" min="0.01" placeholder={t('services.amount') || 'Amount'} value={form.amount}
                   onChange={e => setForm({ ...form, amount: e.target.value })} required
                   className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm" />
                 <select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value })}
@@ -348,7 +384,10 @@ function PaymentsModal({ subscriptionId, onClose, onRecord }) {
                   <option value="bank">{t('payments.bank') || 'Bank Transfer'}</option>
                 </select>
               </div>
-              <button type="submit" className="w-full px-3 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700">{t('common.save')}</button>
+              <button type="submit" disabled={recording}
+                className="w-full px-3 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 disabled:opacity-50">
+                {recording ? (t('common.processing') || 'Processing...') : (t('common.save'))}
+              </button>
             </form>
           )}
           {loading ? (
@@ -356,19 +395,25 @@ function PaymentsModal({ subscriptionId, onClose, onRecord }) {
           ) : payments.length === 0 ? (
             <div className="text-center py-6 text-gray-500">{t('services.noPayments') || 'No payments yet'}</div>
           ) : (
-            <div className="space-y-2">
-              {payments.map(p => (
-                <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div>
-                    <div className="font-medium">{p.amount?.toLocaleString()} {t('common.currency') || 'EGP'}</div>
-                    <div className="text-xs text-gray-500">{p.payment_date} - {p.payment_method}</div>
+            <>
+              <div className="flex justify-between items-center mb-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                <span className="text-sm font-medium">{t('services.totalPaid') || 'Total Paid'}</span>
+                <span className="text-lg font-bold text-primary-600">{totalPaid.toLocaleString()} {t('common.currency') || 'EGP'}</span>
+              </div>
+              <div className="space-y-2">
+                {payments.map(p => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div>
+                      <div className="font-medium">{p.amount?.toLocaleString()} {t('common.currency') || 'EGP'}</div>
+                      <div className="text-xs text-gray-500">{p.payment_date} - {p.payment_method}</div>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      {p.status === 'paid' ? t('services.paymentPaid') : p.status === 'pending' ? t('services.paymentPending') : t('services.paymentFailed')}
+                    </span>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {p.status === 'paid' ? t('services.paymentPaid') : p.status === 'pending' ? t('services.paymentPending') : t('services.paymentFailed')}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
