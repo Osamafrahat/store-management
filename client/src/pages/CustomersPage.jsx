@@ -289,7 +289,7 @@ function CustomerForm({ customer, onSave, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (formData.phone && formData.phone.length !== 10) {
-      setPhoneError('Phone must be exactly 10 digits (without leading 0)')
+      setPhoneError(t('customers.phoneLengthError'))
       return
     }
     setPhoneError('')
@@ -359,7 +359,7 @@ function CustomerForm({ customer, onSave, onClose }) {
               <p className="mt-1 text-xs text-red-500 dark:text-red-400">{phoneError}</p>
             )}
             {!phoneError && formData.phone && formData.phone.length < 10 && (
-              <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">{10 - formData.phone.length} digits remaining</p>
+              <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">{10 - formData.phone.length} {t('customers.digitsRemaining')}</p>
             )}
           </div>
 

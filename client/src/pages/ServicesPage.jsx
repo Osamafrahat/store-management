@@ -52,12 +52,12 @@ export default function ServicesPage() {
 
   const getTypeLabel = (type) => {
     const labels = {
-      maintenance: { en: 'Maintenance', ar: 'صيانة' },
-      warranty: { en: 'Warranty', ar: 'ضمان' },
-      subscription: { en: 'Subscription', ar: 'اشتراك' },
-      custom: { en: 'Custom', ar: 'مخصص' },
+      maintenance: t('services.typeMaintenance'),
+      warranty: t('services.typeWarranty'),
+      subscription: t('services.typeSubscription'),
+      custom: t('services.typeCustom'),
     }
-    return labels[type]?.[language] || type
+    return labels[type] || type
   }
 
   return (

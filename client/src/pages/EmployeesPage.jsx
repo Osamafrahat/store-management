@@ -236,7 +236,7 @@ export default function EmployeesPage() {
                 {employee.salary > 0 && (
                   <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <DollarSign className="w-4 h-4" />
-                    <span>{t('employees.salaryLabel')} ${employee.salary.toLocaleString()}</span>
+                    <span>{t('employees.salaryLabel')} {employee.salary?.toLocaleString()} {t('common.currency') || 'EGP'}</span>
                   </div>
                 )}
               </div>

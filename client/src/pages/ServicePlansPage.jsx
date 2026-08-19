@@ -5,10 +5,10 @@ import { servicePlansApi } from '../lib/api'
 import { X, Plus, Edit2, Trash2, CreditCard, Calendar, Repeat } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 
-const BILLING_CYCLES = {
-  monthly: { en: 'Monthly', ar: 'شهري' },
-  annual: { en: 'Annual', ar: 'سنوي' },
-  one_time: { en: 'One Time', ar: 'لمرة واحدة' },
+const BILLING_CYCLE_KEYS = {
+  monthly: 'services.monthly',
+  annual: 'services.annual',
+  one_time: 'services.oneTime',
 }
 
 export default function ServicePlansPage() {
@@ -74,7 +74,8 @@ export default function ServicePlansPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plans.map(plan => {
-            const cycle = BILLING_CYCLES[plan.billing_cycle] || BILLING_CYCLES.monthly
+            const cycleKey = BILLING_CYCLE_KEYS[plan.billing_cycle] || BILLING_CYCLE_KEYS.monthly
+            const cycleLabel = t(cycleKey)
             const features = Array.isArray(plan.features) ? plan.features : []
             return (
               <div key={plan.id} className="bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50 shadow-sm rounded-xl p-5">
@@ -83,7 +84,7 @@ export default function ServicePlansPage() {
                     <h3 className="font-semibold text-lg">{language === 'ar' && plan.name_ar ? plan.name_ar : plan.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                        <Repeat className="w-3 h-3" />{cycle[language] || cycle.en}
+                        <Repeat className="w-3 h-3" />{cycleLabel}
                       </span>
                       {plan.duration_months > 1 && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
@@ -111,7 +112,7 @@ export default function ServicePlansPage() {
                 )}
                 <div className="text-2xl font-bold text-primary-600">
                   {plan.price?.toLocaleString()} {t('common.currency') || 'EGP'}
-                  <span className="text-sm font-normal text-gray-500">/{cycle[language] || cycle.en}</span>
+                  <span className="text-sm font-normal text-gray-500">/{cycleLabel}</span>
                 </div>
               </div>
             )
@@ -198,7 +199,7 @@ function PlanForm({ plan, onSave, onClose }) {
             <label className="block text-sm font-medium mb-1">{t('services.features') || 'Features (one per line)'}</label>
             <textarea value={form.features} onChange={e => setForm({ ...form, features: e.target.value })} rows={4}
               className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-              placeholder="Feature 1&#10;Feature 2&#10;Feature 3" />
+              placeholder={t('services.featuresPlaceholder')} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">{t('common.cancel')}</button>

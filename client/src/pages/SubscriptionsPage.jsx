@@ -12,11 +12,11 @@ const STATUS_STYLES = {
   past_due: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
 }
 
-const STATUS_LABELS = {
-  active: { en: 'Active', ar: 'نشط' },
-  cancelled: { en: 'Cancelled', ar: 'ملغي' },
-  expired: { en: 'Expired', ar: 'منتهي' },
-  past_due: { en: 'Past Due', ar: 'متأخر' },
+const STATUS_LABEL_KEYS = {
+  active: 'services.statusActive',
+  cancelled: 'services.statusCancelled',
+  expired: 'services.statusExpired',
+  past_due: 'services.statusPastDue',
 }
 
 export default function SubscriptionsPage() {
@@ -111,7 +111,7 @@ export default function SubscriptionsPage() {
         {['', 'active', 'expired', 'cancelled', 'past_due'].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium ${filterStatus === s ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}>
-            {s ? STATUS_LABELS[s]?.[language] || s : t('services.all') || 'All'}
+            {s ? t(STATUS_LABEL_KEYS[s]) || s : t('services.all') || 'All'}
           </button>
         ))}
       </div>
@@ -155,7 +155,7 @@ export default function SubscriptionsPage() {
                     <td className="p-4">{sub.end_date || '-'}</td>
                     <td className="p-4">
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[sub.status] || ''}`}>
-                        {STATUS_LABELS[sub.status]?.[language] || sub.status}
+                        {t(STATUS_LABEL_KEYS[sub.status]) || sub.status}
                       </span>
                     </td>
                     {canEdit && (
@@ -163,17 +163,17 @@ export default function SubscriptionsPage() {
                         <div className="flex items-center justify-end gap-1">
                           {sub.status === 'active' && (
                             <>
-                              <button onClick={() => handleRenew(sub.id)} title="Renew"
+                              <button onClick={() => handleRenew(sub.id)} title={t('services.renew')}
                                 className="p-1.5 text-gray-400 hover:text-green-600 rounded-lg"><RefreshCw className="w-4 h-4" /></button>
-                              <button onClick={() => handleCancel(sub.id)} title="Cancel"
+                              <button onClick={() => handleCancel(sub.id)} title={t('services.cancel')}
                                 className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg"><Ban className="w-4 h-4" /></button>
                             </>
                           )}
-                          <button onClick={() => { setEditing(sub); setShowForm(true) }} title="Edit"
+                          <button onClick={() => { setEditing(sub); setShowForm(true) }} title={t('services.edit')}
                             className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => setShowPayments(sub.id)} title="Payments"
+                          <button onClick={() => setShowPayments(sub.id)} title={t('services.payments')}
                             className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg"><CreditCard className="w-4 h-4" /></button>
-                          <button onClick={() => setDeleteTarget(sub.id)} title="Delete"
+                          <button onClick={() => setDeleteTarget(sub.id)} title={t('services.delete')}
                             className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
@@ -255,7 +255,7 @@ function SubscriptionForm({ subscription, services, plans, customers, onSave, on
               <select value={form.plan_id} onChange={e => setForm({ ...form, plan_id: e.target.value })}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                 <option value="">{t('services.selectPlan') || 'Select plan'}</option>
-                {plans.map(p => <option key={p.id} value={p.id}>{p.name} - {p.price?.toLocaleString()} EGP</option>)}
+                {plans.map(p => <option key={p.id} value={p.id}>{p.name} - {p.price?.toLocaleString()} {t('common.currency') || 'EGP'}</option>)}
               </select>
             </div>
           </div>
@@ -364,7 +364,7 @@ function PaymentsModal({ subscriptionId, onClose, onRecord }) {
                     <div className="text-xs text-gray-500">{p.payment_date} - {p.payment_method}</div>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {p.status}
+                    {p.status === 'paid' ? t('services.paymentPaid') : p.status === 'pending' ? t('services.paymentPending') : t('services.paymentFailed')}
                   </span>
                 </div>
               ))}
