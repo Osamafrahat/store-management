@@ -137,7 +137,6 @@ export default function SubscriptionsPage() {
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="text-start p-4 font-medium text-gray-500">{t('services.customer') || 'Customer'}</th>
-                  <th className="text-start p-4 font-medium text-gray-500">{t('services.service') || 'Service'}</th>
                   <th className="text-start p-4 font-medium text-gray-500">{t('services.plan') || 'Plan'}</th>
                   <th className="text-start p-4 font-medium text-gray-500">{t('services.amount') || 'Amount'}</th>
                   <th className="text-start p-4 font-medium text-gray-500">{t('services.startDate') || 'Start'}</th>
@@ -155,7 +154,6 @@ export default function SubscriptionsPage() {
                         {sub.customer?.name || '-'}
                       </div>
                     </td>
-                    <td className="p-4">{language === 'ar' && sub.service?.name_ar ? sub.service.name_ar : sub.service?.name || '-'}</td>
                     <td className="p-4">{language === 'ar' && sub.plan?.name_ar ? sub.plan.name_ar : sub.plan?.name || '-'}</td>
                     <td className="p-4 font-semibold">{sub.billing_amount?.toLocaleString()} {t('common.currency') || 'EGP'}</td>
                     <td className="p-4">{sub.start_date}</td>
