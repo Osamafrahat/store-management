@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import supabase from '../db/supabase.js'
 import { authenticateToken, requirePermission } from '../middleware/auth.js'
+import { postSubscriptionPaymentJournal } from '../services/accountingEngine.js'
 
 const router = Router()
 
@@ -206,7 +207,7 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
     if (error) throw error
 
     // Record the renewal payment
-    await supabase
+    const { data: renewalPayment } = await supabase
       .from('subscription_payments')
       .insert({
         subscription_id: req.params.id,
@@ -214,6 +215,17 @@ router.patch('/:id/renew', authenticateToken, requirePermission('services_edit')
         payment_method: 'cash',
         notes: 'Renewal payment',
       })
+      .select()
+      .single()
+
+    // Create journal entry for renewal payment
+    if (renewalPayment) {
+      try {
+        await postSubscriptionPaymentJournal(renewalPayment, data, sub.plan)
+      } catch (journalErr) {
+        console.error('Failed to create renewal journal entry:', journalErr.message)
+      }
+    }
 
     res.json(data)
   } catch (err) {
@@ -228,6 +240,14 @@ router.post('/:id/payments', authenticateToken, requirePermission('services_edit
 ], validate, async (req, res) => {
   try {
     const { amount, payment_method, notes } = req.body
+
+    // Get subscription and plan details for journal entry
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('*, plan:service_plans(id, name, price)')
+      .eq('id', req.params.id)
+      .single()
+
     const { data, error } = await supabase
       .from('subscription_payments')
       .insert({
@@ -239,6 +259,16 @@ router.post('/:id/payments', authenticateToken, requirePermission('services_edit
       .select()
       .single()
     if (error) throw error
+
+    // Create journal entry
+    if (data && sub) {
+      try {
+        await postSubscriptionPaymentJournal(data, sub, sub.plan)
+      } catch (journalErr) {
+        console.error('Failed to create subscription journal entry:', journalErr.message)
+      }
+    }
+
     res.status(201).json(data)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -311,7 +341,7 @@ router.post('/quick', authenticateToken, requirePermission('services_edit'), [
     if (subError) throw subError
 
     // Record payment
-    const { error: payError } = await supabase
+    const { data: paymentData, error: payError } = await supabase
       .from('subscription_payments')
       .insert({
         subscription_id: sub.id,
@@ -319,7 +349,18 @@ router.post('/quick', authenticateToken, requirePermission('services_edit'), [
         payment_method: payment_method || 'cash',
         notes: 'POS payment',
       })
+      .select()
+      .single()
     if (payError) console.error('Failed to record payment:', payError.message)
+
+    // Create journal entry for subscription payment
+    if (paymentData) {
+      try {
+        await postSubscriptionPaymentJournal(paymentData, sub, plan)
+      } catch (journalErr) {
+        console.error('Failed to create subscription journal entry:', journalErr.message)
+      }
+    }
 
     res.status(201).json(sub)
   } catch (err) {

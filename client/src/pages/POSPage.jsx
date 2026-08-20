@@ -415,6 +415,7 @@ export default function POSPage() {
               }
 
               // Build order items for products + services (both are one-time sales)
+              // Note: Subscriptions are handled separately via quickCreate and their own journal entries
               const allOrderItems = [
                 ...productItems.map(item => ({
                   product_id: item.product.id,
@@ -435,7 +436,7 @@ export default function POSPage() {
               const serviceSubtotal = serviceItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
               const orderSubtotal = productSubtotal + serviceSubtotal
 
-              // Create order if there are products or services
+              // Create order if there are products or services (subscriptions are separate)
               if (allOrderItems.length > 0) {
                 const orderData = {
                   order_number: generateOrderNumber(),
@@ -450,7 +451,7 @@ export default function POSPage() {
                   user_id: currentUser?.id,
                   customer_id: selectedCustomer?.id || null,
                   promotion_id: null,
-                  notes: subscriptionItems.length > 0 ? `Includes ${subscriptionItems.length} subscription(s)` : null,
+                  notes: serviceItems.length > 0 ? `Service sale - ${serviceItems.length} service(s)` : null,
                   created_at: new Date().toISOString(),
                 }
 

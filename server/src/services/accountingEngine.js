@@ -538,6 +538,110 @@ export async function postExpenseJournal(expense) {
   })
 }
 
+// Auto-post subscription payment to journal
+export async function postSubscriptionPaymentJournal(payment, subscription, plan) {
+  await seedChartOfAccounts()
+
+  // Determine revenue account based on subscription type
+  const revenueCode = '4025' // Subscription Revenue
+  const revenueAccount = await findAccountByCode(revenueCode)
+
+  // Determine cash/bank account based on payment method
+  const method = payment.payment_method || 'cash'
+  const sourceCode = method === 'card' || method === 'bank' ? '1020' : '1010'
+  const sourceAccount = await findAccountByCode(sourceCode)
+
+  const lines = []
+
+  // Debit Cash/Bank
+  if (sourceAccount) {
+    lines.push({
+      accountId: sourceAccount.id,
+      debit: parseFloat(payment.amount),
+      credit: 0,
+      description: `Subscription payment - ${plan?.name || 'subscription'}`,
+    })
+  }
+
+  // Credit Subscription Revenue
+  if (revenueAccount) {
+    lines.push({
+      accountId: revenueAccount.id,
+      debit: 0,
+      credit: parseFloat(payment.amount),
+      description: `Subscription revenue - ${plan?.name || 'subscription'}`,
+    })
+  }
+
+  if (lines.length === 0) return null
+
+  return createJournalEntry({
+    date: payment.payment_date || new Date().toISOString().split('T')[0],
+    description: `Subscription payment - ${plan?.name || 'subscription'}`,
+    reference: `SUB-${subscription.id}`,
+    sourceType: 'subscription_payment',
+    sourceId: payment.id,
+    lines,
+    createdBy: null,
+  })
+}
+
+// Auto-post service sale to journal
+export async function postServiceSaleJournal(order, serviceItems) {
+  await seedChartOfAccounts()
+
+  // Find accounts
+  let arAccount = null
+  if (order.customer_id) {
+    const { data: customer } = await supabase.from('customers').select('account_code').eq('id', order.customer_id).single()
+    if (customer?.account_code) {
+      arAccount = await findAccountByCode(customer.account_code)
+    }
+  }
+  if (!arAccount) {
+    arAccount = await findAccountByCode('1030')
+  }
+
+  const serviceRevenueAccount = await findAccountByCode('4015') // Service Revenue
+  const cashAccount = await findAccountByCode('1010')
+
+  const serviceTotal = serviceItems.reduce((sum, item) => sum + (parseFloat(item.unit_price) * item.quantity), 0)
+
+  const lines = []
+
+  // Debit Cash (service payment received immediately)
+  if (cashAccount) {
+    lines.push({
+      accountId: cashAccount.id,
+      debit: serviceTotal,
+      credit: 0,
+      description: `Service payment - ${order.order_number}`,
+    })
+  }
+
+  // Credit Service Revenue
+  if (serviceRevenueAccount) {
+    lines.push({
+      accountId: serviceRevenueAccount.id,
+      debit: 0,
+      credit: serviceTotal,
+      description: `Service revenue - ${order.order_number}`,
+    })
+  }
+
+  if (lines.length === 0) return null
+
+  return createJournalEntry({
+    date: order.completed_at ? new Date(order.completed_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    description: `Service sale - ${order.order_number}`,
+    reference: order.order_number,
+    sourceType: 'service_order',
+    sourceId: order.id,
+    lines,
+    createdBy: order.user_id,
+  })
+}
+
 // Auto-post stock receive to journal (with per-supplier AP)
 export async function postStockReceiveJournal(movement, product, supplier) {
   const inventoryAccount = await findAccountByCode('1050')
@@ -720,7 +824,9 @@ export async function seedChartOfAccounts() {
     { code: '3030', name: 'Current Year Earnings', account_type: 'equity' },
     // Revenue
     { code: '4010', name: 'Sales Revenue', account_type: 'revenue' },
+    { code: '4015', name: 'Service Revenue', account_type: 'revenue' },
     { code: '4020', name: 'Sales Returns', account_type: 'revenue' },
+    { code: '4025', name: 'Subscription Revenue', account_type: 'revenue' },
     // Expenses
     { code: '5010', name: 'Cost of Goods Sold', account_type: 'expense' },
     { code: '5020', name: 'Operating Expenses', account_type: 'expense' },
