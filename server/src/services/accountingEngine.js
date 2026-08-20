@@ -249,6 +249,7 @@ export async function postOrderJournal(order, orderItems, customer = null) {
     arAccount = data
   }
   const { data: salesAccount } = await supabase.from('accounts').select('id').eq('code', '4010').single()
+  const { data: serviceRevenueAccount } = await supabase.from('accounts').select('id').eq('code', '4015').single()
   const { data: vatAccount } = await supabase.from('accounts').select('id').eq('code', '2030').single()
   const { data: cogsAccount } = await supabase.from('accounts').select('id').eq('code', '5010').single()
   const { data: inventoryAccount } = await supabase.from('accounts').select('id').eq('code', '1050').single()
@@ -265,14 +266,40 @@ export async function postOrderJournal(order, orderItems, customer = null) {
     })
   }
 
-  // Credit sales revenue (subtotal minus discount = actual revenue)
-  if (salesAccount) {
-    const revenue = parseFloat(order.subtotal) - (parseFloat(order.discount_amount) || 0)
+  // Separate product and service revenue
+  let productRevenue = 0
+  let serviceRevenue = 0
+  if (orderItems && orderItems.length > 0) {
+    for (const item of orderItems) {
+      const itemTotal = parseFloat(item.unit_price) * item.quantity
+      if (item._type === 'service') {
+        serviceRevenue += itemTotal
+      } else {
+        productRevenue += itemTotal
+      }
+    }
+  } else {
+    // Fallback: use order subtotal if items not provided
+    productRevenue = parseFloat(order.subtotal) - (parseFloat(order.discount_amount) || 0)
+  }
+
+  // Credit product sales revenue (4010)
+  if (salesAccount && productRevenue > 0) {
     lines.push({
       accountId: salesAccount.id,
       debit: 0,
-      credit: revenue,
-      description: `Sale - ${order.order_number}`,
+      credit: productRevenue,
+      description: `Product sale - ${order.order_number}`,
+    })
+  }
+
+  // Credit service revenue (4015)
+  if (serviceRevenueAccount && serviceRevenue > 0) {
+    lines.push({
+      accountId: serviceRevenueAccount.id,
+      debit: 0,
+      credit: serviceRevenue,
+      description: `Service sale - ${order.order_number}`,
     })
   }
 
@@ -286,11 +313,11 @@ export async function postOrderJournal(order, orderItems, customer = null) {
     })
   }
 
-  // COGS entry (debit expense, credit inventory)
+  // COGS entry (debit expense, credit inventory) - only for product items
   if (orderItems && orderItems.length > 0) {
     let totalCost = 0
     for (const item of orderItems) {
-      if (item.cost_price) {
+      if (item.cost_price && item._type !== 'service') {
         totalCost += parseFloat(item.cost_price) * item.quantity
       }
     }
@@ -583,62 +610,6 @@ export async function postSubscriptionPaymentJournal(payment, subscription, plan
     sourceId: payment.id,
     lines,
     createdBy: null,
-  })
-}
-
-// Auto-post service sale to journal
-export async function postServiceSaleJournal(order, serviceItems) {
-  await seedChartOfAccounts()
-
-  // Find accounts
-  let arAccount = null
-  if (order.customer_id) {
-    const { data: customer } = await supabase.from('customers').select('account_code').eq('id', order.customer_id).single()
-    if (customer?.account_code) {
-      arAccount = await findAccountByCode(customer.account_code)
-    }
-  }
-  if (!arAccount) {
-    arAccount = await findAccountByCode('1030')
-  }
-
-  const serviceRevenueAccount = await findAccountByCode('4015') // Service Revenue
-  const cashAccount = await findAccountByCode('1010')
-
-  const serviceTotal = serviceItems.reduce((sum, item) => sum + (parseFloat(item.unit_price) * item.quantity), 0)
-
-  const lines = []
-
-  // Debit Cash (service payment received immediately)
-  if (cashAccount) {
-    lines.push({
-      accountId: cashAccount.id,
-      debit: serviceTotal,
-      credit: 0,
-      description: `Service payment - ${order.order_number}`,
-    })
-  }
-
-  // Credit Service Revenue
-  if (serviceRevenueAccount) {
-    lines.push({
-      accountId: serviceRevenueAccount.id,
-      debit: 0,
-      credit: serviceTotal,
-      description: `Service revenue - ${order.order_number}`,
-    })
-  }
-
-  if (lines.length === 0) return null
-
-  return createJournalEntry({
-    date: order.completed_at ? new Date(order.completed_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    description: `Service sale - ${order.order_number}`,
-    reference: order.order_number,
-    sourceType: 'service_order',
-    sourceId: order.id,
-    lines,
-    createdBy: order.user_id,
   })
 }
 
