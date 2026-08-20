@@ -1,7 +1,13 @@
 import { useState, memo } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { formatCurrency } from '../../lib/utils'
-import { Package, Plus, Wrench } from 'lucide-react'
+import { Package, Plus, Wrench, Repeat } from 'lucide-react'
+
+const BILLING_CYCLE_LABELS = {
+  monthly: { en: 'Monthly', ar: 'شهري' },
+  annual: { en: 'Annually', ar: 'سنوي' },
+  one_time: { en: 'One-time', ar: 'مرة واحدة' },
+}
 
 export default memo(function ProductGrid({ products, onAddToCart }) {
   const { t, toastError } = useAppStore()
@@ -65,6 +71,8 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
             <div className="aspect-square rounded-lg bg-gray-100 dark:bg-gray-700 mb-3 flex items-center justify-center overflow-hidden">
               {product._type === 'service' ? (
                 <Wrench className="w-12 h-12 text-blue-500" />
+              ) : product._type === 'subscription' ? (
+                <Repeat className="w-12 h-12 text-purple-500" />
               ) : product.image_url ? (
                 <img
                   src={product.image_url}
@@ -99,6 +107,8 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
                   text-xs px-2 py-0.5 rounded-full
                   ${product._type === 'service'
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                    : product._type === 'subscription'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
                     : product.stock_quantity != null && product.stock_quantity > 0
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                     : product.stock_quantity === 0
@@ -106,7 +116,15 @@ export default memo(function ProductGrid({ products, onAddToCart }) {
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   }
                 `}>
-                  {product._type === 'service' ? (t('services.service') || 'Service') : product.stock_quantity != null && product.stock_quantity > 0 ? `${t('inventory.inStock')}: ${product.stock_quantity}` : product.stock_quantity === 0 ? t('pos.outOfStock') : '—'}
+                  {product._type === 'service' 
+                    ? (t('services.service') || 'Service') 
+                    : product._type === 'subscription'
+                    ? (product.billing_cycle === 'annual' ? (t('billingCycle.annual') || 'Annually') : product.billing_cycle === 'one_time' ? (t('billingCycle.oneTime') || 'One-time') : (t('billingCycle.monthly') || 'Monthly'))
+                    : product.stock_quantity != null && product.stock_quantity > 0 
+                    ? `${t('inventory.inStock')}: ${product.stock_quantity}` 
+                    : product.stock_quantity === 0 
+                    ? t('pos.outOfStock') 
+                    : '—'}
                 </span>
               </div>
             </div>
