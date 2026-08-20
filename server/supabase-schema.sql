@@ -793,7 +793,7 @@ CREATE TABLE IF NOT EXISTS services (
   name_ar TEXT,
   description TEXT,
   price NUMERIC NOT NULL DEFAULT 0,
-  service_type TEXT NOT NULL DEFAULT 'subscription' CHECK (service_type IN ('maintenance', 'warranty', 'subscription', 'custom')),
+  service_type TEXT NOT NULL DEFAULT 'maintenance' CHECK (service_type IN ('maintenance', 'warranty', 'custom')),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

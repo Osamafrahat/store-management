@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useUserStore, PERMISSIONS } from '../stores/userStore'
 import { servicesApi } from '../lib/api'
-import { X, Plus, Edit2, Trash2, Wrench, Shield, Clock, Settings } from 'lucide-react'
+import { X, Plus, Edit2, Trash2, Wrench, Shield, Settings } from 'lucide-react'
 import ConfirmModal from '../components/ConfirmModal'
 
 const SERVICE_TYPES = [
   { value: 'maintenance', icon: Wrench },
   { value: 'warranty', icon: Shield },
-  { value: 'subscription', icon: Clock },
   { value: 'custom', icon: Settings },
 ]
 
@@ -54,7 +53,6 @@ export default function ServicesPage() {
     const labels = {
       maintenance: t('services.typeMaintenance'),
       warranty: t('services.typeWarranty'),
-      subscription: t('services.typeSubscription'),
       custom: t('services.typeCustom'),
     }
     return labels[type] || type
@@ -151,7 +149,7 @@ function ServiceForm({ service, onSave, onClose }) {
     name_ar: service?.name_ar || '',
     description: service?.description || '',
     price: service?.price || '',
-    service_type: service?.service_type || 'subscription',
+    service_type: service?.service_type || 'maintenance',
   })
 
   const handleSubmit = async (e) => {
