@@ -309,6 +309,22 @@ router.post('/quick', authenticateToken, requirePermission('services_edit'), [
       .single()
     if (planError || !plan) return res.status(404).json({ error: 'Plan not found' })
 
+    // Check if customer already has an active subscription for this plan
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('id, status')
+      .eq('customer_id', customer_id)
+      .eq('plan_id', plan_id)
+      .in('status', ['active', 'past_due'])
+      .single()
+
+    if (existingSub) {
+      return res.status(409).json({ 
+        error: 'Customer already has an active subscription for this plan',
+        existing_subscription_id: existingSub.id
+      })
+    }
+
     // Calculate end date based on plan duration
     const startDate = new Date(today)
     let endDate = new Date(startDate)

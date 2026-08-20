@@ -406,12 +406,21 @@ export default function POSPage() {
 
               // Create subscriptions from plan items
               for (const item of subscriptionItems) {
-                await subscriptionsApi.quickCreate({
-                  customer_id: selectedCustomer.id,
-                  plan_id: item.product.id,
-                  payment_method: paymentData.method,
-                  notes: `POS sale - ${item.product.name}`,
-                })
+                try {
+                  await subscriptionsApi.quickCreate({
+                    customer_id: selectedCustomer.id,
+                    plan_id: item.product.id,
+                    payment_method: paymentData.method,
+                    notes: `POS sale - ${item.product.name}`,
+                  })
+                } catch (subErr) {
+                  if (subErr.response?.status === 409) {
+                    toastError(t('pos.duplicateSubscription') || 'Customer already has an active subscription for this plan')
+                    setIsSubmitting(false)
+                    return
+                  }
+                  throw subErr
+                }
               }
 
               // Build order items for products + services (both are one-time sales)
