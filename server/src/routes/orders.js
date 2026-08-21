@@ -137,7 +137,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { order_number, items, subtotal, discount_amount, tax_amount, total,
-      payment_method, payment_status, payments, customer_id, promotion_id, client_order_id } = req.body
+      payment_method, payment_status, payments, customer_id, promotion_id, client_order_id, notes } = req.body
 
     if (!order_number) {
       return res.status(400).json({ error: 'Order number is required' })
@@ -179,6 +179,7 @@ router.post('/', async (req, res, next) => {
         customer_id: customer_id || null,
         promotion_id: promotion_id || null,
         client_order_id: client_order_id || null,
+        notes: notes || null,
         completed_at: new Date().toISOString()
       })
       .select()
