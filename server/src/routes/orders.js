@@ -14,7 +14,8 @@ router.get('/', async (req, res, next) => {
         *,
         users(full_name),
         customers(name),
-        refunds(id, amount, is_partial)
+        refunds(id, amount, is_partial),
+        order_items(id, product_id, quantity, unit_price, discount, total, type)
       `)
       .order('created_at', { ascending: false })
       .limit(parseInt(limit))
