@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { ordersApi, etaApi } from '../lib/api'
 import { formatCurrency } from '../lib/utils'
-import { FileText, Search, Eye, RefreshCcw, CheckCircle, XCircle, Clock, Send, Wrench } from 'lucide-react'
+import { FileText, Search, Eye, RefreshCcw, CheckCircle, XCircle, Clock, Send, Wrench, DollarSign, TrendingUp } from 'lucide-react'
 import ReceiptModal from '../components/pos/ReceiptModal'
 
 const STATUS_COLORS = {
@@ -50,8 +50,15 @@ export default function InvoicesPage() {
   }
 
   const isServiceOrder = (order) => {
-    return order.notes?.includes('Service sale') || order.notes?.includes('service(s)') || order.items?.some(i => i.type === 'service' || i._type === 'service')
+    const items = order.order_items || order.items || []
+    return (
+      order.notes?.toLowerCase().includes('service sale') ||
+      order.notes?.toLowerCase().includes('service(s)') ||
+      items.some(i => i.type === 'service' || i._type === 'service')
+    )
   }
+
+  const getOrderItems = (order) => order.order_items || order.items || []
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !search ||
@@ -131,61 +138,79 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg"><FileText className="w-5 h-5 text-primary-600" /></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+              <FileText className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{t('invoices.totalOrders') || 'Total Orders'}</p>
-              <p className="text-xl font-bold">{stats.total}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('invoices.totalOrders') || 'Total Orders'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><Wrench className="w-5 h-5 text-blue-600" /></div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{t('services.serviceSales') || 'Service Sales'}</p>
-              <p className="text-xl font-bold text-blue-600">{stats.serviceOrders}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('invoices.paid') || 'Paid'}</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.paid}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg"><CheckCircle className="w-5 h-5 text-green-600" /></div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+              <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{t('invoices.paid') || 'Paid'}</p>
-              <p className="text-xl font-bold text-green-600">{stats.paid}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('invoices.partialRefund') || 'Partial Refund'}</p>
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.partial}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg"><Clock className="w-5 h-5 text-amber-600" /></div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
+              <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{t('invoices.partialRefund') || 'Partial Refund'}</p>
-              <p className="text-xl font-bold text-amber-600">{stats.partial}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('invoices.refunded') || 'Refunded'}</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.refunded}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg"><XCircle className="w-5 h-5 text-red-600" /></div>
+      </div>
+
+      {/* Revenue Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+              <DollarSign className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{t('invoices.refunded') || 'Refunded'}</p>
-              <p className="text-xl font-bold text-red-600">{stats.refunded}</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('invoices.totalRevenue') || 'Total Revenue'}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(stats.totalRevenue)}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg"><FileText className="w-5 h-5 text-blue-600" /></div>
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 shadow-sm p-5">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+              <Wrench className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{t('invoices.totalRevenue') || 'Total Revenue'}</p>
-              <p className="text-xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
-              {stats.serviceRevenue > 0 && (
-                <p className="text-xs text-blue-500">{t('services.serviceRevenue') || 'Services'}: {formatCurrency(stats.serviceRevenue)}</p>
-              )}
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('services.serviceSales') || 'Service Sales'}</p>
+              <div className="flex items-baseline gap-3">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.serviceOrders}</p>
+                {stats.serviceRevenue > 0 && (
+                  <p className="text-sm font-medium text-blue-500 dark:text-blue-400/70">{formatCurrency(stats.serviceRevenue)}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -253,6 +278,7 @@ export default function InvoicesPage() {
                 filteredOrders.map((order) => {
                   const orderStatus = getOrderStatus(order)
                   const StatusIcon = STATUS_ICONS[orderStatus] || Clock
+                  const items = getOrderItems(order)
                   return (
                     <tr key={order.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                       <td className="px-4 py-3 font-mono font-semibold">
@@ -270,7 +296,7 @@ export default function InvoicesPage() {
                       <td className="px-4 py-3 hidden sm:table-cell">{order.customers?.name || '-'}</td>
                       <td className="px-4 py-3 hidden md:table-cell">{order.users?.full_name || '-'}</td>
                       <td className="px-4 py-3 text-center">
-                        {order.items_count || order.items?.length || '-'}
+                        {order.items_count || items.length || '-'}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">
                         {formatCurrency(order.total)}
