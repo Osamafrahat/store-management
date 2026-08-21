@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS orders (
   is_refunded BOOLEAN DEFAULT false,
   journal_entry_id BIGINT REFERENCES journal_entries(id),
   client_order_id TEXT UNIQUE,
+  notes TEXT,
   completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

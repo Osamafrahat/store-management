@@ -252,23 +252,25 @@ async function processOrderBackground(order, items, payments, customer_id, userI
         type: item._type || 'product'
       })
 
-      // Update stock directly (skip RPC)
-      const { data: product } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).single()
-      if (product) {
-        await supabase.from('products').update({
-          stock_quantity: Math.max(0, product.stock_quantity - qty),
-          updated_at: new Date().toISOString()
-        }).eq('id', item.product_id)
-      }
+      // Update stock directly (skip RPC) - only for product items
+      if (item.product_id) {
+        const { data: product } = await supabase.from('products').select('stock_quantity').eq('id', item.product_id).single()
+        if (product) {
+          await supabase.from('products').update({
+            stock_quantity: Math.max(0, product.stock_quantity - qty),
+            updated_at: new Date().toISOString()
+          }).eq('id', item.product_id)
+        }
 
-      // Record stock movement
-      await supabase.from('stock_movements').insert({
-        product_id: item.product_id,
-        type: 'sale',
-        quantity: -qty,
-        reference_id: order.id,
-        notes: `Order ${order_number}`
-      })
+        // Record stock movement
+        await supabase.from('stock_movements').insert({
+          product_id: item.product_id,
+          type: 'sale',
+          quantity: -qty,
+          reference_id: order.id,
+          notes: `Order ${order_number}`
+        })
+      }
     } catch (e) { console.error(`[ORDER BG] Stock update failed for item ${item.product_id}:`, e.message) }
   }
 
