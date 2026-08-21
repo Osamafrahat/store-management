@@ -242,11 +242,12 @@ async function processOrderBackground(order, items, payments, customer_id, userI
 
       await supabase.from('order_items').insert({
         order_id: order.id,
-        product_id: item.product_id,
+        product_id: item.product_id || null,
         quantity: qty,
         unit_price: item.unit_price,
         discount: item.discount || 0,
-        total: itemTotal
+        total: itemTotal,
+        type: item._type || 'product'
       })
 
       // Update stock directly (skip RPC)

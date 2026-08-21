@@ -50,7 +50,7 @@ export default function InvoicesPage() {
   }
 
   const isServiceOrder = (order) => {
-    return order.notes?.includes('Service sale') || order.notes?.includes('service(s)') || order.items?.some(i => i._type === 'service')
+    return order.notes?.includes('Service sale') || order.notes?.includes('service(s)') || order.items?.some(i => i.type === 'service' || i._type === 'service')
   }
 
   const filteredOrders = orders.filter(order => {
